@@ -1,0 +1,497 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>室內裝修報價系統 (亞昕喜來登範本套印版)</title>
+  <!-- 引入支援全功能 Excel 樣式與範本套印的 ExcelJS 套件 -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/exceljs/4.3.0/exceljs.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/FileSaver.js/2.0.5/FileSaver.min.js"></script>
+  <style>
+    :root {
+      --primary: #2c3e50;
+      --secondary: #27ae60;
+      --light-bg: #f8f9fa;
+      --border: #dee2e6;
+    }
+    body {
+      font-family: "PingFang TC", "Microsoft JhengHei", sans-serif;
+      margin: 0;
+      padding: 20px;
+      background-color: #f4f6f8;
+      color: #333;
+    }
+    .container { max-width: 1200px; margin: 0 auto; }
+    h1, h3 { color: var(--primary); }
+    .card {
+      background: #fff;
+      border-radius: 8px;
+      padding: 20px;
+      margin-bottom: 20px;
+      box-shadow: 0 2px 8px rgba(0,0,0,0.08);
+    }
+    .grid-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 15px; }
+    .grid-4 { display: grid; grid-template-columns: repeat(4, 1fr); gap: 15px; }
+    label { font-weight: bold; display: block; margin-bottom: 5px; font-size: 14px; }
+    input, select {
+      width: 100%;
+      padding: 8px 12px;
+      border: 1px solid var(--border);
+      border-radius: 4px;
+      box-sizing: border-box;
+      font-size: 14px;
+    }
+    button {
+      cursor: pointer;
+      padding: 10px 18px;
+      border: none;
+      border-radius: 4px;
+      font-size: 14px;
+      font-weight: bold;
+    }
+    .btn-primary { background: var(--primary); color: #fff; }
+    .btn-success { background: var(--secondary); color: #fff; }
+    .btn-danger { background: #e74c3c; color: #fff; padding: 6px 12px; }
+    
+    table { width: 100%; border-collapse: collapse; margin-top: 15px; }
+    th, td { border: 1px solid var(--border); padding: 10px; text-align: left; font-size: 14px; }
+    th { background: var(--light-bg); color: var(--primary); }
+    
+    /* 內部成本隱藏與顯示控制 */
+    .cost-col { background: #fff8e7; display: none; }
+    .show-cost .cost-col { display: table-cell; }
+
+    .summary-box { background: #eef2f5; padding: 15px; border-radius: 6px; margin-top: 15px; }
+    .summary-row { display: flex; justify-content: space-between; padding: 6px 0; font-size: 15px; }
+    .summary-row.total { font-size: 18px; font-weight: bold; color: #c0392b; border-top: 2px solid #ccc; padding-top: 10px; }
+  </style>
+</head>
+<body>
+
+<div class="container">
+  <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px;">
+    <h1>🏢 室內裝修報價系統</h1>
+    <button class="btn-primary" onclick="toggleCostDisplay()">🔒 切換顯示廠商成本/毛利</button>
+  </div>
+
+  <!-- 1. 基本資訊 -->
+  <div class="card">
+    <h3>📋 客戶與案場基本資訊</h3>
+    <div class="grid-4">
+      <div><label>客戶姓名</label><input type="text" id="clientName" value="劉隆穎"></div>
+      <div><label>工程地點</label><input type="text" id="projectLocation" value="亞昕喜來登"></div>
+      <div><label>合約書編號</label><input type="text" id="contractNo" value="007006"></div>
+      <div><label>報價日期</label><input type="date" id="quoteDate"></div>
+    </div>
+  </div>
+
+  <!-- 2. 新增項目選單 -->
+  <div class="card">
+    <h3>➕ 新增工程項目（選取相同項目自動合併數量）</h3>
+    <div class="grid-4" style="grid-template-columns: 2fr 2fr 1fr 2fr;">
+      <div>
+        <label>工程類別 (第一層)</label>
+        <select id="categorySelect" onchange="updateSubCategoryOptions()">
+          <option value="">-- 請選擇工程類別 --</option>
+        </select>
+      </div>
+      <div>
+        <label>工程細項 (第二層)</label>
+        <select id="subCategorySelect" onchange="autoFillItemDefaults()">
+          <option value="">-- 請先選擇工程類別 --</option>
+        </select>
+      </div>
+      <div>
+        <label>數量</label>
+        <input type="number" id="itemQty" value="1" min="0.1" step="0.1">
+      </div>
+      <div>
+        <label>單位</label>
+        <input type="text" id="itemUnit" placeholder="坪/尺/組/式/顆">
+      </div>
+    </div>
+
+    <div class="grid-4" style="margin-top: 12px;">
+      <div class="cost-col" style="padding: 8px; border-radius: 4px;">
+        <label>廠商底價 (內部成本)</label>
+        <input type="number" id="costPrice" value="0">
+      </div>
+      <div>
+        <label>對外報價 (客戶單價)</label>
+        <input type="number" id="quotePrice" value="0">
+      </div>
+      <div style="grid-column: span 2;">
+        <label>施工備註 / 規格</label>
+        <input type="text" id="itemNote" placeholder="例如：TV牆下、自然光">
+      </div>
+    </div>
+    <div style="margin-top: 12px; text-align: right;">
+      <button class="btn-success" onclick="addItemToQuote()">加入報價單</button>
+    </div>
+  </div>
+
+  <!-- 3. 報價清單 -->
+  <div class="card" id="quoteContainer">
+    <h3>📝 報價項目清單</h3>
+    <table id="quoteTable">
+      <thead>
+        <tr>
+          <th>大類</th>
+          <th>工程項目 / 備註</th>
+          <th>數量</th>
+          <th>單位</th>
+          <th class="cost-col">廠商單價</th>
+          <th class="cost-col">廠商成本小計</th>
+          <th>客戶單價</th>
+          <th>客戶報價小計</th>
+          <th class="cost-col">內部毛利</th>
+          <th>操作</th>
+        </tr>
+      </thead>
+      <tbody id="quoteTbody"></tbody>
+    </table>
+
+    <div class="grid-2" style="margin-top: 20px;">
+      <div>
+        <h4>⚙️ 費用設定</h4>
+        <div><input type="checkbox" id="chkManagementFee" checked onchange="renderSummary()" style="width:auto;"> <label style="display:inline;">計入 10% 工程監工管理費</label></div>
+        <div><input type="checkbox" id="chkTax" checked onchange="renderSummary()" style="width:auto;"> <label style="display:inline;">計入 5% 營業稅</label></div>
+      </div>
+      <div class="summary-box">
+        <div class="summary-row"><span>工程小計：</span><span id="sumSubtotal">$0</span></div>
+        <div class="summary-row"><span>管理費 (10%)：</span><span id="sumMgmt">$0</span></div>
+        <div class="summary-row"><span>營業稅 (5%)：</span><span id="sumTax">$0</span></div>
+        <div class="summary-row total"><span>報價總計：</span><span id="sumTotal">$0</span></div>
+      </div>
+    </div>
+
+    <div style="margin-top: 20px; text-align: right;">
+      <button class="btn-success" onclick="exportQuoteToExcel()" style="font-size: 16px; padding: 12px 24px;">
+        📄 匯出《亞昕喜來登》標準 Excel 報價單
+      </button>
+    </div>
+  </div>
+</div>
+
+<script>
+  // 標準施工工序字典排序
+  const categoryOrder = ["水電工程", "燈具工程", "木作工程", "油漆工程", "泥作工程", "雜項工程"];
+
+  // 預設資料庫
+  const itemDatabase = {
+    "水電工程": [
+      { name: "新增插座", unit: "組", cost: 2500, price: 4000, note: "TV牆下、主臥衣櫃" },
+      { name: "新增專用迴路110V", unit: "組", cost: 4500, price: 7000, note: "餐櫃" },
+      { name: "新增專用迴路220V", unit: "組", cost: 4500, price: 7000, note: "餐櫃平台、吹風機" },
+      { name: "新增燈具迴路", unit: "組", cost: 1800, price: 3000, note: "餐廳線燈" },
+      { name: "消防灑水頭修改", unit: "組", cost: 2200, price: 3500, note: "配合天花板高度" }
+    ],
+    "燈具工程": [
+      { name: "15cm Led崁燈及挖孔配線", unit: "顆", cost: 650, price: 1200, note: "客廳-自然光/主臥-黃光" },
+      { name: "客廳、主臥崁入式燈條含變壓器", unit: "米", cost: 700, price: 1200, note: "" }
+    ],
+    "木作工程": [
+      { name: "平釘天花板(局部高低差)", unit: "坪", cost: 4200, price: 6200, note: "日本麗仕矽酸鈣板" },
+      { name: "窗簾盒+冷氣盒", unit: "尺", cost: 550, price: 900, note: "雙層" },
+      { name: "弧型造型", unit: "尺", cost: 750, price: 1200, note: "主臥、孝親房" },
+      { name: "主臥隱藏門", unit: "樘", cost: 14000, price: 22000, note: "" }
+    ],
+    "油漆工程": [
+      { name: "平釘天花板油漆", unit: "坪", cost: 1500, price: 2400, note: "得利乳膠漆" },
+      { name: "窗簾盒+冷氣盒油漆", unit: "尺", cost: 300, price: 500, note: "" },
+      { name: "油漆修補過色不批土", unit: "式", cost: 18000, price: 30000, note: "含二次修補" }
+    ],
+    "雜項工程": [
+      { name: "室內保護工程", unit: "坪", cost: 600, price: 1000, note: "地板/牆面" },
+      { name: "粗細清潔工程", unit: "式", cost: 12000, price: 20000, note: "細清" }
+    ]
+  };
+
+  let currentItems = [];
+
+  window.onload = function() {
+    document.getElementById('quoteDate').valueAsDate = new Date();
+    const catSelect = document.getElementById('categorySelect');
+    categoryOrder.forEach(cat => {
+      if(itemDatabase[cat]) {
+        let opt = document.createElement('option');
+        opt.value = cat;
+        opt.textContent = cat;
+        catSelect.appendChild(opt);
+      }
+    });
+  };
+
+  function toggleCostDisplay() {
+    document.getElementById('quoteContainer').classList.toggle('show-cost');
+  }
+
+  function updateSubCategoryOptions() {
+    const cat = document.getElementById('categorySelect').value;
+    const subSelect = document.getElementById('subCategorySelect');
+    subSelect.innerHTML = '<option value="">-- 請選擇細項 --</option>';
+
+    if (cat && itemDatabase[cat]) {
+      itemDatabase[cat].forEach((item, index) => {
+        let opt = document.createElement('option');
+        opt.value = index;
+        opt.textContent = item.name;
+        subSelect.appendChild(opt);
+      });
+    }
+  }
+
+  function autoFillItemDefaults() {
+    const cat = document.getElementById('categorySelect').value;
+    const subIdx = document.getElementById('subCategorySelect').value;
+    if (cat && subIdx !== "") {
+      const itemData = itemDatabase[cat][subIdx];
+      document.getElementById('itemUnit').value = itemData.unit;
+      document.getElementById('costPrice').value = itemData.cost;
+      document.getElementById('quotePrice').value = itemData.price;
+      document.getElementById('itemNote').value = itemData.note;
+    }
+  }
+
+  // 相同項目加總與標準排序
+  function addItemToQuote() {
+    const cat = document.getElementById('categorySelect').value;
+    const subSelect = document.getElementById('subCategorySelect');
+    if (!cat || subSelect.value === "") { alert("請選擇工程類別與細項！"); return; }
+
+    const itemName = subSelect.options[subSelect.selectedIndex].text;
+    const qty = parseFloat(document.getElementById('itemQty').value) || 0;
+    const unit = document.getElementById('itemUnit').value || '式';
+    const cost = parseFloat(document.getElementById('costPrice').value) || 0;
+    const price = parseFloat(document.getElementById('quotePrice').value) || 0;
+    const note = document.getElementById('itemNote').value;
+
+    let existingItem = currentItems.find(i => i.category === cat && i.name === itemName && i.note === note);
+
+    if (existingItem) {
+      existingItem.qty += qty;
+      existingItem.costSubtotal = existingItem.qty * existingItem.cost;
+      existingItem.priceSubtotal = existingItem.qty * existingItem.price;
+      existingItem.profit = existingItem.priceSubtotal - existingItem.costSubtotal;
+    } else {
+      currentItems.push({
+        id: Date.now(),
+        category: cat,
+        name: itemName,
+        qty: qty,
+        unit: unit,
+        cost: cost,
+        costSubtotal: qty * cost,
+        price: price,
+        priceSubtotal: qty * price,
+        profit: (qty * price) - (qty * cost),
+        note: note
+      });
+    }
+
+    currentItems.sort((a, b) => categoryOrder.indexOf(a.category) - categoryOrder.indexOf(b.category));
+    renderQuoteTable();
+  }
+
+  function removeItem(id) {
+    currentItems = currentItems.filter(item => item.id !== id);
+    renderQuoteTable();
+  }
+
+  function renderQuoteTable() {
+    const tbody = document.getElementById('quoteTbody');
+    tbody.innerHTML = '';
+
+    currentItems.forEach(item => {
+      let tr = document.createElement('tr');
+      tr.innerHTML = `
+        <td><b>${item.category}</b></td>
+        <td>${item.name} <br><small style="color:#666">${item.note}</small></td>
+        <td><b>${item.qty}</b></td>
+        <td>${item.unit}</td>
+        <td class="cost-col">$${item.cost.toLocaleString()}</td>
+        <td class="cost-col">$${item.costSubtotal.toLocaleString()}</td>
+        <td>$${item.price.toLocaleString()}</td>
+        <td><b>$${item.priceSubtotal.toLocaleString()}</b></td>
+        <td class="cost-col" style="color:#27ae60; font-weight:bold;">$${item.profit.toLocaleString()}</td>
+        <td><button class="btn-danger" onclick="removeItem(${item.id})">刪除</button></td>
+      `;
+      tbody.appendChild(tr);
+    });
+
+    renderSummary();
+  }
+
+  function renderSummary() {
+    let totalPriceSum = currentItems.reduce((acc, i) => acc + i.priceSubtotal, 0);
+    const hasMgmt = document.getElementById('chkManagementFee').checked;
+    const hasTax = document.getElementById('chkTax').checked;
+
+    const mgmtFee = hasMgmt ? Math.round(totalPriceSum * 0.1) : 0;
+    const taxFee = hasTax ? Math.round((totalPriceSum + mgmtFee) * 0.05) : 0;
+    const finalTotal = totalPriceSum + mgmtFee + taxFee;
+
+    document.getElementById('sumSubtotal').textContent = `$${totalPriceSum.toLocaleString()}`;
+    document.getElementById('sumMgmt').textContent = `$${mgmtFee.toLocaleString()}`;
+    document.getElementById('sumTax').textContent = `$${taxFee.toLocaleString()}`;
+    document.getElementById('sumTotal').textContent = `$${finalTotal.toLocaleString()}`;
+  }
+
+  // 套印《亞昕喜來登》精美格式的核心匯出函式
+  async function exportQuoteToExcel() {
+    if (currentItems.length === 0) { alert("請先加入報價項目！"); return; }
+
+    const clientName = document.getElementById('clientName').value || '劉隆穎';
+    const projectLocation = document.getElementById('projectLocation').value || '亞昕喜來登';
+    const contractNo = document.getElementById('contractNo').value || '007006';
+    const quoteDate = document.getElementById('quoteDate').value || '';
+
+    const workbook = new ExcelJS.Workbook();
+    const sheet = workbook.addWorksheet('估價單');
+
+    // 設定標準欄寬
+    sheet.columns = [
+      { width: 8 },  // A: 項次
+      { width: 35 }, // B: 工程項目
+      { width: 10 }, // C: 數量
+      { width: 8 },  // D: 單位
+      { width: 14 }, // E: 單價
+      { width: 16 }, // F: 總價
+      { width: 30 }  // G: 備註
+    ];
+
+    // 建立表頭結構 (還原亞昕喜來登格式)
+    sheet.mergeCells('A2:G2');
+    sheet.getCell('A2').value = '室内裝修有限公司';
+    sheet.getCell('A2').alignment = { horizontal: 'center' };
+    sheet.getCell('A2').font = { size: 16, bold: true };
+
+    sheet.mergeCells('A4:G4');
+    sheet.getCell('A4').value = '估   價   單';
+    sheet.getCell('A4').alignment = { horizontal: 'center' };
+    sheet.getCell('A4').font = { size: 18, bold: true };
+
+    sheet.mergeCells('A5:G5');
+    sheet.getCell('A5').value = 'ESTIMATE';
+    sheet.getCell('A5').alignment = { horizontal: 'center' };
+    sheet.getCell('A5').font = { size: 12, italic: true };
+
+    sheet.getCell('A6').value = `客戶名稱 : ${clientName}`;
+    sheet.getCell('F6').value = '合約書編號';
+    sheet.getCell('G6').value = contractNo;
+
+    sheet.getCell('A7').value = `工程地點 : ${projectLocation}`;
+    sheet.getCell('F7').value = '報價日期';
+    sheet.getCell('G7').value = quoteDate;
+
+    // 表格標題列
+    const headerRow = sheet.getRow(8);
+    headerRow.values = ['項次', '工   程   項   目', '數量', '單位', '單  價', '總  價', '備  註'];
+    headerRow.font = { bold: true };
+    headerRow.alignment = { horizontal: 'center' };
+
+    let currentRowIdx = 11;
+    const numToChinese = ['一', '二', '三', '四', '五', '六', '七', '八', '九', '十'];
+
+    // 按工序分群寫入明細
+    const grouped = {};
+    currentItems.forEach(item => {
+      if (!grouped[item.category]) grouped[item.category] = [];
+      grouped[item.category].push(item);
+    });
+
+    let catIndex = 0;
+    for (let cat of categoryOrder) {
+      if (!grouped[cat]) continue;
+
+      let items = grouped[cat];
+      let catSubtotal = items.reduce((acc, i) => acc + i.priceSubtotal, 0);
+
+      // 大類總攬列
+      let catRow = sheet.getRow(currentRowIdx);
+      catRow.values = [numToChinese[catIndex] || (catIndex + 1), cat, 1, '式', catSubtotal, catSubtotal, ''];
+      catRow.font = { bold: true };
+      currentRowIdx++;
+
+      // 細項明細列
+      items.forEach(item => {
+        let itemRow = sheet.getRow(currentRowIdx);
+        itemRow.values = ['', `  ${item.name}`, item.qty, item.unit, item.price, item.priceSubtotal, item.note];
+        currentRowIdx++;
+      });
+
+      catIndex++;
+    }
+
+    // 計算總和與費用
+    const subtotal = currentItems.reduce((acc, i) => acc + i.priceSubtotal, 0);
+    const hasMgmt = document.getElementById('chkManagementFee').checked;
+    const hasTax = document.getElementById('chkTax').checked;
+    const mgmtFee = hasMgmt ? Math.round(subtotal * 0.1) : 0;
+    const totalBeforeTax = subtotal + mgmtFee;
+    const taxFee = hasTax ? Math.round(totalBeforeTax * 0.05) : 0;
+    const grandTotal = totalBeforeTax + taxFee;
+
+    // 小計與稅金區塊
+    sheet.getRow(currentRowIdx).values = ['', '小計', '', '', '', subtotal, ''];
+    currentRowIdx++;
+
+    if (hasMgmt) {
+      sheet.getRow(currentRowIdx).values = ['捌', '工程管理費 (10%)', 1, '式', mgmtFee, mgmtFee, ''];
+      currentRowIdx++;
+    }
+
+    sheet.getRow(currentRowIdx).values = ['', '合計', '', '', '', totalBeforeTax, ''];
+    currentRowIdx++;
+
+    if (hasTax) {
+      sheet.getRow(currentRowIdx).values = ['玖', '營業稅 (5%)', 1, '式', taxFee, taxFee, ''];
+      currentRowIdx++;
+    }
+
+    let totalRow = sheet.getRow(currentRowIdx);
+    totalRow.values = ['', '總計', '', '', '', grandTotal, ''];
+    totalRow.font = { bold: true, size: 14 };
+    currentRowIdx += 2;
+
+    // 四期付款拆算
+    sheet.getRow(currentRowIdx).values = ['', '訂金 30%', '', '', '', Math.round(grandTotal * 0.3), ''];
+    currentRowIdx++;
+    sheet.getRow(currentRowIdx).values = ['', '木工完工 30%', '', '', '', Math.round(grandTotal * 0.3), ''];
+    currentRowIdx++;
+    sheet.getRow(currentRowIdx).values = ['', '油漆完工 30%', '', '', '', Math.round(grandTotal * 0.3), ''];
+    currentRowIdx++;
+    sheet.getRow(currentRowIdx).values = ['', '尾款 10%', '', '', '', Math.round(grandTotal * 0.1), ''];
+    currentRowIdx += 3;
+
+    // 案場材料與備註說明
+    sheet.getRow(currentRowIdx).values = ['', '案場材料說明'];
+    sheet.getRow(currentRowIdx).font = { bold: true };
+    currentRowIdx++;
+    sheet.getRow(currentRowIdx).values = ['', '水電材料-太平洋2.0、5.5線徑、國際牌系列插座&面板'];
+    currentRowIdx++;
+    sheet.getRow(currentRowIdx).values = ['', '燈具材料-台灣舞光LED15cm、9.5cm'];
+    currentRowIdx++;
+    sheet.getRow(currentRowIdx).values = ['', '木作材料-日本麗仕矽酸鈣板、台灣F1級防水防蟲集層角材'];
+    currentRowIdx++;
+    sheet.getRow(currentRowIdx).values = ['', '油漆材料-得利全效合一乳膠漆、水泥漆'];
+    currentRowIdx += 2;
+
+    sheet.getRow(currentRowIdx).values = ['1. 未列估價單項目不含於本工程'];
+    currentRowIdx++;
+    sheet.getRow(currentRowIdx).values = ['2. 消防洒水\\偵煙感知器另依現場需求移設估價'];
+    currentRowIdx++;
+    sheet.getRow(currentRowIdx).values = ['3. 空調配管若須配合包覆另行估價'];
+    currentRowIdx++;
+    sheet.getRow(currentRowIdx).values = ['4. 不含大樓施工保證金\\清潔費\\裝修審查等規費'];
+    currentRowIdx++;
+    sheet.getRow(currentRowIdx).values = ['5. 工程於完工驗收之後,提供保固一年'];
+
+    // 導出檔案
+    const buffer = await workbook.xlsx.writeBuffer();
+    saveAs(new Blob([buffer]), `裝修報價-${clientName}-${quoteDate}.xlsx`);
+  }
+</script>
+
+</body>
+</html>
