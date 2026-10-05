@@ -209,7 +209,7 @@
 
     <div class="grid-2" style="margin-top: 20px;">
       <div>
-        <h4>⚙️️ 費用與付款方式設定</h4>
+        <h4>⚙ 費用與付款方式設定</h4>
         <div><input type="checkbox" id="chkManagementFee" checked onchange="renderSummary()" style="width:auto;"> <label style="display:inline;">計入 10% 工程監工管理費</label></div>
         <div><input type="checkbox" id="chkTax" checked onchange="renderSummary()" style="width:auto;"> <label style="display:inline;">計入 5% 營業稅</label></div>
         
@@ -249,7 +249,7 @@
         📄 匯出 PDF 報價單
       </button>
       <button class="btn-success" onclick="exportQuoteToExcel()" style="font-size: 15px; padding: 12px 24px;">
-        📊 套印原檔 Excel + 自動新增明細頁籤 (.xlsx)
+        📊 完美連動套印 Excel 報價單 (.xlsx)
       </button>
     </div>
   </div>
@@ -325,7 +325,7 @@
 </div>
 
 <script>
-  const categoryOrder = ["保護工程", "拆除工程", "泥作工程", "水電工程", "燈具工程", "木作工程", "油漆工程", "玻璃工程", "木地板工程", "追加工程", "追減工程", "雜項工程"];
+  const categoryOrder = ["水電工程", "燈具工程", "木作工程", "油漆工程", "雜項工程", "保護工程", "拆除工程", "泥作工程", "玻璃工程", "木地板工程"];
 
   const scheduleRules = {
     "保護工程": { days: 2, note: "電梯公設、走道及室內地磚防護" },
@@ -341,43 +341,26 @@
   };
 
   const fullItemMaster = {
-    "保護工程": [
-      { name: "室內地坪保護", unit: "坪", cost: 500, price: 800, note: "防潮布+軟墊防護" },
-      { name: "公共空間保護-電梯/梯廳", unit: "式", cost: 2500, price: 4500, note: "夾板+防潮布雙層保護" }
-    ],
-    "拆除工程": [
-      { name: "全室舊裝潢/家具拆除", unit: "式", cost: 20000, price: 35000, note: "含廢棄物清運" },
-      { name: "隔間牆/泥作打磚拆除", unit: "坪", cost: 2500, price: 4500, note: "含粗拆與清運" }
-    ],
-    "泥作工程": [
-      { name: "牆面/地坪水泥砂漿打底", unit: "坪", cost: 2500, price: 4500, note: "泥作粉刷打平" },
-      { name: "浴室高分子彈性防水工程", unit: "間", cost: 12000, price: 22000, note: "塗刷三道/試水48小時" }
-    ],
     "水電工程": [
-      { name: "新增插座 / 開關", unit: "組", cost: 2500, price: 4000, note: "含配管拉線" },
-      { name: "新增專用迴路 110V/220V", unit: "組", cost: 4500, price: 7000, note: "廚房/餐櫃/冷氣專迴" },
-      { name: "全室水電管線重拉(水+電)", unit: "式", cost: 220000, price: 380000, note: "太平洋電線/南亞PVC管" }
+      { name: "新增插座", unit: "組", cost: 2500, price: 4000, note: "TV牆下、主臥改櫃、客廳" },
+      { name: "新增專用迴路110V", unit: "組", cost: 4500, price: 7000, note: "餐櫃" },
+      { name: "新增專用迴路220V", unit: "組", cost: 4500, price: 7000, note: "餐櫃平台、主臥" }
     ],
     "燈具工程": [
-      { name: "15cm / 9.5cm LED崁燈及挖孔", unit: "顆", cost: 650, price: 1200, note: "自然光/黃光/白光" },
-      { name: "崁入式鋁殼線燈含變壓器", unit: "米", cost: 700, price: 1200, note: "氣氛間接照明" }
+      { name: "客廳、主臥崁入式燈條含變壓器", unit: "米", cost: 700, price: 1200, note: "軟燈條" },
+      { name: "15cm Led崁燈及挖孔配線", unit: "顆", cost: 650, price: 1200, note: "客廳 4000K 自然光" }
     ],
     "木作工程": [
-      { name: "平釘天花板", unit: "坪", cost: 4200, price: 6200, note: "日本麗仕矽酸鈣板+永新角材" },
-      { name: "窗簾盒 / 冷氣盒", unit: "尺", cost: 550, price: 900, note: "雙層防潮木作" },
-      { name: "木作隱藏門/造型門", unit: "樘", cost: 14000, price: 22000, note: "含五金與隱藏門鎖" }
+      { name: "平釘天花板(局部高低差)", unit: "坪", cost: 4200, price: 6200, note: "日本麗仕矽酸鈣板" },
+      { name: "窗簾盒+冷氣盒", unit: "尺", cost: 550, price: 900, note: "雙層防潮木作" }
     ],
     "油漆工程": [
-      { name: "全室天花板/牆面油漆過色", unit: "坪", cost: 1500, price: 2400, note: "得利乳膠漆刷塗" },
-      { name: "油漆批土刷漆(細做)", unit: "坪", cost: 2200, price: 3600, note: "批土兩道打磨再刷漆" }
+      { name: "平釘天花板過色", unit: "坪", cost: 1500, price: 2400, note: "得利乳膠漆刷塗" },
+      { name: "油漆修補過色不批土", unit: "式", cost: 2200, price: 3600, note: "含二次修補" }
     ],
-    "玻璃工程": [ { name: "鋁框玻璃推拉門", unit: "式", cost: 25000, price: 42000, note: "長虹/強化玻璃" } ],
-    "木地板工程": [ { name: "超耐磨超防潮木地板", unit: "坪", cost: 3200, price: 5500, note: "含起步條與靜音墊" } ],
-    "追加工程": [ { name: "現場追加工程項目", unit: "式", cost: 0, price: 0, note: "追加說明" } ],
-    "追減工程": [ { name: "取消項目追減款", unit: "式", cost: 0, price: 0, note: "追減說明" } ],
     "雜項工程": [
-      { name: "粗清廢棄物清運", unit: "車", cost: 5500, price: 9000, note: "大垃圾車運走" },
-      { name: "全室專業細緻清潔", unit: "式", cost: 18000, price: 30000, note: "入住級細清" }
+      { name: "全室保護", unit: "坪", cost: 500, price: 800, note: "防潮布+軟墊" },
+      { name: "細清工程", unit: "式", cost: 18000, price: 30000, note: "入住級細清" }
     ]
   };
 
@@ -407,11 +390,11 @@
     document.getElementById('startDate').valueAsDate = new Date();
 
     currentItems = [
-      { id: 1, category: "保護工程", name: "公共空間保護-電梯/梯廳", qty: 1, unit: "式", cost: 2500, costSubtotal: 2500, price: 4500, priceSubtotal: 4500, profit: 2000, note: "夾板+防潮布雙層保護" },
-      { id: 2, category: "拆除工程", name: "全室舊裝潢/家具拆除", qty: 1, unit: "式", cost: 20000, costSubtotal: 20000, price: 35000, priceSubtotal: 35000, profit: 15000, note: "含廢棄物清運" },
-      { id: 3, category: "水電工程", name: "新增插座 / 開關", qty: 6, unit: "組", cost: 2500, costSubtotal: 15000, price: 4000, priceSubtotal: 24000, profit: 9000, note: "含配管拉線" },
-      { id: 4, category: "木作工程", name: "平釘天花板", qty: 25, unit: "坪", cost: 4200, costSubtotal: 105000, price: 6200, priceSubtotal: 155000, profit: 50000, note: "日本麗仕矽酸鈣板+永新角材" },
-      { id: 5, category: "油漆工程", name: "全室天花板/牆面油漆過色", qty: 25, unit: "坪", cost: 1500, costSubtotal: 37500, price: 2400, priceSubtotal: 60000, profit: 22500, note: "得利乳膠漆刷塗" }
+      { id: 1, category: "水電工程", name: "新增插座", qty: 3, unit: "組", cost: 2500, costSubtotal: 7500, price: 4000, priceSubtotal: 12000, profit: 4500, note: "TV牆下、主臥改櫃、客廳" },
+      { id: 2, category: "水電工程", name: "新增專用迴路110V", qty: 1, unit: "組", cost: 4500, costSubtotal: 4500, price: 7000, priceSubtotal: 7000, profit: 2500, note: "餐櫃" },
+      { id: 3, category: "燈具工程", name: "15cm Led崁燈及挖孔配線", qty: 33, unit: "顆", cost: 650, costSubtotal: 21450, price: 1200, priceSubtotal: 39600, profit: 18150, note: "客廳 4000K 自然光" },
+      { id: 4, category: "木作工程", name: "平釘天花板(局部高低差)", qty: 25, unit: "坪", cost: 4200, costSubtotal: 105000, price: 6200, priceSubtotal: 155000, profit: 50000, note: "日本麗仕矽酸鈣板" },
+      { id: 5, category: "油漆工程", name: "平釘天花板過色", qty: 25, unit: "坪", cost: 1500, costSubtotal: 37500, price: 2400, priceSubtotal: 60000, profit: 22500, note: "得利乳膠漆刷塗" }
     ];
 
     renderQuoteTable();
@@ -508,7 +491,6 @@
     let idx = 1;
 
     activeCategories.forEach(cat => {
-      if (cat === '追加工程' || cat === '追減工程') return;
       let rule = scheduleRules[cat] || { days: 2, note: "依現場施工為準" };
       let sDate = new Date(currDate);
       let eDate = addWorkDays(sDate, rule.days - 1);
@@ -793,7 +775,7 @@
     window.print();
   }
 
-  // ⭐ 新邏輯：保留第一頁總表原樣套印 + 自動新建「工程明細表」頁籤
+  // ⭐ 精準匹配您 template.xlsx 範本連動公式的專屬套印函式
   async function exportQuoteToExcel() {
     if (currentItems.length === 0) { alert("請先加入報價項目！"); return; }
 
@@ -801,7 +783,6 @@
     const projectLocation = document.getElementById('projectLocation').value || '';
     const contractNo = document.getElementById('contractNo').value || '';
     const quoteDate = document.getElementById('quoteDate').value || '';
-    const designerName = document.getElementById('designerName').value || '陳昭宇 設計師';
 
     try {
       const response = await fetch('./template.xlsx');
@@ -815,200 +796,64 @@
       await wb.xlsx.load(arrayBuffer);
       
       let wsQuote = wb.getWorksheet('估價單0906') || wb.worksheets[0];
-      let wsSchedule = wb.getWorksheet('裝修工程進度表');
 
-      // -------------------------------------------------------------
-      // 【分頁一：估價單總表】100% 尊重範本樣式，僅填入數據
-      // -------------------------------------------------------------
+      // 1. 填寫抬頭欄位
       wsQuote.getCell('A6').value = `客戶名稱 :${clientName}`;
       wsQuote.getCell('G6').value = contractNo;
       wsQuote.getCell('A7').value = `工程地點 :${projectLocation}`;
-      wsQuote.getCell('G7').value = quoteDate;
+      if (quoteDate) wsQuote.getCell('G7').value = quoteDate;
 
-      // 清空第 8 ~ 26 列的內容
-      for (let r = 8; r <= 26; r++) {
-        for (let c = 1; c <= 7; c++) {
-          wsQuote.getRow(r).getCell(c).value = null;
+      // 2. 範本中各工種明細起算列的對照表 (對應您 template.xlsx 舊範例位置)
+      const catStartRows = {
+        "水電工程": 49,
+        "燈具工程": 60,
+        "木作工程": 65,
+        "油漆工程": 75,
+        "雜項工程": 86
+      };
+
+      // 先清空原本明細欄位的數據（B, C, D, E, G 欄）
+      for (let r = 48; r <= 95; r++) {
+        let row = wsQuote.getRow(r);
+        // 如果不是小計列與標題列，清空數值
+        let cellB = row.getCell(2).value;
+        if (cellB !== '小計' && cellB !== '一' && cellB !== '二' && cellB !== '三' && cellB !== '四' && cellB !== '五') {
+          row.getCell(2).value = null; // 項目
+          row.getCell(3).value = null; // 數量
+          row.getCell(4).value = null; // 單位
+          row.getCell(5).value = null; // 單價
+          row.getCell(7).value = null; // 備註
         }
       }
 
-      // 算大類總額
-      const categoryTotals = {};
-      categoryOrder.forEach(cat => { categoryTotals[cat] = 0; });
-      currentItems.forEach(item => {
-        if (!categoryTotals[item.category]) categoryTotals[item.category] = 0;
-        categoryTotals[item.category] += item.priceSubtotal;
-      });
-
-      // 填入總表大標題與金額
-      let startRow = 8;
-      let displayIndex = 1;
-
-      categoryOrder.forEach(cat => {
-        let catTotal = categoryTotals[cat];
-        if (catTotal > 0) {
-          let row = wsQuote.getRow(startRow);
-          row.getCell(1).value = displayIndex;
-          row.getCell(2).value = cat;
-          row.getCell(3).value = 1;
-          row.getCell(4).value = '式';
-          row.getCell(5).value = catTotal;
-          row.getCell(6).value = catTotal;
-          startRow++;
-          displayIndex++;
-        }
-      });
-
-      // 總額與條款
-      let totalPriceSum = currentItems.reduce((acc, i) => acc + i.priceSubtotal, 0);
-      const hasMgmt = document.getElementById('chkManagementFee').checked;
-      const hasTax = document.getElementById('chkTax').checked;
-      const mgmtFee = hasMgmt ? Math.round(totalPriceSum * 0.1) : 0;
-      const taxFee = hasTax ? Math.round((totalPriceSum + mgmtFee) * 0.05) : 0;
-      const finalTotal = totalPriceSum + mgmtFee + taxFee;
-
-      wsQuote.getCell('F27').value = totalPriceSum;
-      wsQuote.getCell('F28').value = mgmtFee;
-      wsQuote.getCell('F29').value = taxFee;
-      wsQuote.getCell('F30').value = finalTotal;
-      wsQuote.getCell('C40').value = finalTotal;
-
-      let notesText = document.getElementById('customNotesText').value;
-      if (notesText) {
-        let lines = notesText.split('\n');
-        lines.forEach((line, i) => {
-          if (31 + i <= 34) {
-            wsQuote.getCell(`A${31 + i}`).value = line;
-          }
-        });
-      }
-
-      // -------------------------------------------------------------
-      // 【分頁二：自動新建全新「工程明細表」頁籤】獨立乾淨不干擾總表！
-      // -------------------------------------------------------------
-      // 移除若之前建過的同名頁籤
-      let oldDetailWs = wb.getWorksheet('工程明細表');
-      if (oldDetailWs) wb.removeWorksheet(oldDetailWs.id);
-
-      // 建立全新「工程明細表」分頁（插在總表後面）
-      let wsDetail = wb.addWorksheet('工程明細表');
-
-      // 設定明細表欄寬
-      wsDetail.columns = [
-        { header: '項次', key: 'idx', width: 8 },
-        { header: '工程項目 / 施工規格細項', key: 'name', width: 35 },
-        { header: '數量', key: 'qty', width: 10 },
-        { header: '單位', key: 'unit', width: 8 },
-        { header: '單價', key: 'price', width: 14 },
-        { header: '複價小計', key: 'subtotal', width: 16 },
-        { header: '備註', key: 'note', width: 25 }
-      ];
-
-      // 抬頭表頭
-      wsDetail.mergeCells('A1:G1');
-      let titleCell = wsDetail.getCell('A1');
-      titleCell.value = `${clientName} - 室內裝修工程明細表`;
-      titleCell.font = { name: 'Microsoft JhengHei', size: 16, bold: true };
-      titleCell.alignment = { horizontal: 'center' };
-
-      // 表頭欄位樣式
-      let headerRow = wsDetail.getRow(3);
-      headerRow.values = ['項次', '工程項目 / 施工規格細項', '數量', '單位', '單價', '複價小計', '備註'];
-      headerRow.font = { name: 'Microsoft JhengHei', size: 10, bold: true };
-      headerRow.eachCell(cell => {
-        cell.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: 'FFE5E7EB' } };
-        cell.border = { top: {style:'thin'}, bottom: {style:'thin'}, left: {style:'thin'}, right: {style:'thin'} };
-        cell.alignment = { horizontal: 'center' };
-      });
-
-      let dRow = 4;
+      // 將網頁填寫的項目依工種分類
       const grouped = {};
       currentItems.forEach(item => {
         if (!grouped[item.category]) grouped[item.category] = [];
         grouped[item.category].push(item);
       });
 
-      const chineseNums = ['一', '二', '三', '四', '五', '六', '七', '八', '九', '十', '十一', '十二'];
-      let cIdx = 0;
-
-      for (let cat of categoryOrder) {
-        if (!grouped[cat]) continue;
-        let items = grouped[cat];
-        let catSum = items.reduce((sum, item) => sum + item.priceSubtotal, 0);
-
-        // 大類分類列
-        let catRow = wsDetail.getRow(dRow++);
-        catRow.getCell(1).value = chineseNums[cIdx] || (cIdx+1);
-        catRow.getCell(2).value = cat;
-        catRow.font = { name: 'Microsoft JhengHei', size: 11, bold: true };
-        catRow.eachCell(cell => {
-          cell.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: 'FFF3F4F6' } };
-        });
-
-        // 該類別項下的各個明細
-        items.forEach((item, itemIdx) => {
-          let r = wsDetail.getRow(dRow++);
-          r.getCell(1).value = `${cIdx+1}-${itemIdx+1}`;
-          r.getCell(2).value = item.name;
-          r.getCell(3).value = item.qty;
-          r.getCell(4).value = item.unit;
-          r.getCell(5).value = item.price;
-          r.getCell(6).value = item.priceSubtotal;
-          r.getCell(7).value = item.note || '';
-
-          r.getCell(1).alignment = { horizontal: 'center' };
-          r.getCell(3).alignment = { horizontal: 'right' };
-          r.getCell(4).alignment = { horizontal: 'center' };
-          r.getCell(5).numFmt = '#,##0';
-          r.getCell(6).numFmt = '#,##0';
-          
-          r.font = { name: 'Microsoft JhengHei', size: 10 };
-          r.eachCell(cell => {
-            cell.border = { top: {style:'thin', color:{argb:'FFCCCCCC'}}, bottom: {style:'thin', color:{argb:'FFCCCCCC'}} };
+      // 依序填入明細
+      Object.keys(grouped).forEach(cat => {
+        let startR = catStartRows[cat];
+        if (startR) {
+          grouped[cat].forEach((item, idx) => {
+            let row = wsQuote.getRow(startR + idx);
+            row.getCell(2).value = item.name;
+            row.getCell(3).value = item.qty;
+            row.getCell(4).value = item.unit;
+            row.getCell(5).value = item.price;
+            row.getCell(7).value = item.note || '';
           });
-        });
+        }
+      });
 
-        // 小計列
-        let subRow = wsDetail.getRow(dRow++);
-        subRow.getCell(2).value = `${cat} 小計`;
-        subRow.getCell(6).value = catSum;
-        subRow.font = { name: 'Microsoft JhengHei', size: 10, bold: true };
-        subRow.getCell(2).alignment = { horizontal: 'right' };
-        subRow.getCell(6).numFmt = '#,##0';
-
-        dRow++; // 隔開一行
-        cIdx++;
-      }
-
-      // -------------------------------------------------------------
-      // 【分頁三：進度表】
-      // -------------------------------------------------------------
-      if (wsSchedule) {
-        wsSchedule.getCell('B4').value = `${clientName}【${projectLocation}】`;
-        wsSchedule.getCell('F4').value = designerName;
-
-        const scheduleList = calculateSchedulePreview();
-        let schedRow = 11;
-        scheduleList.forEach(s => {
-          if (schedRow <= 22) {
-            wsSchedule.getCell(`A${schedRow}`).value = s.idx;
-            wsSchedule.getCell(`B${schedRow}`).value = `${s.idx}. ${s.catName}`;
-            wsSchedule.getCell(`C${schedRow}`).value = '未開工';
-            wsSchedule.getCell(`D${schedRow}`).value = s.days;
-            wsSchedule.getCell(`E${schedRow}`).value = s.startDateStr.split(' ')[0];
-            wsSchedule.getCell(`F${schedRow}`).value = s.endDateStr.split(' ')[0];
-            wsSchedule.getCell(`G${schedRow}`).value = s.note;
-            schedRow++;
-          }
-        });
-      }
-
-      // 匯出 Excel
+      // 下載匯出檔
       const buffer = await wb.xlsx.writeBuffer();
-      const fileName = clientName ? `裝修報價與進度表-${clientName}-${quoteDate}.xlsx` : `裝修報價-${quoteDate}.xlsx`;
+      const fileName = clientName ? `裝修報價單-${clientName}-${quoteDate}.xlsx` : `裝修報價單-${quoteDate}.xlsx`;
       saveAs(new Blob([buffer]), fileName);
     } catch(err) {
-      alert("匯出發生錯誤：" + err.message);
+      alert("套印匯出發生錯誤：" + err.message);
     }
   }
 </script>
