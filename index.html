@@ -23,6 +23,7 @@
     .btn-warning { background: #f39c12; color: #fff; }
     .btn-info { background: #2980b9; color: #fff; }
     .btn-danger { background: #e74c3c; color: #fff; padding: 6px 12px; }
+    .btn-test { background: #8e44ad; color: #fff; font-size: 14px; border-radius: 4px; padding: 10px 16px; margin-right: 6px; }
     .mode-btn { background: #e2e8f0; color: #475569; font-size: 15px; padding: 10px 20px; border-radius: 6px; border: 2px solid transparent; transition: all 0.2s; }
     .mode-btn.active { background: #2c3e50; color: #fff; border-color: #1e293b; }
     table { width: 100%; border-collapse: collapse; margin-top: 15px; }
@@ -59,7 +60,8 @@
   <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px;">
     <h1>🏢 室內裝修報價與工程進度管理系統</h1>
     <div>
-      <button class="btn-warning" onclick="toggleAdminPanel()" style="margin-right:6px;">⚙️️ 新增常用選單</button>
+      <button class="btn-test" onclick="loadTestData()">🚀 一鍵載入測試資料</button>
+      <button class="btn-warning" onclick="toggleAdminPanel()" style="margin-right:6px;">⚙ 新增常用選單</button>
       <button class="btn-primary" onclick="toggleCostDisplay()">🔒 切換成本/毛利</button>
     </div>
   </div>
@@ -362,6 +364,26 @@
     refreshDraftsDropdown();
     initCategoryDropdowns();
   };
+
+  function loadTestData() {
+    document.getElementById('clientName').value = '林先生 (測試房範例)';
+    document.getElementById('projectLocation').value = '亞昕向陽 A3棟 12樓';
+    document.getElementById('contractNo').value = '20261005-TEST';
+    document.getElementById('designerName').value = '陳昭宇 設計師';
+
+    currentItems = [
+      { id: 101, category: "保護工程", name: "室內地坪保護", qty: 25, unit: "坪", cost: 500, costSubtotal: 12500, price: 800, priceSubtotal: 20000, profit: 7500, note: "防潮布+軟墊雙層保護" },
+      { id: 201, category: "木作工程", name: "平釘天花板", qty: 22, unit: "坪", cost: 4200, costSubtotal: 92400, price: 6200, priceSubtotal: 136400, profit: 44000, note: "日本麗仕矽酸鈣板+永新角材" },
+      { id: 202, category: "木作工程", name: "窗簾盒 / 冷氣盒", qty: 35, unit: "尺", cost: 550, costSubtotal: 19250, price: 900, priceSubtotal: 31500, profit: 12250, note: "客廳與主臥雙層窗簾盒" },
+      { id: 301, category: "水電工程", name: "新增插座 / 開關", qty: 12, unit: "組", cost: 2500, costSubtotal: 30000, price: 4000, priceSubtotal: 48000, profit: 18000, note: "含電視牆配線" },
+      { id: 302, category: "水電工程", name: "新增專用迴路 110V/220V", qty: 3, unit: "組", cost: 4500, costSubtotal: 13500, price: 7000, priceSubtotal: 21000, profit: 7500, note: "廚房專迴" },
+      { id: 401, category: "燈具工程", name: "15cm / 9.5cm LED崁燈及挖孔", qty: 28, unit: "顆", cost: 650, costSubtotal: 18200, price: 1200, priceSubtotal: 33600, profit: 15400, note: "全室自然光防眩崁燈" },
+      { id: 501, category: "雜項工程", name: "全室專業細緻清潔", qty: 1, unit: "式", cost: 18000, costSubtotal: 18000, price: 30000, priceSubtotal: 30000, profit: 12000, note: "入住級細清" }
+    ];
+
+    renderQuoteTable();
+    alert("🚀 已載入測試資料！可以開始測試匯出！");
+  }
 
   function switchMode(mode) {
     document.querySelectorAll('.mode-btn').forEach(btn => btn.classList.remove('active'));
