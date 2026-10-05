@@ -19,7 +19,10 @@
     button { cursor: pointer; padding: 10px 18px; border: none; border-radius: 4px; font-size: 14px; font-weight: bold; }
     .btn-primary { background: #2c3e50; color: #fff; }
     .btn-success { background: #27ae60; color: #fff; }
+    .btn-warning { background: #f39c12; color: #fff; }
     .btn-danger { background: #e74c3c; color: #fff; padding: 6px 12px; }
+    .mode-btn { background: #e2e8f0; color: #475569; font-size: 15px; padding: 10px 20px; border-radius: 6px; border: 2px solid transparent; transition: all 0.2s; }
+    .mode-btn.active { background: #2c3e50; color: #fff; border-color: #1e293b; }
     table { width: 100%; border-collapse: collapse; margin-top: 15px; }
     th, td { border: 1px solid #dee2e6; padding: 10px; text-align: left; font-size: 14px; }
     th { background: #f8f9fa; color: #2c3e50; }
@@ -28,6 +31,7 @@
     .summary-box { background: #eef2f5; padding: 15px; border-radius: 6px; margin-top: 15px; }
     .summary-row { display: flex; justify-content: space-between; padding: 6px 0; font-size: 15px; }
     .summary-row.total { font-size: 18px; font-weight: bold; color: #c0392b; border-top: 2px solid #ccc; padding-top: 10px; }
+    .admin-panel { background: #eef7ee; border: 1px dashed #27ae60; padding: 15px; border-radius: 6px; margin-top: 15px; display: none; }
   </style>
 </head>
 <body>
@@ -35,7 +39,56 @@
 <div class="container">
   <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px;">
     <h1>🏢 室內裝修報價管理系統</h1>
-    <button class="btn-primary" onclick="toggleCostDisplay()">🔒 切換顯示廠商成本/毛利</button>
+    <div>
+      <button class="btn-warning" onclick="toggleAdminPanel()" style="margin-right:8px;">⚙️ 新增/管理選單項目</button>
+      <button class="btn-primary" onclick="toggleCostDisplay()">🔒 切換顯示廠商成本/毛利</button>
+    </div>
+  </div>
+
+  <!-- 🏠 三大案場模式選擇 -->
+  <div class="card" style="background: #f1f5f9; border: 1px solid #cbd5e1;">
+    <h3 style="margin-top:0;">🏠 請選擇案場類型 (自動切換最佳常用選單)：</h3>
+    <div style="display: flex; gap: 12px; flex-wrap: wrap;">
+      <button class="mode-btn" id="btnModeSimple" onclick="switchMode('simple')">🔨 簡易局部裝修</button>
+      <button class="mode-btn active" id="btnModeNew" onclick="switchMode('new')">🏢 新成屋標準裝修</button>
+      <button class="mode-btn" id="btnModeOld" onclick="switchMode('old')">🏚️ 老屋翻新 & 毛胚屋</button>
+    </div>
+  </div>
+
+  <!-- ⭐ 管理與新增預設項目 -->
+  <div class="admin-panel card" id="adminPanel">
+    <h3 style="margin-top:0; color:#27ae60;">⚙️ 新增常用項目至下拉選單</h3>
+    <div class="grid-4" style="grid-template-columns: 2fr 2fr 1fr 1fr;">
+      <div>
+        <label>目標類別</label>
+        <select id="newCatSelect"></select>
+      </div>
+      <div>
+        <label>新項目名稱</label>
+        <input type="text" id="newName" placeholder="例如：9.5cm LED 崁燈">
+      </div>
+      <div>
+        <label>單位</label>
+        <input type="text" id="newUnit" placeholder="米/顆/組/坪">
+      </div>
+      <div>
+        <label>廠商底價</label>
+        <input type="number" id="newCost" value="0">
+      </div>
+    </div>
+    <div class="grid-4" style="margin-top:10px; grid-template-columns: 2fr 4fr 2fr;">
+      <div>
+        <label>客戶報價</label>
+        <input type="number" id="newPrice" value="0">
+      </div>
+      <div>
+        <label>預設備註</label>
+        <input type="text" id="newNote" placeholder="例如：含基本安裝">
+      </div>
+      <div style="display:flex; align-items:flex-end;">
+        <button class="btn-success" onclick="addNewPresetItem()" style="width:100%;">➕ 儲存至常用選單</button>
+      </div>
+    </div>
   </div>
 
   <div class="card">
@@ -123,52 +176,174 @@
 </div>
 
 <script>
-  const categoryOrder = ["水電工程", "燈具工程", "木作工程", "油漆工程", "泥作工程", "雜項工程"];
+  const categoryOrder = ["保護工程", "拆除工程", "泥作工程", "水電工程", "燈具工程", "木作工程", "油漆工程", "玻璃工程", "木地板工程", "雜項工程"];
 
-  const itemDatabase = {
-    "水電工程": [
-      { name: "新增插座", unit: "組", cost: 2500, price: 4000, note: "TV牆下、主臥衣櫃" },
-      { name: "新增專用迴路110V", unit: "組", cost: 4500, price: 7000, note: "餐櫃" },
-      { name: "新增專用迴路220V", unit: "組", cost: 4500, price: 7000, note: "餐櫃平台、吹風機" },
-      { name: "新增燈具迴路", unit: "組", cost: 1800, price: 3000, note: "餐廳線燈" },
-      { name: "消防灑水頭修改", unit: "組", cost: 2200, price: 3500, note: "配合天花板" }
-    ],
-    "燈具工程": [
-      { name: "15cm Led崁燈及挖孔配線", unit: "顆", cost: 650, price: 1200, note: "客廳-自然光/主臥-黃光" },
-      { name: "客廳、主臥崁入式燈條含變壓器", unit: "米", cost: 700, price: 1200, note: "" }
-    ],
-    "木作工程": [
-      { name: "平釘天花板(局部高低差)", unit: "坪", cost: 4200, price: 6200, note: "日本麗仕矽酸鈣板" },
-      { name: "窗簾盒+冷氣盒", unit: "尺", cost: 550, price: 900, note: "雙層" },
-      { name: "弧型造型", unit: "尺", cost: 750, price: 1200, note: "主臥、孝親房" },
-      { name: "主臥隱藏門", unit: "樘", cost: 14000, price: 22000, note: "含五金" }
-    ],
-    "油漆工程": [
-      { name: "平釘天花板油漆", unit: "坪", cost: 1500, price: 2400, note: "得利乳膠漆" },
-      { name: "油漆修補過色不批土", unit: "式", cost: 18000, price: 30000, note: "含二次修補" }
-    ],
-    "雜項工程": [
-      { name: "室內保護工程", unit: "坪", cost: 600, price: 1000, note: "地板/牆面" },
-      { name: "粗細清潔工程", unit: "式", cost: 12000, price: 20000, note: "細清" }
-    ]
+  // 三大案場資料庫 (整合亞昕向陽、國源可鄭小姐、竹城喜多實體項目)
+  const masterItemDatabase = {
+    simple: {
+      "保護工程": [
+        { name: "室內地坪保護", unit: "坪", cost: 500, price: 800, note: "軟墊+防潮布" },
+        { name: "公共空間保護-電梯保護", unit: "式", cost: 0, price: 0, note: "贈送/含夾板防護" },
+        { name: "公共空間保護-梯廳保護", unit: "坪", cost: 1000, price: 1700, note: "防潮布+軟墊+木板" },
+        { name: "大門保護", unit: "式", cost: 600, price: 1000, note: "防刮防護" },
+        { name: "房門保護", unit: "樘", cost: 500, price: 800, note: "氣泡布包覆" }
+      ],
+      "拆除工程": [
+        { name: "拆除工程含廢棄物清運", unit: "式", cost: 18000, price: 30000, note: "舊裝潢/家具拆除" }
+      ],
+      "油漆工程": [
+        { name: "油漆跳色刷漆", unit: "色", cost: 3500, price: 6000, note: "得利乳膠漆" },
+        { name: "局部修補過色", unit: "式", cost: 4000, price: 7000, note: "不含批土" }
+      ],
+      "木地板工程": [
+        { name: "玄關水磨石/SPC木地板", unit: "坪", cost: 3300, price: 5300, note: "寶陞BSPC" },
+        { name: "地板拆除後修補工資", unit: "式", cost: 4000, price: 7000, note: "不含材料" }
+      ],
+      "雜項工程": [
+        { name: "粗清工程", unit: "式", cost: 3500, price: 6000, note: "垃圾打包清運" },
+        { name: "細清工程", unit: "式", cost: 18000, price: 28000, note: "全室入住級細清" }
+      ]
+    },
+    new: {
+      "水電工程": [
+        { name: "新增插座", unit: "組", cost: 2500, price: 4000, note: "TV牆下、主臥衣櫃" },
+        { name: "新增專用迴路110V", unit: "組", cost: 4500, price: 7000, note: "餐櫃" },
+        { name: "新增專用迴路220V", unit: "組", cost: 4500, price: 7000, note: "餐櫃平台、吹風機" },
+        { name: "新增燈具迴路", unit: "組", cost: 1800, price: 3000, note: "餐廳線燈" },
+        { name: "消防灑水頭修改", unit: "組", cost: 2200, price: 3500, note: "配合天花板" },
+        { name: "全室燈線延長", unit: "組", cost: 9000, price: 15000, note: "" }
+      ],
+      "燈具工程": [
+        { name: "15cm LED崁燈及挖孔配線", unit: "顆", cost: 650, price: 1200, note: "自然光/黃光/白光" },
+        { name: "9.5cm LED崁燈及挖孔配線", unit: "顆", cost: 600, price: 1100, note: "黑框/白框" },
+        { name: "崁入式燈條含變壓器", unit: "米", cost: 700, price: 1200, note: "客廳/主臥" },
+        { name: "磁吸軌道燈-燈具安裝", unit: "顆", cost: 450, price: 800, note: "軌道另計" }
+      ],
+      "木作工程": [
+        { name: "平釘天花板(局部高低差)", unit: "坪", cost: 4200, price: 6200, note: "日本麗仕矽酸鈣板" },
+        { name: "窗簾盒+冷氣盒", unit: "尺", cost: 550, price: 900, note: "雙層" },
+        { name: "弧型造型天花/牆", unit: "尺", cost: 750, price: 1200, note: "造型加工" },
+        { name: "主臥/造型隱藏門", unit: "樘", cost: 14000, price: 22000, note: "含五金" },
+        { name: "臥室超耐磨木地板", unit: "坪", cost: 3000, price: 4800, note: "含高低扣條" }
+      ],
+      "油漆工程": [
+        { name: "平釘天花板油漆", unit: "坪", cost: 1500, price: 2400, note: "得利乳膠漆" },
+        { name: "油漆修補過色不批土", unit: "式", cost: 25000, price: 42000, note: "含二次修補" }
+      ],
+      "保護工程": [
+        { name: "全室保護工程", unit: "坪", cost: 600, price: 1000, note: "防潮布+塑膠板" },
+        { name: "門片保護", unit: "樘", cost: 600, price: 1000, note: "保護膠膜" }
+      ],
+      "雜項工程": [
+        { name: "粗清工程", unit: "車", cost: 5500, price: 9000, note: "大垃圾清運" },
+        { name: "細清工程", unit: "式", cost: 18000, price: 30000, note: "全室清潔" }
+      ]
+    },
+    old: {
+      "拆除工程": [
+        { name: "全室舊裝潢/隔間打磚拆除", unit: "式", cost: 40000, price: 70000, note: "含粗拆" },
+        { name: "廢棄物搬運清運費", unit: "車", cost: 6500, price: 12000, note: "3.5噸卡車" }
+      ],
+      "泥作工程": [
+        { name: "牆面/地坪泥作打底打平", unit: "坪", cost: 2500, price: 4500, note: "水泥砂漿打底" },
+        { name: "浴室高分子彈性防水工程", unit: "間", cost: 12000, price: 22000, note: "塗刷三道/試水" },
+        { name: "浴室/廚房壁磚地磚鋪貼", unit: "坪", cost: 4000, price: 7000, note: "不含磁磚料價" }
+      ],
+      "水電工程": [
+        { name: "全室水電重拉配管(水+電)", unit: "式", cost: 250000, price: 430000, note: "太平洋電線/南亞管" },
+        { name: "總開關箱更換升級", unit: "式", cost: 12000, price: 22000, note: "含漏電斷路器" },
+        { name: "衛浴設備安裝組立", unit: "間", cost: 8000, price: 15000, note: "馬桶/花灑/面盆" }
+      ],
+      "燈具工程": [
+        { name: "磁吸軌道燈與燈具組", unit: "顆", cost: 500, price: 800, note: "軌道燈組" },
+        { name: "15cm LED 崁燈", unit: "顆", cost: 650, price: 1200, note: "全室配線" }
+      ],
+      "油漆工程": [
+        { name: "油漆全室批土重刷", unit: "坪", cost: 750, price: 1200, note: "二批二刷乳膠漆" }
+      ],
+      "木地板工程": [
+        { name: "全室超耐磨/SPC木地板", unit: "坪", cost: 3200, price: 5200, note: "直鋪含踢腳板" }
+      ],
+      "保護工程": [
+        { name: "公共區域與電梯重度保護", unit: "式", cost: 12000, price: 20000, note: "夾板重度防護" }
+      ],
+      "雜項工程": [
+        { name: "廢棄物清運與粗細清", unit: "式", cost: 25000, price: 45000, note: "全室裝修完工清理" }
+      ]
+    }
   };
 
+  let currentMode = 'new';
+  let itemDatabase = JSON.parse(localStorage.getItem('quote_custom_database')) || masterItemDatabase[currentMode];
   let currentItems = [];
 
   window.onload = function() {
     document.getElementById('quoteDate').valueAsDate = new Date();
-    const catSelect = document.getElementById('categorySelect');
-    categoryOrder.forEach(cat => {
-      if(itemDatabase[cat]) {
-        let opt = document.createElement('option');
-        opt.value = cat;
-        opt.textContent = cat;
-        catSelect.appendChild(opt);
-      }
-    });
+    switchMode('new');
   };
 
+  function switchMode(mode) {
+    currentMode = mode;
+    document.querySelectorAll('.mode-btn').forEach(btn => btn.classList.remove('active'));
+    if(mode === 'simple') document.getElementById('btnModeSimple').classList.add('active');
+    if(mode === 'new') document.getElementById('btnModeNew').classList.add('active');
+    if(mode === 'old') document.getElementById('btnModeOld').classList.add('active');
+
+    // 載入該模式資料庫
+    itemDatabase = masterItemDatabase[mode];
+    initCategoryDropdowns();
+  }
+
+  function initCategoryDropdowns() {
+    const catSelect = document.getElementById('categorySelect');
+    const newCatSelect = document.getElementById('newCatSelect');
+    catSelect.innerHTML = '<option value="">-- 請選擇工程類別 --</option>';
+    newCatSelect.innerHTML = '';
+
+    categoryOrder.forEach(cat => {
+      if (itemDatabase[cat]) {
+        let opt1 = document.createElement('option');
+        opt1.value = cat; opt1.textContent = cat;
+        catSelect.appendChild(opt1);
+      }
+      let opt2 = document.createElement('option');
+      opt2.value = cat; opt2.textContent = cat;
+      newCatSelect.appendChild(opt2);
+    });
+    updateSubCategoryOptions();
+  }
+
+  function toggleAdminPanel() {
+    const panel = document.getElementById('adminPanel');
+    panel.style.display = (panel.style.display === 'block') ? 'none' : 'block';
+  }
+
   function toggleCostDisplay() { document.getElementById('quoteContainer').classList.toggle('show-cost'); }
+
+  function addNewPresetItem() {
+    const cat = document.getElementById('newCatSelect').value;
+    const name = document.getElementById('newName').value.trim();
+    const unit = document.getElementById('newUnit').value.trim() || '式';
+    const cost = parseFloat(document.getElementById('newCost').value) || 0;
+    const price = parseFloat(document.getElementById('newPrice').value) || 0;
+    const note = document.getElementById('newNote').value.trim();
+
+    if (!name) { alert("請輸入新項目名稱！"); return; }
+
+    if (!itemDatabase[cat]) itemDatabase[cat] = [];
+    itemDatabase[cat].push({ name, unit, cost, price, note });
+
+    alert(`成功新增「${name}」至【${cat}】常用選單！`);
+    
+    document.getElementById('newName').value = '';
+    document.getElementById('newCost').value = '0';
+    document.getElementById('newPrice').value = '0';
+    document.getElementById('newNote').value = '';
+
+    initCategoryDropdowns();
+    document.getElementById('categorySelect').value = cat;
+    updateSubCategoryOptions();
+  }
 
   function updateSubCategoryOptions() {
     const cat = document.getElementById('categorySelect').value;
@@ -286,14 +461,12 @@
       const outWb = new ExcelJS.Workbook();
       const outSheet = outWb.addWorksheet('估價單');
 
-      // 1. 複製與調優欄寬（加寬單價 E 欄與備註 G 欄）
       const defaultWidths = [8, 35, 10, 8, 16, 18, 40];
       for (let i = 1; i <= 7; i++) {
         let srcW = (srcSheet.getColumn(i) && srcSheet.getColumn(i).width) ? srcSheet.getColumn(i).width : defaultWidths[i-1];
         outSheet.getColumn(i).width = Math.max(srcW, defaultWidths[i-1]);
       }
 
-      // 2. 複製原始範本前 47 行 (品牌抬頭、總表、條款樣式)
       for (let r = 1; r <= 47; r++) {
         const srcRow = srcSheet.getRow(r);
         const outRow = outSheet.getRow(r);
@@ -307,7 +480,6 @@
         }
       }
 
-      // 3. 複製合併儲存格資訊 (前 47 行)
       if (srcSheet.model && srcSheet.model.merges) {
         srcSheet.model.merges.forEach(range => {
           const topRow = parseInt(range.split(':')[0].replace(/[^0-9]/g, ''));
@@ -317,13 +489,11 @@
         });
       }
 
-      // 4. 填寫客戶抬頭基本資料
       outSheet.getCell('A6').value = `客戶名稱 :${clientName}`;
       outSheet.getCell('G6').value = contractNo;
       outSheet.getCell('A7').value = `工程地點 :${projectLocation}`;
       outSheet.getCell('G7').value = quoteDate;
 
-      // 5. 填寫第 48 行起細項目，並加入「工種小計」與「頁尾簽名欄」
       let currentDetailRow = 48;
       const grouped = {};
       currentItems.forEach(item => {
@@ -331,9 +501,8 @@
         grouped[item.category].push(item);
       });
 
-      const numToChinese = ['一', '二', '三', '四', '五', '六', '七'];
+      const numToChinese = ['一', '二', '三', '四', '五', '六', '七', '八', '九', '十'];
       const thinBorder = { top:{style:'thin'}, left:{style:'thin'}, bottom:{style:'thin'}, right:{style:'thin'} };
-      const subtotalStyle = { font: { bold: true }, alignment: { horizontal: 'right' } };
 
       let catIdx = 0;
       for (let cat of categoryOrder) {
@@ -341,13 +510,11 @@
         let items = grouped[cat];
         let catSum = items.reduce((sum, item) => sum + item.priceSubtotal, 0);
 
-        // 工種大類標題列
         let rHeader = outSheet.getRow(currentDetailRow++);
         rHeader.getCell(1).value = numToChinese[catIdx] || (catIdx+1);
         rHeader.getCell(2).value = cat;
         rHeader.font = { bold: true };
 
-        // 細項明細列
         items.forEach(item => {
           let rItem = outSheet.getRow(currentDetailRow++);
           rItem.getCell(2).value = `  ${item.name}`;
@@ -362,7 +529,6 @@
           }
         });
 
-        // ⭐ 每組工種結束時的小計列
         let rSubtotal = outSheet.getRow(currentDetailRow++);
         rSubtotal.getCell(2).value = '小計';
         rSubtotal.getCell(6).value = catSum;
@@ -374,7 +540,6 @@
         catIdx++;
       }
 
-      // ⭐ 6. 頁尾客戶與設計師簽名欄位
       currentDetailRow += 2;
       let rSignHeader = outSheet.getRow(currentDetailRow++);
       rSignHeader.getCell(1).value = '客戶簽認與注意事項：';
@@ -386,7 +551,6 @@
       rSignBlock.getCell(6).value = '設計師/公司用印：___________________';
       rSignBlock.font = { bold: true, size: 11 };
 
-      // 導出 Excel 檔案
       const buffer = await outWb.xlsx.writeBuffer();
       const fileName = clientName ? `裝修報價-${clientName}-${quoteDate}.xlsx` : `裝修報價-${quoteDate}.xlsx`;
       saveAs(new Blob([buffer]), fileName);
