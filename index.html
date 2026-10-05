@@ -263,13 +263,7 @@
     document.getElementById('sumTotal').textContent = `$${finalTotal.toLocaleString()}`;
   }
 
-  // 安全清空並寫入儲存格純數值的輔助函式
-  function setCellPureValue(sheet, cellRef, value) {
-    let cell = sheet.getCell(cellRef);
-    cell.value = null; // 先重置，避免 Shared Formula 衝突
-    cell.value = value;
-  }
-
+  // 匯出邏輯：複製 template 結構並建立全新無衝突的工作表
   async function exportQuoteToExcel() {
     if (currentItems.length === 0) { alert("請先加入報價項目！"); return; }
 
@@ -286,47 +280,93 @@
       }
       const arrayBuffer = await response.arrayBuffer();
 
-      const workbook = new ExcelJS.Workbook();
-      await workbook.xlsx.load(arrayBuffer);
-      
-      let sheet = workbook.getWorksheet('估價單0906') || workbook.worksheets[0];
+      const sourceWb = new ExcelJS.Workbook();
+      await sourceWb.xlsx.load(arrayBuffer);
+      let srcSheet = sourceWb.getWorksheet('估價單0906') || sourceWb.worksheets[0];
 
-      if (!sheet) {
-        alert("讀取 Excel 工作表失敗，請檢查範本檔案內容！");
-        return;
+      // 建立乾淨的匯出 Workbook
+      const outWb = new ExcelJS.Workbook();
+      const outSheet = outWb.addWorksheet('估價單');
+
+      // 1. 複製欄寬
+      srcSheet.columns.forEach((col, idx) => {
+        if(col && col.width) {
+          outSheet.getColumn(idx + 1).width = col.width;
+        }
+      });
+
+      // 2. 複製原始範本前 47 行 (品牌抬頭、總表、條款、簽名欄等樣式)
+      for (let r = 1; r <= 47; r++) {
+        const srcRow = srcSheet.getRow(r);
+        const outRow = outSheet.getRow(r);
+        if (srcRow.height) outRow.height = srcRow.height;
+
+        for (let c = 1; c <= 7; c++) {
+          const srcCell = srcRow.getCell(c);
+          const outCell = outRow.getCell(c);
+
+          outCell.value = srcCell.value;
+          if (srcCell.style) outCell.style = JSON.parse(JSON.stringify(srcCell.style));
+        }
       }
 
-      // 填入表頭資訊
-      setCellPureValue(sheet, 'A6', `客戶名稱 :${clientName}`);
-      setCellPureValue(sheet, 'G6', contractNo);
-      setCellPureValue(sheet, 'A7', `工程地點 :${projectLocation}`);
-      setCellPureValue(sheet, 'G7', quoteDate);
+      // 3. 複製合併儲存格資訊 (只複製前 47 行範圍)
+      if (srcSheet.model && srcSheet.model.merges) {
+        srcSheet.model.merges.forEach(range => {
+          const topRow = parseInt(range.split(':')[0].replace(/[^0-9]/g, ''));
+          if (topRow <= 47) {
+            try { outSheet.mergeCells(range); } catch(e){}
+          }
+        });
+      }
 
-      // 安全地填寫細項目（寫入前清除原始 Shared Formula）
-      let currentDetailRow = 49;
+      // 4. 填寫客戶抬頭
+      outSheet.getCell('A6').value = `客戶名稱 :${clientName}`;
+      outSheet.getCell('G6').value = contractNo;
+      outSheet.getCell('A7').value = `工程地點 :${projectLocation}`;
+      outSheet.getCell('G7').value = quoteDate;
+
+      // 5. 填寫明細 (第 48 行起乾淨寫入，帶入標準邊框與格式)
+      let currentDetailRow = 48;
       const grouped = {};
       currentItems.forEach(item => {
         if (!grouped[item.category]) grouped[item.category] = [];
         grouped[item.category].push(item);
       });
 
+      const numToChinese = ['一', '二', '三', '四', '五', '六', '七'];
+      const thinBorder = { top:{style:'thin'}, left:{style:'thin'}, bottom:{style:'thin'}, right:{style:'thin'} };
+
+      let catIdx = 0;
       for (let cat of categoryOrder) {
         if (!grouped[cat]) continue;
         let items = grouped[cat];
 
+        // 大類標題列
+        let rHeader = outSheet.getRow(currentDetailRow++);
+        rHeader.getCell(1).value = numToChinese[catIdx] || (catIdx+1);
+        rHeader.getCell(2).value = cat;
+        rHeader.font = { bold: true };
+
+        // 細項列表
         items.forEach(item => {
-          setCellPureValue(sheet, `B${currentDetailRow}`, item.name);
-          setCellPureValue(sheet, `C${currentDetailRow}`, item.qty);
-          setCellPureValue(sheet, `D${currentDetailRow}`, item.unit);
-          setCellPureValue(sheet, `E${currentDetailRow}`, item.price);
-          setCellPureValue(sheet, `F${currentDetailRow}`, item.priceSubtotal);
-          setCellPureValue(sheet, `G${currentDetailRow}`, item.note || '');
-          currentDetailRow++;
+          let rItem = outSheet.getRow(currentDetailRow++);
+          rItem.getCell(2).value = `  ${item.name}`;
+          rItem.getCell(3).value = item.qty;
+          rItem.getCell(4).value = item.unit;
+          rItem.getCell(5).value = item.price;
+          rItem.getCell(6).value = item.priceSubtotal;
+          rItem.getCell(7).value = item.note || '';
+
+          for(let c = 1; c <= 7; c++) {
+            rItem.getCell(c).border = thinBorder;
+          }
         });
+        catIdx++;
       }
 
-      // 匯出檔案
-      const buffer = await workbook.xlsx.writeBuffer();
+      // 導出 Excel
+      const buffer = await outWb.xlsx.writeBuffer();
       saveAs(new Blob([buffer]), `裝修報價-${clientName}-${quoteDate}.xlsx`);
     } catch(err) {
       alert("匯出發生錯誤：" + err.message);
