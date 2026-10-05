@@ -77,7 +77,7 @@
       <div>
         <h4 style="margin-top:0; color:#581c87;">⚡ 一鍵自動帶入測試模擬資料</h4>
         <div style="display: flex; gap: 10px;">
-          <button class="btn-purple" onclick="loadTestData()">🚀 自動帶入完整測試資料</button>
+          <button class="btn-purple" onclick="loadTestData()">🚀 自動帶入完整測試資料 (多項目)</button>
           <button class="btn-warning" onclick="clearAllItemsData()">🗑 清空目前所有項目</button>
         </div>
       </div>
@@ -112,7 +112,7 @@
         </select>
         <button class="btn-info" onclick="loadSelectedDraft()">📖 載入草稿</button>
         <button class="btn-success" onclick="saveCurrentDraft()">💾 儲存目前報價</button>
-        <button class="btn-danger" onclick="deleteSelectedDraft()" style="padding: 8px 12px;">🗑️️ 刪除</button>
+        <button class="btn-danger" onclick="deleteSelectedDraft()" style="padding: 8px 12px;">🗑 刪除</button>
       </div>
     </div>
   </div>
@@ -339,19 +339,21 @@
     "水電工程": [
       { name: "新增插座", unit: "組", cost: 2500, price: 4000, note: "TV牆下、主臥改櫃" },
       { name: "新增專用迴路110V", unit: "組", cost: 4500, price: 7000, note: "餐櫃" },
-      { name: "新增專用迴路220V", unit: "組", cost: 4500, price: 7000, note: "餐櫃平台、主臥" }
+      { name: "新增專用迴路220V", unit: "組", cost: 4500, price: 7000, note: "餐櫃平台、主臥" },
+      { name: "弱電及網路線拉設", unit: "式", cost: 3500, price: 5500, note: "CAT6 網路線加強" }
+    ],
+    "木作工程": [
+      { name: "平釘天花板(局部高低差)", unit: "坪", cost: 4200, price: 6200, note: "日本麗仕矽酸鈣板" },
+      { name: "窗簾盒+冷氣盒", unit: "尺", cost: 550, price: 900, note: "雙層防潮木作" },
+      { name: "客廳電視造型牆結構", unit: "式", cost: 25000, price: 42000, note: "含隱藏美化線槽" }
+    ],
+    "油漆工程": [
+      { name: "平釘天花板過色", unit: "坪", cost: 1500, price: 2400, note: "得利乳膠漆刷塗" },
+      { name: "全室牆面局部批土修補過色", unit: "式", cost: 8000, price: 15000, note: "含交屋前二次修補" }
     ],
     "燈具工程": [
       { name: "客廳、主臥崁入式燈條含變壓器", unit: "米", cost: 700, price: 1200, note: "軟燈條" },
       { name: "15cm Led崁燈及挖孔配線", unit: "顆", cost: 650, price: 1200, note: "客廳 4000K 自然光" }
-    ],
-    "木作工程": [
-      { name: "平釘天花板(局部高低差)", unit: "坪", cost: 4200, price: 6200, note: "日本麗仕矽酸鈣板" },
-      { name: "窗簾盒+冷氣盒", unit: "尺", cost: 550, price: 900, note: "雙層防潮木作" }
-    ],
-    "油漆工程": [
-      { name: "平釘天花板過色", unit: "坪", cost: 1500, price: 2400, note: "得利乳膠漆刷塗" },
-      { name: "油漆修補過色不批土", unit: "式", cost: 2200, price: 3600, note: "含二次修補" }
     ],
     "雜項工程": [
       { name: "全室保護", unit: "坪", cost: 500, price: 800, note: "防潮布+軟墊" },
@@ -377,6 +379,7 @@
     updateTestMonitor();
   }
 
+  // ⭐ 擴充模擬測試資料：水電4項、木作3項、油漆2項、燈具2項！
   function loadTestData() {
     document.getElementById('clientName').value = '陳大明 (測試客戶)';
     document.getElementById('projectLocation').value = '台北市信義區測試路 88 號 10 樓';
@@ -385,12 +388,28 @@
     document.getElementById('startDate').valueAsDate = new Date();
 
     currentItems = [
+      // 水電工程 4 項
       { id: 1, category: "水電工程", name: "新增插座", qty: 3, unit: "組", cost: 2500, costSubtotal: 7500, price: 4000, priceSubtotal: 12000, profit: 4500, note: "TV牆下、主臥改櫃" },
-      { id: 2, category: "水電工程", name: "新增專用迴路110V", qty: 1, unit: "組", cost: 4500, costSubtotal: 4500, price: 7000, priceSubtotal: 7000, profit: 2500, note: "餐櫃" }
+      { id: 2, category: "水電工程", name: "新增專用迴路110V", qty: 1, unit: "組", cost: 4500, costSubtotal: 4500, price: 7000, priceSubtotal: 7000, profit: 2500, note: "餐櫃平台" },
+      { id: 3, category: "水電工程", name: "新增專用迴路220V", qty: 1, unit: "組", cost: 4500, costSubtotal: 4500, price: 7000, priceSubtotal: 7000, profit: 2500, note: "主臥專用迴路" },
+      { id: 4, category: "水電工程", name: "弱電及網路線拉設", qty: 1, unit: "式", cost: 3500, costSubtotal: 3500, price: 5500, priceSubtotal: 5500, profit: 2000, note: "CAT6 網路線加強" },
+
+      // 木作工程 3 項
+      { id: 5, category: "木作工程", name: "平釘天花板(局部高低差)", qty: 12, unit: "坪", cost: 4200, costSubtotal: 50400, price: 6200, priceSubtotal: 74400, profit: 24000, note: "日本麗仕矽酸鈣板" },
+      { id: 6, category: "木作工程", name: "窗簾盒+冷氣盒", qty: 25, unit: "尺", cost: 550, costSubtotal: 13750, price: 900, priceSubtotal: 22500, profit: 8750, note: "雙層防潮木作" },
+      { id: 7, category: "木作工程", name: "客廳電視造型牆結構", qty: 1, unit: "式", cost: 25000, costSubtotal: 25000, price: 42000, priceSubtotal: 42000, profit: 17000, note: "含隱藏美化線槽" },
+
+      // 油漆工程 2 項
+      { id: 8, category: "油漆工程", name: "平釘天花板過色", qty: 12, unit: "坪", cost: 1500, costSubtotal: 18000, price: 2400, priceSubtotal: 28800, profit: 10800, note: "得利乳膠漆刷塗" },
+      { id: 9, category: "油漆工程", name: "全室牆面局部批土修補過色", qty: 1, unit: "式", cost: 8000, costSubtotal: 8000, price: 15000, priceSubtotal: 15000, profit: 7000, note: "含交屋前二次修補" },
+
+      // 燈具工程 2 項
+      { id: 10, category: "燈具工程", name: "客廳、主臥崁入式燈條含變壓器", qty: 15, unit: "米", cost: 700, costSubtotal: 10500, price: 1200, priceSubtotal: 18000, profit: 7500, note: "軟燈條" },
+      { id: 11, category: "燈具工程", name: "15cm Led崁燈及挖孔配線", qty: 12, unit: "顆", cost: 650, costSubtotal: 7800, price: 1200, priceSubtotal: 14400, profit: 6600, note: "客廳 4000K 自然光" }
     ];
 
     renderQuoteTable();
-    alert("已成功載入模擬測試資料！");
+    alert("已成功載入多項目模擬測試資料！（共 11 個工程細項）");
   }
 
   function clearAllItemsData() {
@@ -767,7 +786,7 @@
     window.print();
   }
 
-  // ⭐ 終極純數據填入版本：100% 保持您 template.xlsx 框架，絕不變形或跑掉！
+  // ⭐ 靜態純數據填入版本 (100% 保持您 template.xlsx 框架與大小)
   async function exportQuoteToExcel() {
     if (currentItems.length === 0) { alert("請先加入報價項目！"); return; }
 
@@ -837,11 +856,11 @@
       const categoryTotals = { "水電工程": 0, "燈具工程": 0, "木作工程": 0, "油漆工程": 0, "雜項工程": 0 };
       let activeOrderIndex = 0;
 
-      // 清除工程管理費(17列)與營業稅(19列)最左邊的項次 (不顯示 捌、玖)
+      // 清除工程管理費(17列)與營業稅(19列)最左邊的項次
       wsQuote.getCell('A17').value = null;
       wsQuote.getCell('A19').value = null;
 
-      // 4. 填入細項數據與金額 (純數字填寫)
+      // 4. 填入細項數據與金額
       catConfig.forEach(cfg => {
         let items = grouped[cfg.cat] || [];
         let catSum = 0;
@@ -872,7 +891,7 @@
               row.getCell(3).value = Number(item.qty);
               row.getCell(4).value = item.unit;
               row.getCell(5).value = Number(item.price);
-              row.getCell(6).value = Number(item.priceSubtotal); // 直接填入複價硬值
+              row.getCell(6).value = Number(item.priceSubtotal);
               row.getCell(7).value = null;
 
               catSum += Number(item.priceSubtotal);
@@ -885,7 +904,6 @@
           }
 
           categoryTotals[cfg.cat] = catSum;
-          // 填入細項小計金額
           wsQuote.getCell(`F${cfg.subtotalRow}`).value = catSum;
         } else {
           // 沒選擇到的工種隱藏
@@ -899,7 +917,7 @@
         }
       });
 
-      // 5. 填寫第一頁總表金額 (純數字硬值)
+      // 5. 填寫第一頁總表金額
       wsQuote.getCell('E11').value = categoryTotals["水電工程"];
       wsQuote.getCell('F11').value = categoryTotals["水電工程"];
 
