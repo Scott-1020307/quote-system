@@ -59,7 +59,7 @@
   <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px;">
     <h1>🏢 室內裝修報價與工程進度管理系統</h1>
     <div>
-      <button class="btn-warning" onclick="toggleAdminPanel()" style="margin-right:6px;">⚙️️ 新增常用選單</button>
+      <button class="btn-warning" onclick="toggleAdminPanel()" style="margin-right:6px;">⚙ 新增常用選單</button>
       <button class="btn-primary" onclick="toggleCostDisplay()">🔒 切換成本/毛利</button>
     </div>
   </div>
@@ -719,7 +719,7 @@
     window.print();
   }
 
-  // ⭐ 完全校正 A4 寬度與強制分頁的 Excel 匯出
+  // ⭐ 完全修復欄寬、消除硬分頁與不跑頁的 Excel 匯出
   async function exportQuoteToExcel() {
     if (currentItems.length === 0) { alert("請先加入報價項目！"); return; }
 
@@ -748,19 +748,21 @@
       // ===== Sheet 1: 估價單 =====
       const outQuoteSheet = outWb.addWorksheet('估價單');
       
-      // ⭐ 1. 精準收納至 A4 單頁寬度 (收窄 B 欄與 G 欄，決不讓備註爆頁)
-      const tunedWidths = [6, 20, 6, 5, 11, 13, 16];
+      // ⭐ 1. 精準計算 A~G 欄寬度 (確保總寬度控制在 A4 直向範圍內，絕不溢出到右邊)
+      const tunedWidths = [6, 22, 7, 5, 12, 14, 16];
       for (let i = 1; i <= 7; i++) outQuoteSheet.getColumn(i).width = tunedWidths[i-1];
       
+      // ⭐ 2. 強制設定 A4 頁面與一頁寬（並清除原檔硬分頁）
       outQuoteSheet.pageSetup = {
-        paperSize: 9, // A4
-        orientation: 'portrait',
-        fitToPage: true,
-        fitToWidth: 1,
-        fitToHeight: 0
+        paperSize: 9,             // A4
+        orientation: 'portrait',   // 直向
+        fitToPage: true,           // 啟用一頁寬控制
+        fitToWidth: 1,             // 所有欄位收納在 1 頁寬
+        fitToHeight: 0,            // 高度自動
+        margins: { left: 0.4, right: 0.4, top: 0.5, bottom: 0.5, header: 0.3, footer: 0.3 }
       };
 
-      // ⭐ 2. 清空第 1~40 列，乾乾淨淨只留第 1 頁「總報價與簽名區」
+      // 複製前 40 列的內容與樣式
       for (let r = 1; r <= 40; r++) {
         const srcRow = srcQuoteSheet.getRow(r);
         const outRow = outQuoteSheet.getRow(r);
@@ -805,7 +807,7 @@
       outQuoteSheet.getCell('F30').value = finalTotal;
       outQuoteSheet.getCell('C40').value = finalTotal;
 
-      // 第一頁頁尾醒目簽名欄 (空間寬敞不擠壓)
+      // 第一頁頁尾簽名欄
       outQuoteSheet.getRow(38).height = 25;
       outQuoteSheet.getCell('A38').value = '客戶簽認與簽約蓋章：';
       outQuoteSheet.getCell('A38').font = { bold: true, size: 12 };
@@ -816,7 +818,7 @@
       outQuoteSheet.getCell('B39').font = { bold: true, size: 11 };
       outQuoteSheet.getCell('F39').font = { bold: true, size: 11 };
 
-      // ⭐ 3. 第一頁末端設定「強制分頁符號」！
+      // ⭐ 3. 第一頁末端設定唯一的「標準分頁符號」
       outQuoteSheet.getRow(40).pageBreak = true;
 
       // ===== 第二頁開始：工程項目細項明細 =====
@@ -920,7 +922,14 @@
       // ===== Sheet 2: 裝修工程進度表 =====
       if (srcScheduleSheet) {
         const outScheduleSheet = outWb.addWorksheet('裝修工程進度表');
-        outScheduleSheet.pageSetup = { paperSize: 9, orientation: 'landscape', fitToPage: true, fitToWidth: 1 };
+        outScheduleSheet.pageSetup = { 
+          paperSize: 9, 
+          orientation: 'landscape', 
+          fitToPage: true, 
+          fitToWidth: 1, 
+          fitToHeight: 0,
+          margins: { left: 0.4, right: 0.4, top: 0.5, bottom: 0.5 }
+        };
 
         for (let r = 1; r <= Math.min(srcScheduleSheet.maxRow, 60); r++) {
           const srcRow = srcScheduleSheet.getRow(r);
