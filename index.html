@@ -77,7 +77,7 @@
       <div>
         <h4 style="margin-top:0; color:#581c87;">⚡ 一鍵自動帶入測試模擬資料</h4>
         <div style="display: flex; gap: 10px;">
-          <button class="btn-purple" onclick="loadTestData()">🚀 自動帶入完整測試資料 (多項目)</button>
+          <button class="btn-purple" onclick="loadTestData()">🚀 自動帶入完整測試資料</button>
           <button class="btn-warning" onclick="clearAllItemsData()">🗑 清空目前所有項目</button>
         </div>
       </div>
@@ -379,7 +379,6 @@
     updateTestMonitor();
   }
 
-  // ⭐ 擴充模擬測試資料：水電4項、木作3項、油漆2項、燈具2項！
   function loadTestData() {
     document.getElementById('clientName').value = '陳大明 (測試客戶)';
     document.getElementById('projectLocation').value = '台北市信義區測試路 88 號 10 樓';
@@ -409,7 +408,7 @@
     ];
 
     renderQuoteTable();
-    alert("已成功載入多項目模擬測試資料！（共 11 個工程細項）");
+    alert("已成功載入測試資料（共 11 項）！");
   }
 
   function clearAllItemsData() {
@@ -786,7 +785,7 @@
     window.print();
   }
 
-  // ⭐ 靜態純數據填入版本 (100% 保持您 template.xlsx 框架與大小)
+  // ⭐ 零動架構套印：100% 動都不動您 Excel 原檔的版面、邊界與欄寬！
   async function exportQuoteToExcel() {
     if (currentItems.length === 0) { alert("請先加入報價項目！"); return; }
 
@@ -808,26 +807,16 @@
       
       let wsQuote = wb.getWorksheet('估價單0906') || wb.worksheets[0];
 
-      // 1. 完全保留範本版面，設定一頁寬與第 47 列實體分頁（第一頁獨佔）
-      wsQuote.pageSetup = {
-        orientation: 'portrait',
-        paperSize: 9, // A4
-        fitToPage: true,
-        fitToWidth: 1,
-        fitToHeight: 0,
-        horizontalCentered: true,
-        margins: { left: 0.4, right: 0.4, top: 0.4, bottom: 0.4, header: 0, footer: 0 }
-      };
+      // 🛑 核心操作：絕不覆寫或修改 wsQuote.pageSetup、margins、column.width、rowBreaks！
+      // 完全使用 template.xlsx 原檔裡您設定好的藍線分頁與欄寬！
 
-      wsQuote.rowBreaks = [{ row: 47 }];
-
-      // 2. 抬頭資訊寫入
+      // 1. 抬頭資訊寫入
       wsQuote.getCell('A6').value = `客戶名稱 : ${clientName}`;
       wsQuote.getCell('G6').value = contractNo;
       wsQuote.getCell('A7').value = `工程地點 : ${projectLocation}`;
       if (quoteDate) wsQuote.getCell('G7').value = quoteDate;
 
-      // 3. 先清空 48~95 列細項舊內容，維持格式
+      // 2. 清空 48~95 列細項舊內容 (維持欄位格式)
       for (let r = 48; r <= 95; r++) {
         let row = wsQuote.getRow(r);
         row.hidden = false;
@@ -860,7 +849,7 @@
       wsQuote.getCell('A17').value = null;
       wsQuote.getCell('A19').value = null;
 
-      // 4. 填入細項數據與金額
+      // 3. 填入細項內容與數據 (絕不 hidden 任何列，確保原檔列高與分頁線完全不變)
       catConfig.forEach(cfg => {
         let items = grouped[cfg.cat] || [];
         let catSum = 0;
@@ -869,23 +858,19 @@
           let numStr = numMap[activeOrderIndex] || (activeOrderIndex + 1);
           activeOrderIndex++;
 
-          // 顯示第一頁總表列與順序項次 (一、二、三)
-          wsQuote.getRow(cfg.mainRow).hidden = false;
+          // 第一頁總表：填寫工種名稱與重新排序的項次
           wsQuote.getCell(`A${cfg.mainRow}`).value = numStr;
           wsQuote.getCell(`B${cfg.mainRow}`).value = cfg.cat;
 
-          // 顯示第二頁細項標題
-          wsQuote.getRow(cfg.headerRow).hidden = false;
-          wsQuote.getRow(cfg.subtotalRow).hidden = false;
+          // 第二頁明細：填寫標題項次
           wsQuote.getCell(`A${cfg.headerRow}`).value = numStr;
           wsQuote.getCell(`B${cfg.headerRow}`).value = cfg.cat;
 
-          // 填入細項內容與計算金額
+          // 填寫細項文字與金額
           items.forEach((item, idx) => {
             if (idx < cfg.maxCount) {
               let rNum = cfg.start + idx;
               let row = wsQuote.getRow(rNum);
-              row.hidden = false;
 
               row.getCell(2).value = item.name;
               row.getCell(3).value = Number(item.qty);
@@ -898,26 +883,20 @@
             }
           });
 
-          // 隱藏未使用的空白細項列
-          for (let unused = items.length; unused < cfg.maxCount; unused++) {
-            wsQuote.getRow(cfg.start + unused).hidden = true;
-          }
-
           categoryTotals[cfg.cat] = catSum;
           wsQuote.getCell(`F${cfg.subtotalRow}`).value = catSum;
         } else {
-          // 沒選擇到的工種隱藏
-          wsQuote.getRow(cfg.mainRow).hidden = true;
-          wsQuote.getRow(cfg.headerRow).hidden = true;
-          wsQuote.getRow(cfg.subtotalRow).hidden = true;
-          for (let r = cfg.start; r < cfg.start + cfg.maxCount; r++) {
-            wsQuote.getRow(r).hidden = true;
-          }
+          // 沒選到的工種，總表填寫 (無施作)，保留該列，絕不隱藏！
+          wsQuote.getCell(`A${cfg.mainRow}`).value = null;
+          wsQuote.getCell(`B${cfg.mainRow}`).value = `${cfg.cat} (無施作)`;
+          
+          wsQuote.getCell(`A${cfg.headerRow}`).value = null;
+          wsQuote.getCell(`B${cfg.headerRow}`).value = `${cfg.cat} (無施作)`;
           categoryTotals[cfg.cat] = 0;
         }
       });
 
-      // 5. 填寫第一頁總表金額
+      // 4. 填寫第一頁總表金額
       wsQuote.getCell('E11').value = categoryTotals["水電工程"];
       wsQuote.getCell('F11').value = categoryTotals["水電工程"];
 
@@ -933,7 +912,7 @@
       wsQuote.getCell('E15').value = categoryTotals["雜項工程"];
       wsQuote.getCell('F15').value = categoryTotals["雜項工程"];
 
-      // 6. 計算與填寫總計、管理費、營業稅與四期付款
+      // 5. 計算總計、管理費、營業稅與付款期別
       let subtotal = currentItems.reduce((acc, i) => acc + Number(i.priceSubtotal), 0);
       let hasMgmt = document.getElementById('chkManagementFee').checked;
       let hasTax = document.getElementById('chkTax').checked;
@@ -948,7 +927,6 @@
       wsQuote.getCell('E19').value = taxFee;
       wsQuote.getCell('F20').value = grandTotal;
 
-      // 四期付款金額
       let p1 = Math.round(grandTotal * 0.3);
       let p2 = Math.round(grandTotal * 0.3);
       let p3 = Math.round(grandTotal * 0.3);
@@ -959,7 +937,6 @@
       wsQuote.getCell('F24').value = p3;
       wsQuote.getCell('F25').value = p4;
 
-      // 總價金額欄
       wsQuote.getCell('C38').value = grandTotal;
 
       // 清除第一頁 G 欄雜訊
@@ -967,7 +944,7 @@
         wsQuote.getRow(r).getCell(7).value = null;
       }
 
-      // 下載產出的 Excel
+      // 匯出下載產出的 Excel 檔案
       const buffer = await wb.xlsx.writeBuffer();
       const fileName = clientName ? `裝修報價單-${clientName}-${quoteDate}.xlsx` : `裝修報價單-${quoteDate}.xlsx`;
       saveAs(new Blob([buffer]), fileName);
