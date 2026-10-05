@@ -22,6 +22,7 @@
     .btn-success { background: #27ae60; color: #fff; }
     .btn-warning { background: #f39c12; color: #fff; }
     .btn-info { background: #2980b9; color: #fff; }
+    .btn-purple { background: #8e44ad; color: #fff; }
     .btn-danger { background: #e74c3c; color: #fff; padding: 6px 12px; }
     .mode-btn { background: #e2e8f0; color: #475569; font-size: 15px; padding: 10px 20px; border-radius: 6px; border: 2px solid transparent; transition: all 0.2s; }
     .mode-btn.active { background: #2c3e50; color: #fff; border-color: #1e293b; }
@@ -37,6 +38,9 @@
     .payment-box { background: #f8fafc; border: 1px solid #cbd5e1; padding: 12px; border-radius: 6px; margin-top: 10px; font-size: 13px; }
     .schedule-preview { background: #fffbe6; border: 1px solid #ffe58f; padding: 15px; border-radius: 6px; margin-top: 15px; }
     
+    /* 🧪 測試頁專用樣式 */
+    .test-page-panel { background: #f3e8ff; border: 2px solid #a855f7; border-radius: 8px; padding: 20px; margin-bottom: 20px; display: none; }
+
     /* 📄 高清 A4 原生列印 */
     #pdfPrintArea { display: none; }
     @media print {
@@ -58,9 +62,41 @@
 <div class="container">
   <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px;">
     <h1>🏢 室內裝修報價與工程進度管理系統</h1>
-    <div>
-      <button class="btn-warning" onclick="toggleAdminPanel()" style="margin-right:6px;">⚙ 新增常用選單</button>
+    <div style="display: flex; gap: 6px;">
+      <button class="btn-purple" onclick="toggleTestPage()">🧪 測試頁</button>
+      <button class="btn-warning" onclick="toggleAdminPanel()">⚙ 新增常用選單</button>
       <button class="btn-primary" onclick="toggleCostDisplay()">🔒 切換成本/毛利</button>
+    </div>
+  </div>
+
+  <!-- 🧪 測試頁主控板 (可點選右上角 [🧪 測試頁] 切換顯示/隱藏) -->
+  <div class="test-page-panel" id="testPagePanel">
+    <div style="display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid #c084fc; padding-bottom: 10px; margin-bottom: 15px;">
+      <h3 style="margin: 0; color: #6b21a8;">🧪 系統開發測試頁 (Test & Sandbox Mode)</h3>
+      <button class="btn-danger" onclick="toggleTestPage()" style="padding: 4px 10px; font-size: 12px;">✕ 關閉測試頁</button>
+    </div>
+    
+    <div class="grid-2">
+      <div>
+        <h4 style="margin-top:0; color:#581c87;">⚡ 一鍵自動帶入測試模擬資料</h4>
+        <p style="font-size: 13px; color: #6b21a8; line-height: 1.5;">
+          點擊下方按鈕，系統將自動填入模擬客戶資料、開工日期，並帶入完整的保護、拆除、水電、天花板與油漆工程測試項目，方便您直接測試 PDF 另存與套印 Excel 檔！
+        </p>
+        <div style="display: flex; gap: 10px;">
+          <button class="btn-purple" onclick="loadTestData()">🚀 自動帶入完整測試資料</button>
+          <button class="btn-warning" onclick="clearAllItemsData()">🗑️ 清空目前所有項目</button>
+        </div>
+      </div>
+
+      <div style="background: #ffffff; padding: 12px; border-radius: 6px; border: 1px solid #d8b4fe;">
+        <h4 style="margin-top:0; color:#581c87;">📊 系統目前運作狀態監視器</h4>
+        <ul style="font-size: 13px; line-height: 1.8; margin: 0; padding-left: 20px;">
+          <li><b>已儲存草稿數量：</b> <span id="testDraftCount">0</span> 份</li>
+          <li><b>當前報價項目總數：</b> <span id="testItemCount">0</span> 項</li>
+          <li><b>目前未含稅報價小計：</b> <span id="testSubtotalVal">$0</span></li>
+          <li><b>目前計算完工日：</b> <span id="testEndDateVal">-</span></li>
+        </ul>
+      </div>
     </div>
   </div>
 
@@ -361,7 +397,50 @@
     updateCustomNotes();
     refreshDraftsDropdown();
     initCategoryDropdowns();
+    updateTestMonitor();
   };
+
+  function toggleTestPage() {
+    const panel = document.getElementById('testPagePanel');
+    panel.style.display = (panel.style.display === 'block') ? 'none' : 'block';
+    updateTestMonitor();
+  }
+
+  function loadTestData() {
+    document.getElementById('clientName').value = '陳大明 (測試客戶)';
+    document.getElementById('projectLocation').value = '台北市信義區測試路 88 號 10 樓';
+    document.getElementById('contractNo').value = 'TEST-2026-001';
+    document.getElementById('designerName').value = '陳昭宇 設計師';
+    document.getElementById('startDate').valueAsDate = new Date();
+
+    currentItems = [
+      { id: 1, category: "保護工程", name: "公共空間保護-電梯/梯廳", qty: 1, unit: "式", cost: 2500, costSubtotal: 2500, price: 4500, priceSubtotal: 4500, profit: 2000, note: "夾板+防潮布雙層保護" },
+      { id: 2, category: "拆除工程", name: "全室舊裝潢/家具拆除", qty: 1, unit: "式", cost: 20000, costSubtotal: 20000, price: 35000, priceSubtotal: 35000, profit: 15000, note: "含廢棄物清運" },
+      { id: 3, category: "水電工程", name: "新增插座 / 開關", qty: 6, unit: "組", cost: 2500, costSubtotal: 15000, price: 4000, priceSubtotal: 24000, profit: 9000, note: "含配管拉線" },
+      { id: 4, category: "木作工程", name: "平釘天花板", qty: 25, unit: "坪", cost: 4200, costSubtotal: 105000, price: 6200, priceSubtotal: 155000, profit: 50000, note: "日本麗仕矽酸鈣板+永新角材" },
+      { id: 5, category: "油漆工程", name: "全室天花板/牆面油漆過色", qty: 25, unit: "坪", cost: 1500, costSubtotal: 37500, price: 2400, priceSubtotal: 60000, profit: 22500, note: "得利乳膠漆刷塗" }
+    ];
+
+    renderQuoteTable();
+    alert("已成功載入模擬測試資料！您可以直接測試列印與匯出功能。");
+  }
+
+  function clearAllItemsData() {
+    if (confirm("確定要清空目前報價單上的所有項目嗎？")) {
+      currentItems = [];
+      renderQuoteTable();
+    }
+  }
+
+  function updateTestMonitor() {
+    document.getElementById('testDraftCount').textContent = localStorage.length;
+    document.getElementById('testItemCount').textContent = currentItems.length;
+    let subtotal = currentItems.reduce((sum, i) => sum + i.priceSubtotal, 0);
+    document.getElementById('testSubtotalVal').textContent = `$${subtotal.toLocaleString()}`;
+    
+    let summaryText = document.getElementById('scheduleSummaryText').textContent;
+    document.getElementById('testEndDateVal').textContent = summaryText.includes('預計完工日') ? summaryText.split('(')[0].replace('預計完工日：', '') : '-';
+  }
 
   function switchMode(mode) {
     document.querySelectorAll('.mode-btn').forEach(btn => btn.classList.remove('active'));
@@ -510,6 +589,7 @@
         select.appendChild(opt);
       }
     }
+    updateTestMonitor();
   }
 
   function loadSelectedDraft() {
@@ -643,6 +723,7 @@
     });
     renderSummary();
     calculateSchedulePreview();
+    updateTestMonitor();
   }
 
   function renderSummary() {
