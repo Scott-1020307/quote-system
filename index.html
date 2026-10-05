@@ -84,7 +84,7 @@
         </p>
         <div style="display: flex; gap: 10px;">
           <button class="btn-purple" onclick="loadTestData()">🚀 自動帶入完整測試資料</button>
-          <button class="btn-warning" onclick="clearAllItemsData()">🗑️️ 清空目前所有項目</button>
+          <button class="btn-warning" onclick="clearAllItemsData()">🗑 清空目前所有項目</button>
         </div>
       </div>
 
@@ -800,7 +800,7 @@
     window.print();
   }
 
-  // ⭐ 完全修復版：統一字體、加寬單價欄防 ####、備註不填字、且代入實際工程明細
+  // ⭐ 完全純粹套印版：完全不更改 template.xlsx 任何字型、框線或結構
   async function exportQuoteToExcel() {
     if (currentItems.length === 0) { alert("請先加入報價項目！"); return; }
 
@@ -824,28 +824,20 @@
       let wsQuote = wb.getWorksheet('估價單0906') || wb.worksheets[0];
       let wsSchedule = wb.getWorksheet('裝修工程進度表');
 
-      // 統一使用的標準字型
-      const fontStd = { name: 'Microsoft JhengHei', size: 10 };
-      const fontBold = { name: 'Microsoft JhengHei', size: 10, bold: true };
-
-      // ⭐ 解決 #### 問題：適度調寬 E 欄 (單價) 與 F 欄 (小計)
-      wsQuote.getColumn('E').width = 14;
-      wsQuote.getColumn('F').width = 16;
-
-      // 1. 填寫抬頭資訊
+      // 1. 填寫抬頭
       wsQuote.getCell('A6').value = `客戶名稱 :${clientName}`;
       wsQuote.getCell('G6').value = contractNo;
       wsQuote.getCell('A7').value = `工程地點 :${projectLocation}`;
       wsQuote.getCell('G7').value = quoteDate;
 
-      // 2. 清空第 8 ~ 26 列 (第一頁總表項目區)
+      // 2. 清空第 8 ~ 26 列內容
       for (let r = 8; r <= 26; r++) {
         for (let c = 1; c <= 7; c++) {
           wsQuote.getRow(r).getCell(c).value = null;
         }
       }
 
-      // 3. 按類別計算大類金額
+      // 3. 計算大類金額
       const categoryTotals = {};
       categoryOrder.forEach(cat => { categoryTotals[cat] = 0; });
       currentItems.forEach(item => {
@@ -853,7 +845,7 @@
         categoryTotals[item.category] += item.priceSubtotal;
       });
 
-      // 4. 填寫第一頁總表 (僅顯示大標題名稱，備註維持空白，單價與金額加格式)
+      // 4. 第一頁總表僅填入大類與金額，不改任何格子的樣式
       let startRow = 8;
       let displayIndex = 1;
 
@@ -861,22 +853,18 @@
         let catTotal = categoryTotals[cat];
         if (catTotal > 0) {
           let row = wsQuote.getRow(startRow);
-          
-          let c1 = row.getCell(1); c1.value = displayIndex; c1.font = fontStd; c1.alignment = { horizontal: 'center' };
-          let c2 = row.getCell(2); c2.value = cat; c2.font = fontBold;
-          let c3 = row.getCell(3); c3.value = 1; c3.font = fontStd; c3.alignment = { horizontal: 'center' };
-          let c4 = row.getCell(4); c4.value = '式'; c4.font = fontStd; c4.alignment = { horizontal: 'center' };
-          
-          let c5 = row.getCell(5); c5.value = catTotal; c5.font = fontStd; c5.numFmt = '#,##0'; c5.alignment = { horizontal: 'right' };
-          let c6 = row.getCell(6); c6.value = catTotal; c6.font = fontBold; c6.numFmt = '#,##0'; c6.alignment = { horizontal: 'right' };
-          let c7 = row.getCell(7); c7.value = ''; // ⭐ 備註留空，不再顯示詳如明細
-
+          row.getCell(1).value = displayIndex;
+          row.getCell(2).value = cat;
+          row.getCell(3).value = 1;
+          row.getCell(4).value = '式';
+          row.getCell(5).value = catTotal;
+          row.getCell(6).value = catTotal;
           startRow++;
           displayIndex++;
         }
       });
 
-      // 5. 填寫第一頁金額摘要
+      // 5. 金額總計摘要
       let totalPriceSum = currentItems.reduce((acc, i) => acc + i.priceSubtotal, 0);
       const hasMgmt = document.getElementById('chkManagementFee').checked;
       const hasTax = document.getElementById('chkTax').checked;
@@ -884,80 +872,24 @@
       const taxFee = hasTax ? Math.round((totalPriceSum + mgmtFee) * 0.05) : 0;
       const finalTotal = totalPriceSum + mgmtFee + taxFee;
 
-      let r27 = wsQuote.getCell('F27'); r27.value = totalPriceSum; r27.numFmt = '#,##0'; r27.font = fontBold;
-      let r28 = wsQuote.getCell('F28'); r28.value = mgmtFee; r28.numFmt = '#,##0'; r28.font = fontStd;
-      let r29 = wsQuote.getCell('F29'); r29.value = taxFee; r29.numFmt = '#,##0'; r29.font = fontStd;
-      let r30 = wsQuote.getCell('F30'); r30.value = finalTotal; r30.numFmt = '#,##0'; r30.font = fontBold;
-      let r40 = wsQuote.getCell('C40'); r40.value = finalTotal; r40.numFmt = '#,##0'; r40.font = fontBold;
+      wsQuote.getCell('F27').value = totalPriceSum;
+      wsQuote.getCell('F28').value = mgmtFee;
+      wsQuote.getCell('F29').value = taxFee;
+      wsQuote.getCell('F30').value = finalTotal;
+      wsQuote.getCell('C40').value = finalTotal;
 
-      // 6. 填寫注意事項
+      // 6. 注意事項
       let notesText = document.getElementById('customNotesText').value;
       if (notesText) {
         let lines = notesText.split('\n');
         lines.forEach((line, i) => {
           if (31 + i <= 34) {
-            let cell = wsQuote.getCell(`A${31 + i}`);
-            cell.value = line;
-            cell.font = fontStd;
+            wsQuote.getCell(`A${31 + i}`).value = line;
           }
         });
       }
 
-      // ⭐ 7. 代入實際工程細項明細至第二頁 (從第 41 列開始依序填入系統真實數據)
-      let detailRow = 41;
-      
-      // 先清空原本 Excel 第 41 列之後的舊範本內容，避免重疊
-      for (let r = 41; r <= Math.max(wsQuote.rowCount, 100); r++) {
-        for (let c = 1; c <= 7; c++) {
-          wsQuote.getRow(r).getCell(c).value = null;
-        }
-      }
-
-      // 按大類分群
-      const grouped = {};
-      currentItems.forEach(item => {
-        if (!grouped[item.category]) grouped[item.category] = [];
-        grouped[item.category].push(item);
-      });
-
-      const chineseNums = ['一', '二', '三', '四', '五', '六', '七', '八', '九', '十', '十一', '十二'];
-      let cIdx = 0;
-
-      for (let cat of categoryOrder) {
-        if (!grouped[cat]) continue;
-        let items = grouped[cat];
-        let catSum = items.reduce((sum, item) => sum + item.priceSubtotal, 0);
-
-        // 大類標題列
-        let rHead = wsQuote.getRow(detailRow++);
-        rHead.height = 22;
-        let h1 = rHead.getCell(1); h1.value = chineseNums[cIdx] || (cIdx+1); h1.font = fontBold; h1.alignment = { horizontal: 'center' };
-        let h2 = rHead.getCell(2); h2.value = cat; h2.font = fontBold;
-        
-        // 細項列表
-        items.forEach((item, itemIdx) => {
-          let rItem = wsQuote.getRow(detailRow++);
-          rItem.height = 20;
-          let cell1 = rItem.getCell(1); cell1.value = `${cIdx+1}-${itemIdx+1}`; cell1.font = fontStd; cell1.alignment = { horizontal: 'center' };
-          let cell2 = rItem.getCell(2); cell2.value = item.name; cell2.font = fontStd;
-          let cell3 = rItem.getCell(3); cell3.value = item.qty; cell3.font = fontStd; cell3.alignment = { horizontal: 'right' };
-          let cell4 = rItem.getCell(4); cell4.value = item.unit; cell4.font = fontStd; cell4.alignment = { horizontal: 'center' };
-          let cell5 = rItem.getCell(5); cell5.value = item.price; cell5.font = fontStd; cell5.numFmt = '#,##0'; cell5.alignment = { horizontal: 'right' };
-          let cell6 = rItem.getCell(6); cell6.value = item.priceSubtotal; cell6.font = fontBold; cell6.numFmt = '#,##0'; cell6.alignment = { horizontal: 'right' };
-          let cell7 = rItem.getCell(7); cell7.value = item.note || ''; cell7.font = fontStd;
-        });
-
-        // 該類別小計列
-        let rSub = wsQuote.getRow(detailRow++);
-        rSub.height = 22;
-        let s2 = rSub.getCell(2); s2.value = `${cat} 小計`; s2.font = fontBold; s2.alignment = { horizontal: 'right' };
-        let s6 = rSub.getCell(6); s6.value = catSum; s6.font = fontBold; s6.numFmt = '#,##0'; s6.alignment = { horizontal: 'right' };
-
-        detailRow++; // 空一列分隔
-        cIdx++;
-      }
-
-      // 8. 填寫工程進度表 (第二分頁)
+      // 7. 進度表
       if (wsSchedule) {
         wsSchedule.getCell('B4').value = `${clientName}【${projectLocation}】`;
         wsSchedule.getCell('F4').value = designerName;
