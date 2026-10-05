@@ -7,7 +7,7 @@
   <script src="https://cdnjs.cloudflare.com/ajax/libs/exceljs/4.3.0/exceljs.min.js"></script>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/FileSaver.js/2.0.5/FileSaver.min.js"></script>
   <style>
-    :root { var(--primary): #2c3e50; var(--secondary): #27ae60; var(--light-bg): #f8f9fa; var(--border): #dee2e6; }
+    :root { --primary: #2c3e50; --secondary: #27ae60; --light-bg: #f8f9fa; --border: #dee2e6; }
     body { font-family: "PingFang TC", "Microsoft JhengHei", sans-serif; margin: 0; padding: 20px; background-color: #f4f6f8; color: #333; }
     .container { max-width: 1200px; margin: 0 auto; }
     h1, h3 { color: #2c3e50; }
@@ -263,7 +263,7 @@
     document.getElementById('sumTotal').textContent = `$${finalTotal.toLocaleString()}`;
   }
 
-  // 讀取實體 template.xlsx 並套印
+  // 讀取實體 template.xlsx 並自動選擇正確工作表套印
   async function exportQuoteToExcel() {
     if (currentItems.length === 0) { alert("請先加入報價項目！"); return; }
 
@@ -273,7 +273,6 @@
     const quoteDate = document.getElementById('quoteDate').value || '';
 
     try {
-      // 從伺服器抓取原始 template.xlsx 檔案
       const response = await fetch('./template.xlsx');
       if(!response.ok) {
         alert("找不到原檔範本 template.xlsx，請確認您已將範本檔上傳至 GitHub 專案中！");
@@ -283,18 +282,23 @@
 
       const workbook = new ExcelJS.Workbook();
       await workbook.xlsx.load(arrayBuffer);
-      const sheet = workbook.getWorksheet(1); // 讀取第一個工作表
+      
+      // 精準指定工作表：先找「估價單0906」，若無則使用第一個 Sheet
+      let sheet = workbook.getWorksheet('估價單0906') || workbook.worksheets[0];
 
-      // 填入表頭資訊 (保持原格式)
+      if (!sheet) {
+        alert("讀取 Excel 工作表失敗，請檢查範本檔案內容！");
+        return;
+      }
+
+      // 填入表頭資訊
       sheet.getCell('A6').value = `客戶名稱 :${clientName}`;
       sheet.getCell('G6').value = contractNo;
       sheet.getCell('A7').value = `工程地點 :${projectLocation}`;
       sheet.getCell('G7').value = quoteDate;
 
-      // 按工序填寫第 48 行開始的明細，並同步寫入第一頁總表
-      let catRowMap = { "水電工程": 11, "燈具工程": 12, "木作工程": 13, "油漆工程": 14, "雜項工程": 15 };
+      // 填寫明細
       let currentDetailRow = 49;
-
       const grouped = {};
       currentItems.forEach(item => {
         if (!grouped[item.category]) grouped[item.category] = [];
@@ -305,7 +309,6 @@
         if (!grouped[cat]) continue;
         let items = grouped[cat];
 
-        // 寫入詳細項目
         items.forEach(item => {
           sheet.getCell(`B${currentDetailRow}`).value = item.name;
           sheet.getCell(`C${currentDetailRow}`).value = item.qty;
