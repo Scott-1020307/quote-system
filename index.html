@@ -263,7 +263,13 @@
     document.getElementById('sumTotal').textContent = `$${finalTotal.toLocaleString()}`;
   }
 
-  // 讀取實體 template.xlsx 並自動選擇正確工作表套印
+  // 安全清空並寫入儲存格純數值的輔助函式
+  function setCellPureValue(sheet, cellRef, value) {
+    let cell = sheet.getCell(cellRef);
+    cell.value = null; // 先重置，避免 Shared Formula 衝突
+    cell.value = value;
+  }
+
   async function exportQuoteToExcel() {
     if (currentItems.length === 0) { alert("請先加入報價項目！"); return; }
 
@@ -283,7 +289,6 @@
       const workbook = new ExcelJS.Workbook();
       await workbook.xlsx.load(arrayBuffer);
       
-      // 精準指定工作表：先找「估價單0906」，若無則使用第一個 Sheet
       let sheet = workbook.getWorksheet('估價單0906') || workbook.worksheets[0];
 
       if (!sheet) {
@@ -292,12 +297,12 @@
       }
 
       // 填入表頭資訊
-      sheet.getCell('A6').value = `客戶名稱 :${clientName}`;
-      sheet.getCell('G6').value = contractNo;
-      sheet.getCell('A7').value = `工程地點 :${projectLocation}`;
-      sheet.getCell('G7').value = quoteDate;
+      setCellPureValue(sheet, 'A6', `客戶名稱 :${clientName}`);
+      setCellPureValue(sheet, 'G6', contractNo);
+      setCellPureValue(sheet, 'A7', `工程地點 :${projectLocation}`);
+      setCellPureValue(sheet, 'G7', quoteDate);
 
-      // 填寫明細
+      // 安全地填寫細項目（寫入前清除原始 Shared Formula）
       let currentDetailRow = 49;
       const grouped = {};
       currentItems.forEach(item => {
@@ -310,12 +315,12 @@
         let items = grouped[cat];
 
         items.forEach(item => {
-          sheet.getCell(`B${currentDetailRow}`).value = item.name;
-          sheet.getCell(`C${currentDetailRow}`).value = item.qty;
-          sheet.getCell(`D${currentDetailRow}`).value = item.unit;
-          sheet.getCell(`E${currentDetailRow}`).value = item.price;
-          sheet.getCell(`F${currentDetailRow}`).value = item.priceSubtotal;
-          sheet.getCell(`G${currentDetailRow}`).value = item.note || '';
+          setCellPureValue(sheet, `B${currentDetailRow}`, item.name);
+          setCellPureValue(sheet, `C${currentDetailRow}`, item.qty);
+          setCellPureValue(sheet, `D${currentDetailRow}`, item.unit);
+          setCellPureValue(sheet, `E${currentDetailRow}`, item.price);
+          setCellPureValue(sheet, `F${currentDetailRow}`, item.priceSubtotal);
+          setCellPureValue(sheet, `G${currentDetailRow}`, item.note || '');
           currentDetailRow++;
         });
       }
