@@ -38,10 +38,8 @@
     .payment-box { background: #f8fafc; border: 1px solid #cbd5e1; padding: 12px; border-radius: 6px; margin-top: 10px; font-size: 13px; }
     .schedule-preview { background: #fffbe6; border: 1px solid #ffe58f; padding: 15px; border-radius: 6px; margin-top: 15px; }
     
-    /* 🧪 測試頁專用樣式 */
     .test-page-panel { background: #f3e8ff; border: 2px solid #a855f7; border-radius: 8px; padding: 20px; margin-bottom: 20px; display: none; }
 
-    /* 📄 高清 A4 原生列印 */
     #pdfPrintArea { display: none; }
     @media print {
       body * { visibility: hidden; }
@@ -69,19 +67,15 @@
     </div>
   </div>
 
-  <!-- 🧪 測試頁主控板 -->
   <div class="test-page-panel" id="testPagePanel">
     <div style="display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid #c084fc; padding-bottom: 10px; margin-bottom: 15px;">
-      <h3 style="margin: 0; color: #6b21a8;">🧪 系統開發測試頁 (Test & Sandbox Mode)</h3>
+      <h3 style="margin: 0; color: #6b21a8;">🧪 系統開發測試頁 (Test Mode)</h3>
       <button class="btn-danger" onclick="toggleTestPage()" style="padding: 4px 10px; font-size: 12px;">✕ 關閉測試頁</button>
     </div>
     
     <div class="grid-2">
       <div>
         <h4 style="margin-top:0; color:#581c87;">⚡ 一鍵自動帶入測試模擬資料</h4>
-        <p style="font-size: 13px; color: #6b21a8; line-height: 1.5;">
-          點擊下方按鈕，系統將自動填入模擬客戶資料、開工日期，並帶入測試項目，方便您直接測試 PDF 另存與套印 Excel 檔！
-        </p>
         <div style="display: flex; gap: 10px;">
           <button class="btn-purple" onclick="loadTestData()">🚀 自動帶入完整測試資料</button>
           <button class="btn-warning" onclick="clearAllItemsData()">🗑 清空目前所有項目</button>
@@ -101,7 +95,7 @@
   </div>
 
   <div class="card" style="background: #f1f5f9; border: 1px solid #cbd5e1;">
-    <h3 style="margin-top:0;">🏠 請選擇案場類型 (快速過濾推薦常用項目)：</h3>
+    <h3 style="margin-top:0;">🏠 請選擇案場類型：</h3>
     <div style="display: flex; gap: 12px; flex-wrap: wrap;">
       <button class="mode-btn" id="btnModeSimple" onclick="switchMode('simple')">🔨 簡易局部裝修</button>
       <button class="mode-btn active" id="btnModeNew" onclick="switchMode('new')">🏢 新成屋標準裝修</button>
@@ -111,7 +105,7 @@
 
   <div class="card" style="background: #f0fdf4; border: 1px solid #bbf7d0;">
     <div style="display: flex; justify-content: space-between; align-items: center;">
-      <h3 style="margin:0; color:#166534;">💾 專案草稿箱 (可儲存/載入多份報價)</h3>
+      <h3 style="margin:0; color:#166534;">💾 專案草稿箱</h3>
       <div style="display: flex; gap: 8px;">
         <select id="savedDraftsSelect" style="width: auto; min-width: 200px;">
           <option value="">-- 選擇已儲存的報價草稿 --</option>
@@ -150,7 +144,7 @@
     </div>
     <div class="grid-4" style="margin-top: 12px;">
       <div>
-        <label style="color:#d97706;">📅 預計開工日期 (扣除六日推算)</label>
+        <label style="color:#d97706;">📅 預計開工日期</label>
         <input type="date" id="startDate" onchange="calculateSchedulePreview()">
       </div>
       <div><label>設計師 / 負責人</label><input type="text" id="designerName" placeholder="例如：陳昭宇 設計師"></div>
@@ -162,7 +156,7 @@
   </div>
 
   <div class="card">
-    <h3>➕ 新增工程項目 (含追加減工程)</h3>
+    <h3>➕ 新增工程項目</h3>
     <div class="grid-4" style="grid-template-columns: 2fr 2fr 1fr 2fr;">
       <div>
         <label>工程類別 (第一層)</label>
@@ -185,7 +179,7 @@
         <label>廠商底價 (內部成本)</label>
         <input type="number" id="costPrice" value="0">
       </div>
-      <div><label>對外報價 (客戶單價，追減可填負數)</label><input type="number" id="quotePrice" value="0"></div>
+      <div><label>對外報價 (客戶單價)</label><input type="number" id="quotePrice" value="0"></div>
       <div style="grid-column: span 2;"><label>施工備註 / 規格</label><input type="text" id="itemNote" placeholder="例如：TV牆下、追加項目說明"></div>
     </div>
     <div style="margin-top: 12px; text-align: right;">
@@ -215,7 +209,7 @@
 
     <div class="grid-2" style="margin-top: 20px;">
       <div>
-        <h4>⚙️ 費用與付款方式設定</h4>
+        <h4>⚙️️ 費用與付款方式設定</h4>
         <div><input type="checkbox" id="chkManagementFee" checked onchange="renderSummary()" style="width:auto;"> <label style="display:inline;">計入 10% 工程監工管理費</label></div>
         <div><input type="checkbox" id="chkTax" checked onchange="renderSummary()" style="width:auto;"> <label style="display:inline;">計入 5% 營業稅</label></div>
         
@@ -226,7 +220,7 @@
         </div>
 
         <div style="margin-top: 15px;">
-          <label>🏷️ 常用合約條款與注意事項（勾選自動排版帶入）：</label>
+          <label>🏷️ 常用合約條款與注意事項：</label>
           <div style="font-size:13px; line-height:1.8;">
             <div><input type="checkbox" class="note-preset" value="1. 本估價單項目不包含燈具、家電設備與軟裝佈置。" checked onchange="updateCustomNotes()"> 1. 不包含燈具、家電與軟裝。</div>
             <div><input type="checkbox" class="note-preset" value="2. 施工期間工程保固一年，消耗性材料與人為因素除外。" checked onchange="updateCustomNotes()"> 2. 提供施工保固一年。</div>
@@ -246,22 +240,21 @@
     </div>
 
     <div class="schedule-preview">
-      <h4 style="margin-top:0; color:#b45309;">📅 裝修工程進度預覽 (扣除假日自動排程)</h4>
+      <h4 style="margin-top:0; color:#b45309;">📅 裝修工程進度預覽</h4>
       <div id="scheduleTablePreview">請先加入報價項目並選擇預計開工日期...</div>
     </div>
 
     <div style="margin-top: 25px; text-align: right; display: flex; justify-content: flex-end; gap: 12px;">
       <button class="btn-info" onclick="exportQuoteToPDF()" style="font-size: 15px; padding: 12px 20px;">
-        📄 匯出 PDF 報價單 (另存PDF)
+        📄 匯出 PDF 報價單
       </button>
       <button class="btn-success" onclick="exportQuoteToExcel()" style="font-size: 15px; padding: 12px 24px;">
-        📊 套印原檔 Excel 報價單 + 工程進度表 (.xlsx)
+        📊 套印原檔 Excel + 自動新增明細頁籤 (.xlsx)
       </button>
     </div>
   </div>
 </div>
 
-<!-- 📄 高清 A4 列印視窗 PDF 區域 -->
 <div id="pdfPrintArea">
   <div class="page-break" style="min-height: 850px; display: flex; flex-direction: column; justify-content: space-between;">
     <div>
@@ -301,8 +294,8 @@
     </div>
 
     <div style="margin-top: 40px; padding-top: 20px; border-top: 1px dashed #000; display: flex; justify-content: space-between; font-size: 15px; font-weight: bold;">
-      <div style="width: 45%;">客戶簽認：___________________________<br><br><small style="font-weight:normal; color:#666;">（確認並同意上述工程總價與付款條件）</small></div>
-      <div style="width: 45%;">設計公司蓋章：___________________________<br><br><small style="font-weight:normal; color:#666;">（負責人/設計師簽章）</small></div>
+      <div style="width: 45%;">客戶簽認：___________________________</div>
+      <div style="width: 45%;">設計公司蓋章：___________________________</div>
     </div>
   </div>
 
@@ -422,7 +415,7 @@
     ];
 
     renderQuoteTable();
-    alert("已成功載入模擬測試資料！您可以直接測試列印與匯出功能。");
+    alert("已成功載入模擬測試資料！");
   }
 
   function clearAllItemsData() {
@@ -571,7 +564,7 @@
     };
 
     localStorage.setItem(key, JSON.stringify(draftData));
-    alert(`成功儲存客戶【${name}】的報價與進度草稿！`);
+    alert(`成功儲存客戶【${name}】的報價草稿！`);
     refreshDraftsDropdown();
   }
 
@@ -800,7 +793,7 @@
     window.print();
   }
 
-  // ⭐ 完全純粹套印版：完全不更改 template.xlsx 任何字型、框線或結構
+  // ⭐ 新邏輯：保留第一頁總表原樣套印 + 自動新建「工程明細表」頁籤
   async function exportQuoteToExcel() {
     if (currentItems.length === 0) { alert("請先加入報價項目！"); return; }
 
@@ -824,20 +817,22 @@
       let wsQuote = wb.getWorksheet('估價單0906') || wb.worksheets[0];
       let wsSchedule = wb.getWorksheet('裝修工程進度表');
 
-      // 1. 填寫抬頭
+      // -------------------------------------------------------------
+      // 【分頁一：估價單總表】100% 尊重範本樣式，僅填入數據
+      // -------------------------------------------------------------
       wsQuote.getCell('A6').value = `客戶名稱 :${clientName}`;
       wsQuote.getCell('G6').value = contractNo;
       wsQuote.getCell('A7').value = `工程地點 :${projectLocation}`;
       wsQuote.getCell('G7').value = quoteDate;
 
-      // 2. 清空第 8 ~ 26 列內容
+      // 清空第 8 ~ 26 列的內容
       for (let r = 8; r <= 26; r++) {
         for (let c = 1; c <= 7; c++) {
           wsQuote.getRow(r).getCell(c).value = null;
         }
       }
 
-      // 3. 計算大類金額
+      // 算大類總額
       const categoryTotals = {};
       categoryOrder.forEach(cat => { categoryTotals[cat] = 0; });
       currentItems.forEach(item => {
@@ -845,7 +840,7 @@
         categoryTotals[item.category] += item.priceSubtotal;
       });
 
-      // 4. 第一頁總表僅填入大類與金額，不改任何格子的樣式
+      // 填入總表大標題與金額
       let startRow = 8;
       let displayIndex = 1;
 
@@ -864,7 +859,7 @@
         }
       });
 
-      // 5. 金額總計摘要
+      // 總額與條款
       let totalPriceSum = currentItems.reduce((acc, i) => acc + i.priceSubtotal, 0);
       const hasMgmt = document.getElementById('chkManagementFee').checked;
       const hasTax = document.getElementById('chkTax').checked;
@@ -878,7 +873,6 @@
       wsQuote.getCell('F30').value = finalTotal;
       wsQuote.getCell('C40').value = finalTotal;
 
-      // 6. 注意事項
       let notesText = document.getElementById('customNotesText').value;
       if (notesText) {
         let lines = notesText.split('\n');
@@ -889,7 +883,106 @@
         });
       }
 
-      // 7. 進度表
+      // -------------------------------------------------------------
+      // 【分頁二：自動新建全新「工程明細表」頁籤】獨立乾淨不干擾總表！
+      // -------------------------------------------------------------
+      // 移除若之前建過的同名頁籤
+      let oldDetailWs = wb.getWorksheet('工程明細表');
+      if (oldDetailWs) wb.removeWorksheet(oldDetailWs.id);
+
+      // 建立全新「工程明細表」分頁（插在總表後面）
+      let wsDetail = wb.addWorksheet('工程明細表');
+
+      // 設定明細表欄寬
+      wsDetail.columns = [
+        { header: '項次', key: 'idx', width: 8 },
+        { header: '工程項目 / 施工規格細項', key: 'name', width: 35 },
+        { header: '數量', key: 'qty', width: 10 },
+        { header: '單位', key: 'unit', width: 8 },
+        { header: '單價', key: 'price', width: 14 },
+        { header: '複價小計', key: 'subtotal', width: 16 },
+        { header: '備註', key: 'note', width: 25 }
+      ];
+
+      // 抬頭表頭
+      wsDetail.mergeCells('A1:G1');
+      let titleCell = wsDetail.getCell('A1');
+      titleCell.value = `${clientName} - 室內裝修工程明細表`;
+      titleCell.font = { name: 'Microsoft JhengHei', size: 16, bold: true };
+      titleCell.alignment = { horizontal: 'center' };
+
+      // 表頭欄位樣式
+      let headerRow = wsDetail.getRow(3);
+      headerRow.values = ['項次', '工程項目 / 施工規格細項', '數量', '單位', '單價', '複價小計', '備註'];
+      headerRow.font = { name: 'Microsoft JhengHei', size: 10, bold: true };
+      headerRow.eachCell(cell => {
+        cell.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: 'FFE5E7EB' } };
+        cell.border = { top: {style:'thin'}, bottom: {style:'thin'}, left: {style:'thin'}, right: {style:'thin'} };
+        cell.alignment = { horizontal: 'center' };
+      });
+
+      let dRow = 4;
+      const grouped = {};
+      currentItems.forEach(item => {
+        if (!grouped[item.category]) grouped[item.category] = [];
+        grouped[item.category].push(item);
+      });
+
+      const chineseNums = ['一', '二', '三', '四', '五', '六', '七', '八', '九', '十', '十一', '十二'];
+      let cIdx = 0;
+
+      for (let cat of categoryOrder) {
+        if (!grouped[cat]) continue;
+        let items = grouped[cat];
+        let catSum = items.reduce((sum, item) => sum + item.priceSubtotal, 0);
+
+        // 大類分類列
+        let catRow = wsDetail.getRow(dRow++);
+        catRow.getCell(1).value = chineseNums[cIdx] || (cIdx+1);
+        catRow.getCell(2).value = cat;
+        catRow.font = { name: 'Microsoft JhengHei', size: 11, bold: true };
+        catRow.eachCell(cell => {
+          cell.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: 'FFF3F4F6' } };
+        });
+
+        // 該類別項下的各個明細
+        items.forEach((item, itemIdx) => {
+          let r = wsDetail.getRow(dRow++);
+          r.getCell(1).value = `${cIdx+1}-${itemIdx+1}`;
+          r.getCell(2).value = item.name;
+          r.getCell(3).value = item.qty;
+          r.getCell(4).value = item.unit;
+          r.getCell(5).value = item.price;
+          r.getCell(6).value = item.priceSubtotal;
+          r.getCell(7).value = item.note || '';
+
+          r.getCell(1).alignment = { horizontal: 'center' };
+          r.getCell(3).alignment = { horizontal: 'right' };
+          r.getCell(4).alignment = { horizontal: 'center' };
+          r.getCell(5).numFmt = '#,##0';
+          r.getCell(6).numFmt = '#,##0';
+          
+          r.font = { name: 'Microsoft JhengHei', size: 10 };
+          r.eachCell(cell => {
+            cell.border = { top: {style:'thin', color:{argb:'FFCCCCCC'}}, bottom: {style:'thin', color:{argb:'FFCCCCCC'}} };
+          });
+        });
+
+        // 小計列
+        let subRow = wsDetail.getRow(dRow++);
+        subRow.getCell(2).value = `${cat} 小計`;
+        subRow.getCell(6).value = catSum;
+        subRow.font = { name: 'Microsoft JhengHei', size: 10, bold: true };
+        subRow.getCell(2).alignment = { horizontal: 'right' };
+        subRow.getCell(6).numFmt = '#,##0';
+
+        dRow++; // 隔開一行
+        cIdx++;
+      }
+
+      // -------------------------------------------------------------
+      // 【分頁三：進度表】
+      // -------------------------------------------------------------
       if (wsSchedule) {
         wsSchedule.getCell('B4').value = `${clientName}【${projectLocation}】`;
         wsSchedule.getCell('F4').value = designerName;
@@ -910,7 +1003,7 @@
         });
       }
 
-      // 匯出下載
+      // 匯出 Excel
       const buffer = await wb.xlsx.writeBuffer();
       const fileName = clientName ? `裝修報價與進度表-${clientName}-${quoteDate}.xlsx` : `裝修報價-${quoteDate}.xlsx`;
       saveAs(new Blob([buffer]), fileName);
