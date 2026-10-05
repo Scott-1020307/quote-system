@@ -220,7 +220,7 @@
         </div>
 
         <div style="margin-top: 15px;">
-          <label>🏷️ 常用合約條款與注意事項：</label>
+          <label>🏷️️ 常用合約條款與注意事項：</label>
           <div style="font-size:13px; line-height:1.8;">
             <div><input type="checkbox" class="note-preset" value="1. 本估價單項目不包含燈具、家電設備與軟裝佈置。" checked onchange="updateCustomNotes()"> 1. 不包含燈具、家電與軟裝。</div>
             <div><input type="checkbox" class="note-preset" value="2. 施工期間工程保固一年，消耗性材料與人為因素除外。" checked onchange="updateCustomNotes()"> 2. 提供施工保固一年。</div>
@@ -767,7 +767,7 @@
     window.print();
   }
 
-  // ⭐ 終極完美解決 1.欄寬超過 2.第一頁填滿獨立 3.項次自動排序(1,2,3)
+  // ⭐ 終極完美套印函數 (絕對符合您的 4 大要求)
   async function exportQuoteToExcel() {
     if (currentItems.length === 0) { alert("請先加入報價項目！"); return; }
 
@@ -791,33 +791,28 @@
       let wsQuote = wb.getWorksheet('估價單0906') || wb.worksheets[0];
 
       // -----------------------------------------------------------------
-      // 📌 核心 1：精準縮減 A~G 欄寬，總和限制在 62，確保 100% 縮進 A4 一頁寬！
+      // 📌 核心 3：100% 保持您 template.xlsx 的原始欄寬比例與列印版面
       // -----------------------------------------------------------------
-      wsQuote.getColumn('A').width = 3.5;  // 項次 (一、二、三)
-      wsQuote.getColumn('B').width = 25.0; // 工程項目
-      wsQuote.getColumn('C').width = 5.5;  // 數量
-      wsQuote.getColumn('D').width = 5.5;  // 單位
-      wsQuote.getColumn('E').width = 10.0; // 單價
-      wsQuote.getColumn('F').width = 12.0; // 總價
-      wsQuote.getColumn('G').width = 10.5; // 備註 (絕對留在同一頁)
+      wsQuote.pageSetup = {
+        orientation: 'portrait',
+        paperSize: 9, // A4
+        fitToPage: true,
+        fitToWidth: 1, // 自動調配至剛好一頁寬，不變形過窄過寬
+        fitToHeight: 0,
+        horizontalCentered: true,
+        margins: { left: 0.4, right: 0.4, top: 0.4, bottom: 0.4, header: 0, footer: 0 }
+      };
 
-      // 列印範圍強行限定於 A1:G95
-      wsQuote.printArea = 'A1:G95';
-      wsQuote.pageSetup.fitToPage = true;
-      wsQuote.pageSetup.fitToWidth = 1;
-      wsQuote.pageSetup.fitToHeight = 0;
-      wsQuote.pageSetup.horizontalCentered = true;
-
-      // 📌 核心 2：在第 47 列下方設定實體 Page Break（強行把細項分開到第二頁）
+      // 📌 核心 4：在第 47 列（簽名欄完畢）下方精確切斷，第一頁總表獨立獨佔一頁！
       wsQuote.rowBreaks = [{ row: 47 }];
 
-      // 1. 抬頭資訊寫入
+      // 抬頭資訊寫入
       wsQuote.getCell('A6').value = `客戶名稱 : ${clientName}`;
       wsQuote.getCell('G6').value = contractNo;
       wsQuote.getCell('A7').value = `工程地點 : ${projectLocation}`;
       if (quoteDate) wsQuote.getCell('G7').value = quoteDate;
 
-      // 2. 清寫 48~95 列明細，且「絕不隱藏資料列（hidden=false）」，維持固定高度！
+      // 1. 先清空第 48~95 列細項舊內容，維持原格式
       for (let r = 48; r <= 95; r++) {
         let row = wsQuote.getRow(r);
         row.hidden = false;
@@ -831,14 +826,14 @@
         }
       }
 
-      // 目前選取的項目進行工種分組
+      // 依選取項目進行工種分組
       const grouped = {};
       currentItems.forEach(item => {
         if (!grouped[item.category]) grouped[item.category] = [];
         grouped[item.category].push(item);
       });
 
-      // 5 大工種列位對照
+      // 5 大工種定義對照
       const catConfig = [
         { cat: "水電工程", mainRow: 11, headerRow: 48, start: 49, maxCount: 8, subtotalRow: 57, formula: 'SUM(F49:F56)' },
         { cat: "燈具工程", mainRow: 12, headerRow: 59, start: 60, maxCount: 2, subtotalRow: 62, formula: 'SUM(F60:F61)' },
@@ -851,68 +846,95 @@
       const categoryTotals = {};
       let activeOrderIndex = 0;
 
+      // 清除工程管理費(17列)與營業稅(19列)最左邊的項次（不顯示 捌、玖）
+      wsQuote.getCell('A17').value = null;
+      wsQuote.getCell('A19').value = null;
+
       // -----------------------------------------------------------------
-      // 📌 核心 2 & 3：當工種沒選時寫入空白填滿；有選時重新進行 1, 2, 3 項次排序！
+      // 📌 核心 1 & 2：有選的工種顯示並依序編號 (一、二、三...)，數字 100% 精準連動入總表！
       // -----------------------------------------------------------------
       catConfig.forEach(cfg => {
         let items = grouped[cfg.cat] || [];
         let catSum = 0;
 
         if (items.length > 0) {
-          // 有選擇該工種：重新排序項次 (一、二、三...)
+          // 有選擇該工種：賦予項次 (一、二、三)
           let numStr = numMap[activeOrderIndex] || (activeOrderIndex + 1);
           activeOrderIndex++;
 
-          // 第一頁總表寫入重新排序的項次與名稱
+          // 顯示總表工種列與正確項次
+          wsQuote.getRow(cfg.mainRow).hidden = false;
           wsQuote.getCell(`A${cfg.mainRow}`).value = numStr;
           wsQuote.getCell(`B${cfg.mainRow}`).value = cfg.cat;
 
-          // 第二頁明細標題寫入重新排序的項次
+          // 顯示第二頁細項標題與小計列
+          wsQuote.getRow(cfg.headerRow).hidden = false;
+          wsQuote.getRow(cfg.subtotalRow).hidden = false;
           wsQuote.getCell(`A${cfg.headerRow}`).value = numStr;
           wsQuote.getCell(`B${cfg.headerRow}`).value = cfg.cat;
 
-          // 填入細項明細
+          // 填入工程細項
           items.forEach((item, idx) => {
             if (idx < cfg.maxCount) {
               let rNum = cfg.start + idx;
               let row = wsQuote.getRow(rNum);
+              row.hidden = false;
+
               row.getCell(2).value = item.name;
               row.getCell(3).value = Number(item.qty);
               row.getCell(4).value = item.unit;
               row.getCell(5).value = Number(item.price);
               row.getCell(6).value = { formula: `C${rNum}*E${rNum}`, result: Number(item.priceSubtotal) };
-              row.getCell(7).value = null; // 備註欄保持空白
+              row.getCell(7).value = null; // 備註欄強制留空
 
               catSum += Number(item.priceSubtotal);
             }
           });
 
+          // 隱藏該工種未使用的空白列
+          for (let unused = items.length; unused < cfg.maxCount; unused++) {
+            wsQuote.getRow(cfg.start + unused).hidden = true;
+          }
+
           categoryTotals[cfg.cat] = catSum;
           let subRow = wsQuote.getRow(cfg.subtotalRow);
           subRow.getCell(6).value = { formula: cfg.formula, result: catSum };
         } else {
-          // 📌 沒有選擇該工種：寫入【空白行】填滿，確保第一頁高度完全固定，明細絕不上移！
-          wsQuote.getCell(`A${cfg.mainRow}`).value = null;
-          wsQuote.getCell(`B${cfg.mainRow}`).value = `${cfg.cat} (無施作)`;
-          wsQuote.getCell(`E${cfg.mainRow}`).value = 0;
-          wsQuote.getCell(`F${cfg.mainRow}`).value = { formula: `C${cfg.mainRow}*E${cfg.mainRow}`, result: 0 };
-
-          // 第二頁明細標題也標示無施作
-          wsQuote.getCell(`A${cfg.headerRow}`).value = null;
-          wsQuote.getCell(`B${cfg.headerRow}`).value = `${cfg.cat} (無施作)`;
-          
+          // 沒選擇的工種：總表與明細區塊完全隱藏
+          wsQuote.getRow(cfg.mainRow).hidden = true;
+          wsQuote.getRow(cfg.headerRow).hidden = true;
+          wsQuote.getRow(cfg.subtotalRow).hidden = true;
+          for (let r = cfg.start; r < cfg.start + cfg.maxCount; r++) {
+            wsQuote.getRow(r).hidden = true;
+          }
           categoryTotals[cfg.cat] = 0;
-          let subRow = wsQuote.getRow(cfg.subtotalRow);
-          subRow.getCell(6).value = { formula: cfg.formula, result: 0 };
         }
       });
 
-      // 第一頁總表備註 G 欄全部強制維持空白
+      // 總表所有 G 欄備註保持空白
       for (let r = 11; r <= 15; r++) {
         wsQuote.getRow(r).getCell(7).value = null;
       }
 
-      // 第一頁總表與付款期別連動計算
+      // -----------------------------------------------------------------
+      // 📌 第一頁總表金額連動計算
+      // -----------------------------------------------------------------
+      wsQuote.getCell('E11').value = categoryTotals["水電工程"];
+      wsQuote.getCell('F11').value = { formula: 'C11*E11', result: categoryTotals["水電工程"] };
+
+      wsQuote.getCell('E12').value = { formula: 'F62', result: categoryTotals["燈具工程"] };
+      wsQuote.getCell('F12').value = { formula: 'C12*E12', result: categoryTotals["燈具工程"] };
+
+      wsQuote.getCell('E13').value = { formula: 'F72', result: categoryTotals["木作工程"] };
+      wsQuote.getCell('F13').value = { formula: 'C13*E13', result: categoryTotals["木作工程"] };
+
+      wsQuote.getCell('E14').value = { formula: 'F83', result: categoryTotals["油漆工程"] };
+      wsQuote.getCell('F14').value = { formula: 'C14*E14', result: categoryTotals["油漆工程"] };
+
+      wsQuote.getCell('E15').value = { formula: 'F92', result: categoryTotals["雜項工程"] };
+      wsQuote.getCell('F15').value = { formula: 'C15*E15', result: categoryTotals["雜項工程"] };
+
+      // 總金額與付款期別連動
       let totalPriceSum = currentItems.reduce((acc, i) => acc + Number(i.priceSubtotal), 0);
       let mgmtFee = Math.round(totalPriceSum * 0.1);
       let subWithMgmt = totalPriceSum + mgmtFee;
@@ -936,7 +958,7 @@
 
       wsQuote.getCell('C38').value = grandTotal;
 
-      // 下載匯出檔
+      // 匯出下載 Excel 檔案
       const buffer = await wb.xlsx.writeBuffer();
       const fileName = clientName ? `裝修報價單-${clientName}-${quoteDate}.xlsx` : `裝修報價單-${quoteDate}.xlsx`;
       saveAs(new Blob([buffer]), fileName);
