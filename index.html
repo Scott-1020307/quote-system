@@ -22,6 +22,7 @@
     .btn-success { background: #27ae60; color: #fff; }
     .btn-warning { background: #f39c12; color: #fff; }
     .btn-info { background: #2980b9; color: #fff; }
+    .btn-purple { background: #8e44ad; color: #fff; }
     .btn-danger { background: #e74c3c; color: #fff; padding: 6px 12px; }
     .mode-btn { background: #e2e8f0; color: #475569; font-size: 15px; padding: 10px 20px; border-radius: 6px; border: 2px solid transparent; transition: all 0.2s; }
     .mode-btn.active { background: #2c3e50; color: #fff; border-color: #1e293b; }
@@ -37,6 +38,9 @@
     .payment-box { background: #f8fafc; border: 1px solid #cbd5e1; padding: 12px; border-radius: 6px; margin-top: 10px; font-size: 13px; }
     .schedule-preview { background: #fffbe6; border: 1px solid #ffe58f; padding: 15px; border-radius: 6px; margin-top: 15px; }
     
+    /* 🧪 測試頁專用樣式 */
+    .test-page-panel { background: #f3e8ff; border: 2px solid #a855f7; border-radius: 8px; padding: 20px; margin-bottom: 20px; display: none; }
+
     /* 📄 高清 A4 原生列印 */
     #pdfPrintArea { display: none; }
     @media print {
@@ -58,9 +62,41 @@
 <div class="container">
   <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px;">
     <h1>🏢 室內裝修報價與工程進度管理系統</h1>
-    <div>
-      <button class="btn-warning" onclick="toggleAdminPanel()" style="margin-right:6px;">⚙️️ 新增常用選單</button>
+    <div style="display: flex; gap: 6px;">
+      <button class="btn-purple" onclick="toggleTestPage()">🧪 測試頁</button>
+      <button class="btn-warning" onclick="toggleAdminPanel()">⚙ 新增常用選單</button>
       <button class="btn-primary" onclick="toggleCostDisplay()">🔒 切換成本/毛利</button>
+    </div>
+  </div>
+
+  <!-- 🧪 測試頁主控板 -->
+  <div class="test-page-panel" id="testPagePanel">
+    <div style="display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid #c084fc; padding-bottom: 10px; margin-bottom: 15px;">
+      <h3 style="margin: 0; color: #6b21a8;">🧪 系統開發測試頁 (Test & Sandbox Mode)</h3>
+      <button class="btn-danger" onclick="toggleTestPage()" style="padding: 4px 10px; font-size: 12px;">✕ 關閉測試頁</button>
+    </div>
+    
+    <div class="grid-2">
+      <div>
+        <h4 style="margin-top:0; color:#581c87;">⚡ 一鍵自動帶入測試模擬資料</h4>
+        <p style="font-size: 13px; color: #6b21a8; line-height: 1.5;">
+          點擊下方按鈕，系統將自動填入模擬客戶資料、開工日期，並帶入測試項目，方便您直接測試 PDF 另存與套印 Excel 檔！
+        </p>
+        <div style="display: flex; gap: 10px;">
+          <button class="btn-purple" onclick="loadTestData()">🚀 自動帶入完整測試資料</button>
+          <button class="btn-warning" onclick="clearAllItemsData()">🗑️ 清空目前所有項目</button>
+        </div>
+      </div>
+
+      <div style="background: #ffffff; padding: 12px; border-radius: 6px; border: 1px solid #d8b4fe;">
+        <h4 style="margin-top:0; color:#581c87;">📊 系統目前運作狀態監視器</h4>
+        <ul style="font-size: 13px; line-height: 1.8; margin: 0; padding-left: 20px;">
+          <li><b>已儲存草稿數量：</b> <span id="testDraftCount">0</span> 份</li>
+          <li><b>當前報價項目總數：</b> <span id="testItemCount">0</span> 項</li>
+          <li><b>目前未含稅報價小計：</b> <span id="testSubtotalVal">$0</span></li>
+          <li><b>目前計算完工日：</b> <span id="testEndDateVal">-</span></li>
+        </ul>
+      </div>
     </div>
   </div>
 
@@ -318,7 +354,7 @@
     ],
     "拆除工程": [
       { name: "全室舊裝潢/家具拆除", unit: "式", cost: 20000, price: 35000, note: "含廢棄物清運" },
-      { name: "隔間牆/泥作打磚拆除", unit: "坪", cost: 2500, price: 4500, note: "含含粗拆與清運" }
+      { name: "隔間牆/泥作打磚拆除", unit: "坪", cost: 2500, price: 4500, note: "含粗拆與清運" }
     ],
     "泥作工程": [
       { name: "牆面/地坪水泥砂漿打底", unit: "坪", cost: 2500, price: 4500, note: "泥作粉刷打平" },
@@ -361,7 +397,50 @@
     updateCustomNotes();
     refreshDraftsDropdown();
     initCategoryDropdowns();
+    updateTestMonitor();
   };
+
+  function toggleTestPage() {
+    const panel = document.getElementById('testPagePanel');
+    panel.style.display = (panel.style.display === 'block') ? 'none' : 'block';
+    updateTestMonitor();
+  }
+
+  function loadTestData() {
+    document.getElementById('clientName').value = '陳大明 (測試客戶)';
+    document.getElementById('projectLocation').value = '台北市信義區測試路 88 號 10 樓';
+    document.getElementById('contractNo').value = 'TEST-2026-001';
+    document.getElementById('designerName').value = '陳昭宇 設計師';
+    document.getElementById('startDate').valueAsDate = new Date();
+
+    currentItems = [
+      { id: 1, category: "保護工程", name: "公共空間保護-電梯/梯廳", qty: 1, unit: "式", cost: 2500, costSubtotal: 2500, price: 4500, priceSubtotal: 4500, profit: 2000, note: "夾板+防潮布雙層保護" },
+      { id: 2, category: "拆除工程", name: "全室舊裝潢/家具拆除", qty: 1, unit: "式", cost: 20000, costSubtotal: 20000, price: 35000, priceSubtotal: 35000, profit: 15000, note: "含廢棄物清運" },
+      { id: 3, category: "水電工程", name: "新增插座 / 開關", qty: 6, unit: "組", cost: 2500, costSubtotal: 15000, price: 4000, priceSubtotal: 24000, profit: 9000, note: "含配管拉線" },
+      { id: 4, category: "木作工程", name: "平釘天花板", qty: 25, unit: "坪", cost: 4200, costSubtotal: 105000, price: 6200, priceSubtotal: 155000, profit: 50000, note: "日本麗仕矽酸鈣板+永新角材" },
+      { id: 5, category: "油漆工程", name: "全室天花板/牆面油漆過色", qty: 25, unit: "坪", cost: 1500, costSubtotal: 37500, price: 2400, priceSubtotal: 60000, profit: 22500, note: "得利乳膠漆刷塗" }
+    ];
+
+    renderQuoteTable();
+    alert("已成功載入模擬測試資料！您可以直接測試列印與匯出功能。");
+  }
+
+  function clearAllItemsData() {
+    if (confirm("確定要清空目前報價單上的所有項目嗎？")) {
+      currentItems = [];
+      renderQuoteTable();
+    }
+  }
+
+  function updateTestMonitor() {
+    document.getElementById('testDraftCount').textContent = localStorage.length;
+    document.getElementById('testItemCount').textContent = currentItems.length;
+    let subtotal = currentItems.reduce((sum, i) => sum + i.priceSubtotal, 0);
+    document.getElementById('testSubtotalVal').textContent = `$${subtotal.toLocaleString()}`;
+    
+    let summaryText = document.getElementById('scheduleSummaryText').textContent;
+    document.getElementById('testEndDateVal').textContent = summaryText.includes('預計完工日') ? summaryText.split('(')[0].replace('預計完工日：', '') : '-';
+  }
 
   function switchMode(mode) {
     document.querySelectorAll('.mode-btn').forEach(btn => btn.classList.remove('active'));
@@ -510,6 +589,7 @@
         select.appendChild(opt);
       }
     }
+    updateTestMonitor();
   }
 
   function loadSelectedDraft() {
@@ -643,6 +723,7 @@
     });
     renderSummary();
     calculateSchedulePreview();
+    updateTestMonitor();
   }
 
   function renderSummary() {
@@ -719,7 +800,7 @@
     window.print();
   }
 
-  // ⭐ 完全校正 A4 寬度與強制分頁的 Excel 匯出
+  // ⭐ 完全還原原始 template.xlsx 範本樣式：僅填入對應儲存格，絕不改變原檔結構與排版
   async function exportQuoteToExcel() {
     if (currentItems.length === 0) { alert("請先加入報價項目！"); return; }
 
@@ -737,55 +818,55 @@
       }
       const arrayBuffer = await response.arrayBuffer();
 
-      const sourceWb = new ExcelJS.Workbook();
-      await sourceWb.xlsx.load(arrayBuffer);
+      const wb = new ExcelJS.Workbook();
+      await wb.xlsx.load(arrayBuffer);
       
-      let srcQuoteSheet = sourceWb.getWorksheet('估價單0906') || sourceWb.worksheets[0];
-      let srcScheduleSheet = sourceWb.getWorksheet('裝修工程進度表');
+      let wsQuote = wb.getWorksheet('估價單0906') || wb.worksheets[0];
+      let wsSchedule = wb.getWorksheet('裝修工程進度表');
 
-      const outWb = new ExcelJS.Workbook();
-      
-      // ===== Sheet 1: 估價單 =====
-      const outQuoteSheet = outWb.addWorksheet('估價單');
-      
-      // ⭐ 1. 精準收納至 A4 單頁寬度 (收窄 B 欄與 G 欄，決不讓備註爆頁)
-      const tunedWidths = [6, 20, 6, 5, 11, 13, 16];
-      for (let i = 1; i <= 7; i++) outQuoteSheet.getColumn(i).width = tunedWidths[i-1];
-      
-      outQuoteSheet.pageSetup = {
-        paperSize: 9, // A4
-        orientation: 'portrait',
-        fitToPage: true,
-        fitToWidth: 1,
-        fitToHeight: 0
-      };
+      // 1. 填寫抬頭與合約基本資訊
+      wsQuote.getCell('A6').value = `客戶名稱 :${clientName}`;
+      wsQuote.getCell('G6').value = contractNo;
+      wsQuote.getCell('A7').value = `工程地點 :${projectLocation}`;
+      wsQuote.getCell('G7').value = quoteDate;
 
-      // ⭐ 2. 清空第 1~40 列，乾乾淨淨只留第 1 頁「總報價與簽名區」
-      for (let r = 1; r <= 40; r++) {
-        const srcRow = srcQuoteSheet.getRow(r);
-        const outRow = outQuoteSheet.getRow(r);
-        outRow.height = srcRow.height || 22;
+      // 2. 清空第 8 ~ 26 列原本範本的文字與數值內容，但保留原有的格式與公式
+      for (let r = 8; r <= 26; r++) {
         for (let c = 1; c <= 7; c++) {
-          const srcCell = srcRow.getCell(c);
-          const outCell = outRow.getCell(c);
-          if (r <= 7 || (r >= 27 && r <= 40)) {
-            outCell.value = srcCell.value;
-            if (srcCell.style) outCell.style = JSON.parse(JSON.stringify(srcCell.style));
-          } else {
-            outCell.value = ''; // 清空原本 8~26 列的範例項目，保持第一頁為純淨總表
-          }
+          wsQuote.getRow(r).getCell(c).value = null;
         }
       }
 
-      if (srcQuoteSheet.model && srcQuoteSheet.model.merges) {
-        srcQuoteSheet.model.merges.forEach(range => {
-          const topRow = parseInt(range.split(':')[0].replace(/[^0-9]/g, ''));
-          if (topRow <= 7 || (topRow >= 27 && topRow <= 40)) {
-            try { outQuoteSheet.mergeCells(range); } catch(e){}
-          }
-        });
-      }
+      // 3. 計算各大類工程的小計金額
+      const categoryTotals = {};
+      categoryOrder.forEach(cat => { categoryTotals[cat] = 0; });
+      currentItems.forEach(item => {
+        if (!categoryTotals[item.category]) categoryTotals[item.category] = 0;
+        categoryTotals[item.category] += item.priceSubtotal;
+      });
 
+      // 4. 只將有項目的「工種大類標題」與金額依序填入總表（8~26列）
+      let startRow = 8;
+      let displayIndex = 1;
+
+      categoryOrder.forEach(cat => {
+        let catTotal = categoryTotals[cat];
+        if (catTotal > 0) {
+          let row = wsQuote.getRow(startRow);
+          row.getCell(1).value = displayIndex;
+          row.getCell(2).value = cat; // 僅顯示大標題名稱 (例如：保護工程)
+          row.getCell(3).value = 1;
+          row.getCell(4).value = '式';
+          row.getCell(5).value = catTotal;
+          row.getCell(6).value = catTotal;
+          row.getCell(7).value = '詳如工程明細表';
+
+          startRow++;
+          displayIndex++;
+        }
+      });
+
+      // 5. 填寫工程小計與總額摘要（由原檔公式自動接手計算，確保最精準）
       let totalPriceSum = currentItems.reduce((acc, i) => acc + i.priceSubtotal, 0);
       const hasMgmt = document.getElementById('chkManagementFee').checked;
       const hasTax = document.getElementById('chkTax').checked;
@@ -793,173 +874,46 @@
       const taxFee = hasTax ? Math.round((totalPriceSum + mgmtFee) * 0.05) : 0;
       const finalTotal = totalPriceSum + mgmtFee + taxFee;
 
-      // 第一頁抬頭與金額摘要
-      outQuoteSheet.getCell('A6').value = `客戶名稱 :${clientName}`;
-      outQuoteSheet.getCell('G6').value = contractNo;
-      outQuoteSheet.getCell('A7').value = `工程地點 :${projectLocation}`;
-      outQuoteSheet.getCell('G7').value = quoteDate;
+      wsQuote.getCell('F27').value = totalPriceSum;
+      wsQuote.getCell('F28').value = mgmtFee;
+      wsQuote.getCell('F29').value = taxFee;
+      wsQuote.getCell('F30').value = finalTotal;
+      wsQuote.getCell('C40').value = finalTotal;
 
-      outQuoteSheet.getCell('F27').value = totalPriceSum;
-      outQuoteSheet.getCell('F28').value = mgmtFee;
-      outQuoteSheet.getCell('F29').value = taxFee;
-      outQuoteSheet.getCell('F30').value = finalTotal;
-      outQuoteSheet.getCell('C40').value = finalTotal;
-
-      // 第一頁頁尾醒目簽名欄 (空間寬敞不擠壓)
-      outQuoteSheet.getRow(38).height = 25;
-      outQuoteSheet.getCell('A38').value = '客戶簽認與簽約蓋章：';
-      outQuoteSheet.getCell('A38').font = { bold: true, size: 12 };
-
-      outQuoteSheet.getRow(39).height = 35;
-      outQuoteSheet.getCell('B39').value = '客戶簽名：___________________';
-      outQuoteSheet.getCell('F39').value = '設計公司蓋章：___________________';
-      outQuoteSheet.getCell('B39').font = { bold: true, size: 11 };
-      outQuoteSheet.getCell('F39').font = { bold: true, size: 11 };
-
-      // ⭐ 3. 第一頁末端設定「強制分頁符號」！
-      outQuoteSheet.getRow(40).pageBreak = true;
-
-      // ===== 第二頁開始：工程項目細項明細 =====
-      let currentDetailRow = 41;
-
-      let rPage2Header = outQuoteSheet.getRow(currentDetailRow++);
-      rPage2Header.height = 25;
-      rPage2Header.getCell(1).value = '項次';
-      rPage2Header.getCell(2).value = '工 種 施 工 項 目 明 細';
-      rPage2Header.getCell(3).value = '數量';
-      rPage2Header.getCell(4).value = '單位';
-      rPage2Header.getCell(5).value = '單價';
-      rPage2Header.getCell(6).value = '複價小計';
-      rPage2Header.getCell(7).value = '備註說明';
-
-      const fullGridBorder = {
-        top: { style: 'thin', color: { argb: 'FF000000' } }, left: { style: 'thin', color: { argb: 'FF000000' } },
-        bottom: { style: 'thin', color: { argb: 'FF000000' } }, right: { style: 'thin', color: { argb: 'FF000000' } }
-      };
-
-      for (let c = 1; c <= 7; c++) {
-        let cell = rPage2Header.getCell(c);
-        cell.border = fullGridBorder;
-        cell.font = { bold: true, size: 11 };
-        cell.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: 'FFE5E7EB' } };
-        cell.alignment = { horizontal: 'center', vertical: 'center' };
-      }
-
-      const grouped = {};
-      currentItems.forEach(item => {
-        if (!grouped[item.category]) grouped[item.category] = [];
-        grouped[item.category].push(item);
-      });
-
-      const numToChinese = ['一', '二', '三', '四', '五', '六', '七', '八', '九', '十', '十一', '十二'];
-      let catIdx = 0;
-
-      for (let cat of categoryOrder) {
-        if (!grouped[cat]) continue;
-        let items = grouped[cat];
-        let catSum = items.reduce((sum, item) => sum + item.priceSubtotal, 0);
-
-        let rHeader = outQuoteSheet.getRow(currentDetailRow++);
-        rHeader.height = 22;
-        rHeader.getCell(1).value = numToChinese[catIdx] || (catIdx+1);
-        rHeader.getCell(2).value = cat;
-        for (let c = 1; c <= 7; c++) {
-          let cell = rHeader.getCell(c);
-          cell.border = fullGridBorder;
-          cell.font = { bold: true, size: 11 };
-          cell.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: 'FFF3F4F6' } };
-        }
-
-        items.forEach(item => {
-          let rItem = outQuoteSheet.getRow(currentDetailRow++);
-          rItem.height = 20;
-          rItem.getCell(1).value = '';
-          rItem.getCell(2).value = `  ${item.name}`;
-          rItem.getCell(3).value = item.qty;
-          rItem.getCell(4).value = item.unit;
-          rItem.getCell(5).value = item.price;
-          rItem.getCell(6).value = item.priceSubtotal;
-          rItem.getCell(7).value = item.note || '';
-
-          for (let c = 1; c <= 7; c++) {
-            let cell = rItem.getCell(c);
-            cell.border = fullGridBorder;
-            cell.alignment = { wrapText: true, vertical: 'center' };
-            if (c === 3 || c === 5 || c === 6) cell.alignment.horizontal = 'right';
-            if (c === 1 || c === 4) cell.alignment.horizontal = 'center';
-          }
-        });
-
-        let rSubtotal = outQuoteSheet.getRow(currentDetailRow++);
-        rSubtotal.height = 22;
-        rSubtotal.getCell(2).value = '小計';
-        rSubtotal.getCell(6).value = catSum;
-        for (let c = 1; c <= 7; c++) {
-          let cell = rSubtotal.getCell(c);
-          cell.border = fullGridBorder;
-          cell.font = { bold: true };
-          if (c === 2 || c === 6) cell.alignment = { horizontal: 'right', vertical: 'center' };
-        }
-        catIdx++;
-      }
-
-      // ===== 最尾頁：工程注意事項 =====
-      currentDetailRow += 2;
+      // 6. 填寫注意事項（保持在 A31 ~ A34 範圍）
       let notesText = document.getElementById('customNotesText').value;
       if (notesText) {
-        let rNoteHeader = outQuoteSheet.getRow(currentDetailRow++);
-        rNoteHeader.getCell(1).value = '【工程注意事項與合約條款】';
-        rNoteHeader.font = { bold: true, size: 11 };
-        notesText.split('\n').forEach(line => {
-          let rN = outQuoteSheet.getRow(currentDetailRow++);
-          rN.getCell(2).value = line;
-          rN.font = { size: 10 };
+        let lines = notesText.split('\n');
+        lines.forEach((line, i) => {
+          if (31 + i <= 34) {
+            wsQuote.getCell(`A${31 + i}`).value = line;
+          }
         });
       }
 
-      // ===== Sheet 2: 裝修工程進度表 =====
-      if (srcScheduleSheet) {
-        const outScheduleSheet = outWb.addWorksheet('裝修工程進度表');
-        outScheduleSheet.pageSetup = { paperSize: 9, orientation: 'landscape', fitToPage: true, fitToWidth: 1 };
-
-        for (let r = 1; r <= Math.min(srcScheduleSheet.maxRow, 60); r++) {
-          const srcRow = srcScheduleSheet.getRow(r);
-          const outRow = outScheduleSheet.getRow(r);
-          if (srcRow.height) outRow.height = srcRow.height;
-          for (let c = 1; c <= 15; c++) {
-            const srcCell = srcRow.getCell(c);
-            const outCell = outScheduleSheet.getRow(r).getCell(c);
-            outCell.value = srcCell.value;
-            if (srcCell.style) outCell.style = JSON.parse(JSON.stringify(srcCell.style));
-          }
-        }
-
-        if (srcScheduleSheet.model && srcScheduleSheet.model.merges) {
-          srcScheduleSheet.model.merges.forEach(range => {
-            try { outScheduleSheet.mergeCells(range); } catch(e){}
-          });
-        }
-
-        outScheduleSheet.getCell('B4').value = `${clientName}【${projectLocation}】`;
-        outScheduleSheet.getCell('F4').value = designerName;
+      // 7. 填寫工程進度表（如有該工作表）
+      if (wsSchedule) {
+        wsSchedule.getCell('B4').value = `${clientName}【${projectLocation}】`;
+        wsSchedule.getCell('F4').value = designerName;
 
         const scheduleList = calculateSchedulePreview();
         let schedRow = 11;
         scheduleList.forEach(s => {
           if (schedRow <= 22) {
-            outScheduleSheet.getCell(`A${schedRow}`).value = s.idx;
-            outScheduleSheet.getCell(`B${schedRow}`).value = `${s.idx}. ${s.catName}`;
-            outScheduleSheet.getCell(`C${schedRow}`).value = '未開工';
-            outScheduleSheet.getCell(`D${schedRow}`).value = s.days;
-            outScheduleSheet.getCell(`E${schedRow}`).value = s.startDateStr.split(' ')[0];
-            outScheduleSheet.getCell(`F${schedRow}`).value = s.endDateStr.split(' ')[0];
-            outScheduleSheet.getCell(`G${schedRow}`).value = s.note;
+            wsSchedule.getCell(`A${schedRow}`).value = s.idx;
+            wsSchedule.getCell(`B${schedRow}`).value = `${s.idx}. ${s.catName}`;
+            wsSchedule.getCell(`C${schedRow}`).value = '未開工';
+            wsSchedule.getCell(`D${schedRow}`).value = s.days;
+            wsSchedule.getCell(`E${schedRow}`).value = s.startDateStr.split(' ')[0];
+            wsSchedule.getCell(`F${schedRow}`).value = s.endDateStr.split(' ')[0];
+            wsSchedule.getCell(`G${schedRow}`).value = s.note;
             schedRow++;
           }
         });
       }
 
-      const buffer = await outWb.xlsx.writeBuffer();
+      // 下載匯出
+      const buffer = await wb.xlsx.writeBuffer();
       const fileName = clientName ? `裝修報價與進度表-${clientName}-${quoteDate}.xlsx` : `裝修報價-${quoteDate}.xlsx`;
       saveAs(new Blob([buffer]), fileName);
     } catch(err) {
