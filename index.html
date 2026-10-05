@@ -69,7 +69,7 @@
     </div>
   </div>
 
-  <!-- 🧪 測試頁主控板 (可點選右上角 [🧪 測試頁] 切換顯示/隱藏) -->
+  <!-- 🧪 測試頁主控板 -->
   <div class="test-page-panel" id="testPagePanel">
     <div style="display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid #c084fc; padding-bottom: 10px; margin-bottom: 15px;">
       <h3 style="margin: 0; color: #6b21a8;">🧪 系統開發測試頁 (Test & Sandbox Mode)</h3>
@@ -118,7 +118,7 @@
         </select>
         <button class="btn-info" onclick="loadSelectedDraft()">📖 載入草稿</button>
         <button class="btn-success" onclick="saveCurrentDraft()">💾 儲存目前報價</button>
-        <button class="btn-danger" onclick="deleteSelectedDraft()" style="padding: 8px 12px;">🗑️ 刪除</button>
+        <button class="btn-danger" onclick="deleteSelectedDraft()" style="padding: 8px 12px;">🗑️️ 刪除</button>
       </div>
     </div>
   </div>
@@ -800,7 +800,7 @@
     window.print();
   }
 
-  // ⭐ 簡單穩定版：直接套用 template.xlsx 原檔格式，不重構欄寬與不隨意分頁
+  // ⭐ 套印版本：第一頁總表僅列出「大類別名稱與小計金額」，簡潔不雜亂
   async function exportQuoteToExcel() {
     if (currentItems.length === 0) { alert("請先加入報價項目！"); return; }
 
@@ -830,29 +830,42 @@
       wsQuote.getCell('A7').value = `工程地點 :${projectLocation}`;
       wsQuote.getCell('G7').value = quoteDate;
 
-      // 2. 填寫項目明細（從第 8 列開始直接依序填入）
-      let startRow = 8;
-      
-      // 先清空 8 ~ 26 列原本範本的文字數據，保持樣式
+      // 2. 清空 8 ~ 26 列範本預設內容，確保乾淨
       for (let r = 8; r <= 26; r++) {
         for (let c = 1; c <= 7; c++) {
           wsQuote.getRow(r).getCell(c).value = '';
         }
       }
 
-      currentItems.forEach((item, index) => {
-        let r = startRow + index;
-        let row = wsQuote.getRow(r);
-        row.getCell(1).value = index + 1;
-        row.getCell(2).value = `${item.category} - ${item.name}`;
-        row.getCell(3).value = item.qty;
-        row.getCell(4).value = item.unit;
-        row.getCell(5).value = item.price;
-        row.getCell(6).value = item.priceSubtotal;
-        row.getCell(7).value = item.note || '';
+      // 3. 第一頁總表：將同類別項目進行加總，只列出「大標題名稱」與「類別總金額」
+      const categoryTotals = {};
+      categoryOrder.forEach(cat => { categoryTotals[cat] = 0; });
+      currentItems.forEach(item => {
+        if (!categoryTotals[item.category]) categoryTotals[item.category] = 0;
+        categoryTotals[item.category] += item.priceSubtotal;
       });
 
-      // 3. 計算並填寫金額總計
+      let startRow = 8;
+      let displayIndex = 1;
+
+      categoryOrder.forEach(cat => {
+        let catTotal = categoryTotals[cat];
+        if (catTotal > 0) {
+          let row = wsQuote.getRow(startRow);
+          row.getCell(1).value = displayIndex;
+          row.getCell(2).value = cat; // 僅顯示工種大類標題 (例如: 保護工程)
+          row.getCell(3).value = 1;
+          row.getCell(4).value = '式';
+          row.getCell(5).value = catTotal;
+          row.getCell(6).value = catTotal;
+          row.getCell(7).value = '詳如工程明細表';
+
+          startRow++;
+          displayIndex++;
+        }
+      });
+
+      // 4. 計算並填寫金額金額摘要
       let totalPriceSum = currentItems.reduce((acc, i) => acc + i.priceSubtotal, 0);
       const hasMgmt = document.getElementById('chkManagementFee').checked;
       const hasTax = document.getElementById('chkTax').checked;
@@ -866,7 +879,7 @@
       wsQuote.getCell('F30').value = finalTotal;
       wsQuote.getCell('C40').value = finalTotal;
 
-      // 4. 填寫工程注意事項
+      // 5. 填寫工程注意事項
       let notesText = document.getElementById('customNotesText').value;
       if (notesText) {
         let lines = notesText.split('\n');
@@ -877,7 +890,7 @@
         });
       }
 
-      // 5. 填寫工程進度表
+      // 6. 填寫工程進度表
       if (wsSchedule) {
         wsSchedule.getCell('B4').value = `${clientName}【${projectLocation}】`;
         wsSchedule.getCell('F4').value = designerName;
