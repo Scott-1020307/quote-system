@@ -178,7 +178,6 @@
 <script>
   const categoryOrder = ["保護工程", "拆除工程", "泥作工程", "水電工程", "燈具工程", "木作工程", "油漆工程", "玻璃工程", "木地板工程", "雜項工程"];
 
-  // 三大案場資料庫 (整合亞昕向陽、國源可鄭小姐、竹城喜多實體項目)
   const masterItemDatabase = {
     simple: {
       "保護工程": [
@@ -274,7 +273,7 @@
   };
 
   let currentMode = 'new';
-  let itemDatabase = JSON.parse(localStorage.getItem('quote_custom_database')) || masterItemDatabase[currentMode];
+  let itemDatabase = masterItemDatabase[currentMode];
   let currentItems = [];
 
   window.onload = function() {
@@ -289,7 +288,6 @@
     if(mode === 'new') document.getElementById('btnModeNew').classList.add('active');
     if(mode === 'old') document.getElementById('btnModeOld').classList.add('active');
 
-    // 載入該模式資料庫
     itemDatabase = masterItemDatabase[mode];
     initCategoryDropdowns();
   }
@@ -502,7 +500,14 @@
       });
 
       const numToChinese = ['一', '二', '三', '四', '五', '六', '七', '八', '九', '十'];
-      const thinBorder = { top:{style:'thin'}, left:{style:'thin'}, bottom:{style:'thin'}, right:{style:'thin'} };
+      
+      // ⭐ 定義完整清晰的實線邊框 (包含內框格線)
+      const fullGridBorder = {
+        top: { style: 'thin', color: { argb: 'FF000000' } },
+        left: { style: 'thin', color: { argb: 'FF000000' } },
+        bottom: { style: 'thin', color: { argb: 'FF000000' } },
+        right: { style: 'thin', color: { argb: 'FF000000' } }
+      };
 
       let catIdx = 0;
       for (let cat of categoryOrder) {
@@ -510,13 +515,20 @@
         let items = grouped[cat];
         let catSum = items.reduce((sum, item) => sum + item.priceSubtotal, 0);
 
+        // ⭐ 大類標題列：補齊所有 A~G 欄邊框
         let rHeader = outSheet.getRow(currentDetailRow++);
         rHeader.getCell(1).value = numToChinese[catIdx] || (catIdx+1);
         rHeader.getCell(2).value = cat;
-        rHeader.font = { bold: true };
+        for (let c = 1; c <= 7; c++) {
+          let cell = rHeader.getCell(c);
+          cell.border = fullGridBorder;
+          cell.font = { bold: true, size: 11 };
+        }
 
+        // ⭐ 明細列：強制每格 (A~G 欄) 都加上獨立內框實線
         items.forEach(item => {
           let rItem = outSheet.getRow(currentDetailRow++);
+          rItem.getCell(1).value = ''; // 項次留空
           rItem.getCell(2).value = `  ${item.name}`;
           rItem.getCell(3).value = item.qty;
           rItem.getCell(4).value = item.unit;
@@ -524,17 +536,24 @@
           rItem.getCell(6).value = item.priceSubtotal;
           rItem.getCell(7).value = item.note || '';
 
-          for(let c = 1; c <= 7; c++) {
-            rItem.getCell(c).border = thinBorder;
+          for (let c = 1; c <= 7; c++) {
+            let cell = rItem.getCell(c);
+            cell.border = fullGridBorder;
+            // 金額與數量置右，單位與項次置中
+            if (c === 3 || c === 5 || c === 6) cell.alignment = { horizontal: 'right' };
+            if (c === 1 || c === 4) cell.alignment = { horizontal: 'center' };
           }
         });
 
+        // ⭐ 工種小計列：全欄線條與粗體
         let rSubtotal = outSheet.getRow(currentDetailRow++);
         rSubtotal.getCell(2).value = '小計';
         rSubtotal.getCell(6).value = catSum;
-        rSubtotal.font = { bold: true };
-        for(let c = 1; c <= 7; c++) {
-          rSubtotal.getCell(c).border = thinBorder;
+        for (let c = 1; c <= 7; c++) {
+          let cell = rSubtotal.getCell(c);
+          cell.border = fullGridBorder;
+          cell.font = { bold: true };
+          if (c === 2 || c === 6) cell.alignment = { horizontal: 'right' };
         }
 
         catIdx++;
