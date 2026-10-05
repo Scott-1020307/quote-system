@@ -38,9 +38,19 @@
     .payment-box { background: #f8fafc; border: 1px solid #cbd5e1; padding: 12px; border-radius: 6px; margin-top: 10px; font-size: 13px; }
     .schedule-preview { background: #fffbe6; border: 1px solid #ffe58f; padding: 15px; border-radius: 6px; margin-top: 15px; }
     
-    #pdfPrintContainer { display: none; background: #fff; padding: 20px; font-size: 13px; }
+    #pdfPrintContainer {
+      position: absolute;
+      left: -9999px;
+      top: 0;
+      width: 794px;
+      background: #fff;
+      padding: 25px;
+      box-sizing: border-box;
+      font-family: "PingFang TC", "Microsoft JhengHei", sans-serif;
+      color: #000;
+    }
     #pdfPrintContainer table { width: 100%; border-collapse: collapse; margin-top: 10px; }
-    #pdfPrintContainer th, #pdfPrintContainer td { border: 1px solid #333; padding: 6px 8px; font-size: 12px; }
+    #pdfPrintContainer th, #pdfPrintContainer td { border: 1px solid #000; padding: 6px 8px; font-size: 12px; }
     #pdfPrintContainer th { background: #f0f0f0; }
   </style>
 </head>
@@ -217,59 +227,70 @@
 </div>
 
 <div id="pdfPrintContainer">
-  <div style="text-align: center; border-bottom: 2px solid #333; padding-bottom: 10px; margin-bottom: 15px;">
-    <h2 style="margin: 0; font-size: 20px;">室 內 裝 修 報 價 單</h2>
-  </div>
-  <table style="width: 100%; border: none; margin-bottom: 15px; font-size: 13px;">
-    <tr style="border: none;">
-      <td style="border: none; padding: 3px 0;"><b>客戶姓名：</b> <span id="pdfClientName"></span></td>
-      <td style="border: none; padding: 3px 0;"><b>合約編號：</b> <span id="pdfContractNo"></span></td>
-    </tr>
-    <tr style="border: none;">
-      <td style="border: none; padding: 3px 0;"><b>工程地點：</b> <span id="pdfProjectLocation"></span></td>
-      <td style="border: none; padding: 3px 0;"><b>報價日期：</b> <span id="pdfQuoteDate"></span></td>
-    </tr>
-    <tr style="border: none;">
-      <td style="border: none; padding: 3px 0;"><b>預計開工：</b> <span id="pdfStartDate"></span></td>
-      <td style="border: none; padding: 3px 0;"><b>設計師：</b> <span id="pdfDesignerName"></span></td>
-    </tr>
-  </table>
-
-  <table style="width: 100%; border-collapse: collapse;">
-    <thead>
-      <tr style="background: #e5e7eb;">
-        <th style="width: 15%;">工種類別</th>
-        <th style="width: 35%;">工程項目 / 施工規格細項</th>
-        <th style="width: 10%;">數量</th>
-        <th style="width: 8%;">單位</th>
-        <th style="width: 14%;">單價</th>
-        <th style="width: 18%;">複價小計</th>
-      </tr>
-    </thead>
-    <tbody id="pdfTableBody"></tbody>
-  </table>
-
-  <div style="margin-top: 15px; display: flex; justify-content: space-between;">
-    <div style="width: 55%; font-size: 11px;">
-      <h4 style="margin: 0 0 5px 0;">📑 工程付款期別：</h4>
-      <div id="pdfPaymentBox" style="background: #f9fafb; border: 1px solid #ddd; padding: 8px; border-radius: 4px;"></div>
-      <h4 style="margin: 10px 0 5px 0;">🏷️️ 注意事項與條款：</h4>
-      <div id="pdfNotesBox" style="white-space: pre-wrap; color: #444; line-height: 1.4;"></div>
+  <!-- 第一頁：總表 + 付款資訊 + 簽名欄 -->
+  <div style="page-break-after: always;">
+    <div style="text-align: center; border-bottom: 2px solid #000; padding-bottom: 10px; margin-bottom: 15px;">
+      <h2 style="margin: 0; font-size: 22px; letter-spacing: 2px;">室 內 裝 修 報 價 總 表</h2>
     </div>
+    <table style="width: 100%; border: none; margin-bottom: 20px; font-size: 13px;">
+      <tr style="border: none;">
+        <td style="border: none; padding: 4px 0;"><b>客戶姓名：</b> <span id="pdfClientName"></span></td>
+        <td style="border: none; padding: 4px 0;"><b>合約編號：</b> <span id="pdfContractNo"></span></td>
+      </tr>
+      <tr style="border: none;">
+        <td style="border: none; padding: 4px 0;"><b>工程地點：</b> <span id="pdfProjectLocation"></span></td>
+        <td style="border: none; padding: 4px 0;"><b>報價日期：</b> <span id="pdfQuoteDate"></span></td>
+      </tr>
+      <tr style="border: none;">
+        <td style="border: none; padding: 4px 0;"><b>預計開工：</b> <span id="pdfStartDate"></span></td>
+        <td style="border: none; padding: 4px 0;"><b>設計師：</b> <span id="pdfDesignerName"></span></td>
+      </tr>
+    </table>
 
-    <div style="width: 40%; text-align: right; font-size: 13px;">
-      <table style="width: 100%; border-collapse: collapse;">
-        <tr><td style="border:none; text-align:right;"><b>工程小計：</b></td><td style="border:none; text-align:right; width:100px;" id="pdfSubtotal">$0</td></tr>
-        <tr><td style="border:none; text-align:right;"><b>監工管理費(10%)：</b></td><td style="border:none; text-align:right;" id="pdfMgmt">$0</td></tr>
-        <tr><td style="border:none; text-align:right;"><b>營業稅(5%)：</b></td><td style="border:none; text-align:right;" id="pdfTax">$0</td></tr>
-        <tr style="border-top: 2px solid #333;"><td style="border:none; text-align:right; font-size:16px;"><b>報價總計：</b></td><td style="border:none; text-align:right; font-size:16px; color:#c0392b;" id="pdfTotal">$0</td></tr>
+    <div style="background: #f8fafc; border: 1px solid #000; padding: 15px; margin-bottom: 20px;">
+      <h3 style="margin-top:0; border-bottom: 1px solid #ccc; padding-bottom: 5px;">💰 報價總計摘要</h3>
+      <table style="width: 100%; border: none; font-size: 14px;">
+        <tr style="border:none;"><td style="border:none; padding:5px 0;">工程小計：</td><td style="border:none; text-align:right;" id="pdfSubtotal">$0</td></tr>
+        <tr style="border:none;"><td style="border:none; padding:5px 0;">監工管理費 (10%)：</td><td style="border:none; text-align:right;" id="pdfMgmt">$0</td></tr>
+        <tr style="border:none;"><td style="border:none; padding:5px 0;">營業稅 (5%)：</td><td style="border:none; text-align:right;" id="pdfTax">$0</td></tr>
+        <tr style="border-top: 2px solid #000;"><td style="border:none; padding:8px 0; font-size:16px; font-weight:bold;">報價總計：</td><td style="border:none; text-align:right; font-size:18px; color:#c0392b; font-weight:bold;" id="pdfTotal">$0</td></tr>
       </table>
     </div>
+
+    <div style="border: 1px solid #000; padding: 15px; margin-bottom: 30px;">
+      <h3 style="margin-top:0; border-bottom: 1px solid #ccc; padding-bottom: 5px;">📑 工程付款期別</h3>
+      <div id="pdfPaymentBox" style="line-height: 1.8; font-size: 13px;"></div>
+    </div>
+
+    <div style="margin-top: 80px; display: flex; justify-content: space-between; font-size: 14px; font-weight: bold;">
+      <div>客戶簽認：___________________________</div>
+      <div>設計公司蓋章：___________________________</div>
+    </div>
   </div>
 
-  <div style="margin-top: 30px; display: flex; justify-content: space-between; font-size: 13px;">
-    <div>客戶簽認：___________________________</div>
-    <div>設計公司蓋章：___________________________</div>
+  <!-- 第二頁起：工程項目細項表 + 尾頁注意事項 -->
+  <div>
+    <div style="text-align: center; border-bottom: 1px solid #000; padding-bottom: 5px; margin-bottom: 10px;">
+      <h3 style="margin: 0; font-size: 18px;">工 種 施 工 項 目 明 細</h3>
+    </div>
+    <table style="width: 100%; border-collapse: collapse;">
+      <thead>
+        <tr style="background: #e5e7eb;">
+          <th style="width: 15%; text-align: center;">工種類別</th>
+          <th style="width: 35%; text-align: left;">工程項目 / 施工規格細項</th>
+          <th style="width: 10%; text-align: center;">數量</th>
+          <th style="width: 8%; text-align: center;">單位</th>
+          <th style="width: 14%; text-align: right;">單價</th>
+          <th style="width: 18%; text-align: right;">複價小計</th>
+        </tr>
+      </thead>
+      <tbody id="pdfTableBody"></tbody>
+    </table>
+
+    <div style="margin-top: 25px; border-top: 2px solid #000; padding-top: 15px;">
+      <h4 style="margin: 0 0 8px 0; font-size: 14px;">🏷️ 工程注意事項與合約條款：</h4>
+      <div id="pdfNotesBox" style="white-space: pre-wrap; color: #333; line-height: 1.6; font-size: 12px;"></div>
+    </div>
   </div>
 </div>
 
@@ -672,8 +693,8 @@
     currentItems.forEach(item => {
       let tr = document.createElement('tr');
       tr.innerHTML = `
-        <td><b>${item.category}</b></td>
-        <td>${item.name} ${item.note ? '<br><small>('+item.note+')</small>' : ''}</td>
+        <td style="text-align:center;"><b>${item.category}</b></td>
+        <td>${item.name} ${item.note ? '<br><small style="color:#555;">('+item.note+')</small>' : ''}</td>
         <td style="text-align:center;">${item.qty}</td>
         <td style="text-align:center;">${item.unit}</td>
         <td style="text-align:right;">$${item.price.toLocaleString()}</td>
@@ -695,22 +716,19 @@
     document.getElementById('pdfNotesBox').textContent = document.getElementById('customNotesText').value;
 
     const printContainer = document.getElementById('pdfPrintContainer');
-    printContainer.style.display = 'block';
 
     const opt = {
-      margin:       10,
+      margin:       8,
       filename:     `室內裝修報價單-${clientName}.pdf`,
       image:        { type: 'jpeg', quality: 0.98 },
-      html2canvas:  { scale: 2 },
+      html2canvas:  { scale: 2, useCORS: true, logging: false },
       jsPDF:        { unit: 'mm', format: 'a4', orientation: 'portrait' }
     };
 
-    html2pdf().set(opt).from(printContainer).save().then(() => {
-      printContainer.style.display = 'none';
-    });
+    html2pdf().set(opt).from(printContainer).save();
   }
 
-  // ⭐ 完美分頁與滿格邊框 Excel 匯出
+  // ⭐ 完全符合「第一頁總價簽名、第二頁工種明細、最尾頁注意事項」的 Excel 匯出邏輯
   async function exportQuoteToExcel() {
     if (currentItems.length === 0) { alert("請先加入報價項目！"); return; }
 
@@ -742,8 +760,8 @@
       for (let i = 1; i <= 7; i++) outQuoteSheet.getColumn(i).width = tunedWidths[i-1];
       outQuoteSheet.pageSetup = { paperSize: 9, orientation: 'portrait', fitToPage: true, fitToWidth: 1 };
 
-      // 複製第 1 頁 (1~47 列，包含總價與摘要資訊)
-      for (let r = 1; r <= 47; r++) {
+      // 複製原檔第 1 頁（列 1~40：抬頭、金額小計、稅金、付款期數、匯款資訊與簽名欄）
+      for (let r = 1; r <= 40; r++) {
         const srcRow = srcQuoteSheet.getRow(r);
         const outRow = outQuoteSheet.getRow(r);
         if (srcRow.height) outRow.height = srcRow.height;
@@ -758,11 +776,10 @@
       if (srcQuoteSheet.model && srcQuoteSheet.model.merges) {
         srcQuoteSheet.model.merges.forEach(range => {
           const topRow = parseInt(range.split(':')[0].replace(/[^0-9]/g, ''));
-          if (topRow <= 47) { try { outQuoteSheet.mergeCells(range); } catch(e){} }
+          if (topRow <= 40) { try { outQuoteSheet.mergeCells(range); } catch(e){} }
         });
       }
 
-      // 計算金額
       let totalPriceSum = currentItems.reduce((acc, i) => acc + i.priceSubtotal, 0);
       const hasMgmt = document.getElementById('chkManagementFee').checked;
       const hasTax = document.getElementById('chkTax').checked;
@@ -770,29 +787,31 @@
       const taxFee = hasTax ? Math.round((totalPriceSum + mgmtFee) * 0.05) : 0;
       const finalTotal = totalPriceSum + mgmtFee + taxFee;
 
-      // 填入第一頁表頭與總額摘要資訊
+      // 第一頁填入抬頭與總額
       outQuoteSheet.getCell('A6').value = `客戶名稱 :${clientName}`;
       outQuoteSheet.getCell('G6').value = contractNo;
       outQuoteSheet.getCell('A7').value = `工程地點 :${projectLocation}`;
       outQuoteSheet.getCell('G7').value = quoteDate;
 
-      // 更新原檔摘要區金額 (對齊 template.xlsx 第 27~30 列與 40 列)
       outQuoteSheet.getCell('F27').value = totalPriceSum;
       outQuoteSheet.getCell('F28').value = mgmtFee;
       outQuoteSheet.getCell('F29').value = taxFee;
       outQuoteSheet.getCell('F30').value = finalTotal;
       outQuoteSheet.getCell('C40').value = finalTotal;
 
-      // ⭐ 設定第一頁強制分頁符號，讓詳細工項從第二頁開頭獨立輸出！
-      outQuoteSheet.getRow(47).pageBreak = true;
+      // 第一頁下方加上簽名簽認區
+      outQuoteSheet.getCell('A39').value = '客戶簽認：___________________';
+      outQuoteSheet.getCell('E39').value = '設計公司蓋章：___________________';
 
-      // ===== 第二頁起：工程項目明細與滿格邊框 =====
-      let currentDetailRow = 48;
+      // ⭐ 第一頁結束：設定強制分頁符號！
+      outQuoteSheet.getRow(40).pageBreak = true;
 
-      // 第二頁頁頭
+      // ===== 第二頁開始：工程項目大類與細項明細 =====
+      let currentDetailRow = 41;
+
       let rPage2Header = outQuoteSheet.getRow(currentDetailRow++);
       rPage2Header.getCell(1).value = '項次';
-      rPage2Header.getCell(2).value = '工 種 施 工 項目 明 細';
+      rPage2Header.getCell(2).value = '工 種 施 工 項 目 明 細';
       rPage2Header.getCell(3).value = '數量';
       rPage2Header.getCell(4).value = '單位';
       rPage2Header.getCell(5).value = '單價';
@@ -867,7 +886,7 @@
         catIdx++;
       }
 
-      // ===== 最後一頁頁尾：條款與簽名欄位 =====
+      // ===== 檔案最尾頁：注意事項與合約條款 =====
       currentDetailRow += 2;
       let notesText = document.getElementById('customNotesText').value;
       if (notesText) {
@@ -880,17 +899,6 @@
           rN.font = { size: 10 };
         });
       }
-
-      currentDetailRow += 2;
-      let rSignHeader = outQuoteSheet.getRow(currentDetailRow++);
-      rSignHeader.getCell(1).value = '客戶簽認與簽約蓋章：';
-      rSignHeader.font = { bold: true, size: 12 };
-
-      currentDetailRow += 1;
-      let rSignBlock = outQuoteSheet.getRow(currentDetailRow);
-      rSignBlock.getCell(2).value = '客戶簽名：___________________';
-      rSignBlock.getCell(6).value = '設計師/公司用印：___________________';
-      rSignBlock.font = { bold: true, size: 11 };
 
       // ===== Sheet 2: 裝修工程進度表 =====
       if (srcScheduleSheet) {
