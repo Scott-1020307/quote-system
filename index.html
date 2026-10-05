@@ -41,9 +41,9 @@
   <div class="card">
     <h3>📋 客戶與案場基本資訊</h3>
     <div class="grid-4">
-      <div><label>客戶姓名</label><input type="text" id="clientName" value="劉隆穎"></div>
-      <div><label>工程地點</label><input type="text" id="projectLocation" value="亞昕喜來登"></div>
-      <div><label>合約書編號</label><input type="text" id="contractNo" value="007006"></div>
+      <div><label>客戶姓名</label><input type="text" id="clientName" placeholder="例如：劉先生"></div>
+      <div><label>工程地點</label><input type="text" id="projectLocation" placeholder="例如：亞昕喜來登"></div>
+      <div><label>合約書編號</label><input type="text" id="contractNo" placeholder="例如：007006"></div>
       <div><label>報價日期</label><input type="date" id="quoteDate"></div>
     </div>
   </div>
@@ -263,13 +263,12 @@
     document.getElementById('sumTotal').textContent = `$${finalTotal.toLocaleString()}`;
   }
 
-  // 匯出邏輯：複製 template 結構並建立全新無衝突的工作表
   async function exportQuoteToExcel() {
     if (currentItems.length === 0) { alert("請先加入報價項目！"); return; }
 
-    const clientName = document.getElementById('clientName').value || '劉隆穎';
-    const projectLocation = document.getElementById('projectLocation').value || '亞昕喜來登';
-    const contractNo = document.getElementById('contractNo').value || '007006';
+    const clientName = document.getElementById('clientName').value || '';
+    const projectLocation = document.getElementById('projectLocation').value || '';
+    const contractNo = document.getElementById('contractNo').value || '';
     const quoteDate = document.getElementById('quoteDate').value || '';
 
     try {
@@ -284,18 +283,17 @@
       await sourceWb.xlsx.load(arrayBuffer);
       let srcSheet = sourceWb.getWorksheet('估價單0906') || sourceWb.worksheets[0];
 
-      // 建立乾淨的匯出 Workbook
       const outWb = new ExcelJS.Workbook();
       const outSheet = outWb.addWorksheet('估價單');
 
-      // 1. 複製欄寬
-      srcSheet.columns.forEach((col, idx) => {
-        if(col && col.width) {
-          outSheet.getColumn(idx + 1).width = col.width;
-        }
-      });
+      // 1. 複製與調優欄寬（加寬單價 E 欄與備註 G 欄）
+      const defaultWidths = [8, 35, 10, 8, 16, 18, 40];
+      for (let i = 1; i <= 7; i++) {
+        let srcW = (srcSheet.getColumn(i) && srcSheet.getColumn(i).width) ? srcSheet.getColumn(i).width : defaultWidths[i-1];
+        outSheet.getColumn(i).width = Math.max(srcW, defaultWidths[i-1]);
+      }
 
-      // 2. 複製原始範本前 47 行 (品牌抬頭、總表、條款、簽名欄等樣式)
+      // 2. 複製原始範本前 47 行 (品牌抬頭、總表、條款樣式)
       for (let r = 1; r <= 47; r++) {
         const srcRow = srcSheet.getRow(r);
         const outRow = outSheet.getRow(r);
@@ -304,13 +302,12 @@
         for (let c = 1; c <= 7; c++) {
           const srcCell = srcRow.getCell(c);
           const outCell = outRow.getCell(c);
-
           outCell.value = srcCell.value;
           if (srcCell.style) outCell.style = JSON.parse(JSON.stringify(srcCell.style));
         }
       }
 
-      // 3. 複製合併儲存格資訊 (只複製前 47 行範圍)
+      // 3. 複製合併儲存格資訊 (前 47 行)
       if (srcSheet.model && srcSheet.model.merges) {
         srcSheet.model.merges.forEach(range => {
           const topRow = parseInt(range.split(':')[0].replace(/[^0-9]/g, ''));
@@ -320,13 +317,13 @@
         });
       }
 
-      // 4. 填寫客戶抬頭
+      // 4. 填寫客戶抬頭基本資料
       outSheet.getCell('A6').value = `客戶名稱 :${clientName}`;
       outSheet.getCell('G6').value = contractNo;
       outSheet.getCell('A7').value = `工程地點 :${projectLocation}`;
       outSheet.getCell('G7').value = quoteDate;
 
-      // 5. 填寫明細 (第 48 行起乾淨寫入，帶入標準邊框與格式)
+      // 5. 填寫第 48 行起細項目，並加入「工種小計」與「頁尾簽名欄」
       let currentDetailRow = 48;
       const grouped = {};
       currentItems.forEach(item => {
@@ -336,19 +333,21 @@
 
       const numToChinese = ['一', '二', '三', '四', '五', '六', '七'];
       const thinBorder = { top:{style:'thin'}, left:{style:'thin'}, bottom:{style:'thin'}, right:{style:'thin'} };
+      const subtotalStyle = { font: { bold: true }, alignment: { horizontal: 'right' } };
 
       let catIdx = 0;
       for (let cat of categoryOrder) {
         if (!grouped[cat]) continue;
         let items = grouped[cat];
+        let catSum = items.reduce((sum, item) => sum + item.priceSubtotal, 0);
 
-        // 大類標題列
+        // 工種大類標題列
         let rHeader = outSheet.getRow(currentDetailRow++);
         rHeader.getCell(1).value = numToChinese[catIdx] || (catIdx+1);
         rHeader.getCell(2).value = cat;
         rHeader.font = { bold: true };
 
-        // 細項列表
+        // 細項明細列
         items.forEach(item => {
           let rItem = outSheet.getRow(currentDetailRow++);
           rItem.getCell(2).value = `  ${item.name}`;
@@ -362,12 +361,35 @@
             rItem.getCell(c).border = thinBorder;
           }
         });
+
+        // ⭐ 每組工種結束時的小計列
+        let rSubtotal = outSheet.getRow(currentDetailRow++);
+        rSubtotal.getCell(2).value = '小計';
+        rSubtotal.getCell(6).value = catSum;
+        rSubtotal.font = { bold: true };
+        for(let c = 1; c <= 7; c++) {
+          rSubtotal.getCell(c).border = thinBorder;
+        }
+
         catIdx++;
       }
 
-      // 導出 Excel
+      // ⭐ 6. 頁尾客戶與設計師簽名欄位
+      currentDetailRow += 2;
+      let rSignHeader = outSheet.getRow(currentDetailRow++);
+      rSignHeader.getCell(1).value = '客戶簽認與注意事項：';
+      rSignHeader.font = { bold: true, size: 12 };
+
+      currentDetailRow += 1;
+      let rSignBlock = outSheet.getRow(currentDetailRow);
+      rSignBlock.getCell(2).value = '客戶簽名：___________________';
+      rSignBlock.getCell(6).value = '設計師/公司用印：___________________';
+      rSignBlock.font = { bold: true, size: 11 };
+
+      // 導出 Excel 檔案
       const buffer = await outWb.xlsx.writeBuffer();
-      saveAs(new Blob([buffer]), `裝修報價-${clientName}-${quoteDate}.xlsx`);
+      const fileName = clientName ? `裝修報價-${clientName}-${quoteDate}.xlsx` : `裝修報價-${quoteDate}.xlsx`;
+      saveAs(new Blob([buffer]), fileName);
     } catch(err) {
       alert("匯出發生錯誤：" + err.message);
     }
