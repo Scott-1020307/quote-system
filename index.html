@@ -756,7 +756,7 @@
     window.print();
   }
 
-  // ⭐ 套印 Excel 報價單 (終極優化：解鎖格式 + 強制單頁寬 + 金額點化)
+  // ⭐ 完美連動套印 Excel 報價單 (自動縮放 1 頁寬，絕不爆頁、不出現 ######)
   async function exportQuoteToExcel() {
     if (currentItems.length === 0) { alert("請先加入報價項目！"); return; }
 
@@ -778,36 +778,38 @@
       
       let wsQuote = wb.getWorksheet('估價單0906') || wb.worksheets[0];
 
-      // 🔒 1. 重置與強制列印版面 (符合 1 頁寬)
-      wsQuote.pageSetup = {
-        orientation: 'portrait',
-        fitToPage: true,
-        fitToWidth: 1,
-        fitToHeight: 0,
-        paperSize: 9 // A4 紙張
+      // 🛡️ 1. 強制設定 Excel 列印縮放：1 頁寬 (Fit to 1 Page Wide)，絕對防止 G 欄被推到第二頁
+      wsQuote.pageSetup.fitToPage = true;
+      wsQuote.pageSetup.fitToWidth = 1;
+      wsQuote.pageSetup.fitToHeight = 0; // 高度隨內容長度自動順延分頁
+      wsQuote.pageSetup.orientation = 'portrait';
+      
+      // 🛡️ 2. 微調縮小左右列印邊界 (0.3 英吋)，爭取更多水平空間
+      wsQuote.pageSetup.margins = {
+        left: 0.3, right: 0.3, top: 0.5, bottom: 0.5, header: 0.3, footer: 0.3
       };
 
-      // 🔒 2. 動態拉寬欄位，徹底防止 ###### 溢出
-      wsQuote.getColumn(1).width = 6.0;   // A: 項次 (1cm)
-      wsQuote.getColumn(2).width = 25.0;  // B: 項目 (5cm)
-      wsQuote.getColumn(3).width = 8.0;   // C: 數量 (1.5cm)
-      wsQuote.getColumn(4).width = 8.0;   // D: 單位 (1.5cm)
-      wsQuote.getColumn(5).width = 16.0;  // E: 單價 (加大放得下金額)
-      wsQuote.getColumn(6).width = 16.0;  // F: 複價小計 (加大放得下金額)
-      wsQuote.getColumn(7).width = 22.0;  // G: 備註 (5cm)
+      // 🛡️ 3. 精確黃金欄寬比例 (A~F 寬度適中不擠壓，G欄保有充足空間)
+      wsQuote.getColumn(1).width = 5.0;   // A: 項次
+      wsQuote.getColumn(2).width = 20.0;  // B: 工程項目
+      wsQuote.getColumn(3).width = 6.0;   // C: 數量
+      wsQuote.getColumn(4).width = 6.0;   // D: 單位
+      wsQuote.getColumn(5).width = 12.0;  // E: 單價
+      wsQuote.getColumn(6).width = 13.0;  // F: 複價小計
+      wsQuote.getColumn(7).width = 15.0;  // G: 備註/合約編號區塊
 
-      const numFmt = '#,##0'; // 千分點整數格式
+      const numFmt = '#,##0'; // 千分位整數格式
 
-      // 抬頭資訊寫入 (頁面 1)
+      // 1. 抬頭資訊寫入 (頁面 1)
       wsQuote.getCell('A6').value = `客戶名稱 : ${clientName}`;
       wsQuote.getCell('G6').value = contractNo;
       wsQuote.getCell('A7').value = `工程地點 : ${projectLocation}`;
       if (quoteDate) wsQuote.getCell('G7').value = quoteDate;
 
-      // 清空舊樣板內容 48~95 列
+      // 2. 清空舊樣板預留列 (48~95 列)
       for (let r = 48; r <= 95; r++) {
         let row = wsQuote.getRow(r);
-        row.hidden = true;
+        row.hidden = true; // 預設隱藏，避免空白頁
         for (let c = 1; c <= 7; c++) { row.getCell(c).value = null; }
       }
 
@@ -822,29 +824,29 @@
       const numMap = ["一", "二", "三", "四", "五", "六", "七", "八"];
       const categoryTotals = { "水電工程": 0, "燈具工程": 0, "木作工程": 0, "油漆工程": 0, "雜項工程": 0 };
       
-      let curRow = 48; // 明細起始列 (頁面 2)
+      let curRow = 48; // 明細表起始列 (頁面 2)
       let activeIdx = 0;
 
-      // 🎯 【無縫緊接動態生成】：細項寫完緊接小計、空一列再接下一工種
+      // 3. 動態填寫明細 (細項寫完緊接小計、空一列接下個工種)
       catOrderList.forEach(cat => {
         let items = grouped[cat] || [];
         if (items.length > 0) {
           let numStr = numMap[activeIdx] || (activeIdx + 1);
           activeIdx++;
 
-          // 總表 (頁面 1) 紀錄
+          // 填寫第一頁總表項目標題
           let mainRowMap = { "水電工程": 11, "燈具工程": 12, "木作工程": 13, "油漆工程": 14, "雜項工程": 15 };
           wsQuote.getCell(`A${mainRowMap[cat]}`).value = numStr;
           wsQuote.getCell(`B${mainRowMap[cat]}`).value = cat;
 
-          // 明細工種標題列
+          // 明細表工種標題
           let hRow = wsQuote.getRow(curRow);
           hRow.hidden = false;
           hRow.getCell(1).value = numStr;
           hRow.getCell(2).value = cat;
           curRow++;
 
-          // 明細細項
+          // 明細表細項
           let catSum = 0;
           items.forEach(item => {
             let row = wsQuote.getRow(curRow);
@@ -878,7 +880,7 @@
           categoryTotals[cat] = catSum;
           curRow++;
 
-          // 空一列接下一個工種
+          // 空一列接下一個工種 (無縫緊接)
           let emptyRow = wsQuote.getRow(curRow);
           emptyRow.hidden = false;
           curRow++;
@@ -889,7 +891,7 @@
         }
       });
 
-      // 填寫第一頁總表金額與千分位格式
+      // 4. 填寫第一頁總表金額與千分位格式
       const fillTotalCell = (cellRef, val) => {
         let cell = wsQuote.getCell(cellRef);
         cell.value = Number(val);
@@ -902,7 +904,7 @@
       fillTotalCell('E14', categoryTotals["油漆工程"]); fillTotalCell('F14', categoryTotals["油漆工程"]);
       fillTotalCell('E15', categoryTotals["雜項工程"]); fillTotalCell('F15', categoryTotals["雜項工程"]);
 
-      // 計算總計與付款期別
+      // 5. 計算總計與付款期別
       let subtotal = currentItems.reduce((acc, i) => acc + Number(i.priceSubtotal), 0);
       let hasMgmt = document.getElementById('chkManagementFee').checked;
       let hasTax = document.getElementById('chkTax').checked;
@@ -929,6 +931,7 @@
 
       fillTotalCell('C38', grandTotal);
 
+      // 下載產出的 Excel 報價單
       const buffer = await wb.xlsx.writeBuffer();
       const fileName = clientName ? `裝修報價單-${clientName}-${quoteDate}.xlsx` : `裝修報價單-${quoteDate}.xlsx`;
       saveAs(new Blob([buffer]), fileName);
