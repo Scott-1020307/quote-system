@@ -10,13 +10,8 @@
 
 <title>室內裝修報價與工程進度管理系統</title>
 
-
-<!-- ExcelJS -->
 <script src="https://cdn.jsdelivr.net/npm/exceljs@4.3.0/dist/exceljs.min.js"></script>
-
-<!-- FileSaver -->
 <script src="https://cdn.jsdelivr.net/npm/file-saver@2.0.5/dist/FileSaver.min.js"></script>
-
 
 <style>
 
@@ -267,18 +262,16 @@ button:hover {
 
 <body>
 
-
 <div class="container">
-
 
 <h1>
     室內裝修報價與工程進度管理系統
 </h1>
 
 
-<!-- ==========================================
+<!-- ==========================================================
      功能按鈕
-========================================== -->
+========================================================== -->
 
 <div class="card">
 
@@ -313,9 +306,9 @@ button:hover {
 </div>
 
 
-<!-- ==========================================
+<!-- ==========================================================
      測試資料
-========================================== -->
+========================================================== -->
 
 <div
     id="testPanel"
@@ -348,9 +341,9 @@ button:hover {
 </div>
 
 
-<!-- ==========================================
+<!-- ==========================================================
      基本資料
-========================================== -->
+========================================================== -->
 
 <div class="card">
 
@@ -359,80 +352,45 @@ button:hover {
     <div class="grid">
 
         <div class="field">
-
-            <label>
-                客戶名稱
-            </label>
-
+            <label>客戶名稱</label>
             <input
                 id="clientName"
                 type="text">
-
         </div>
 
-
         <div class="field">
-
-            <label>
-                工程地點
-            </label>
-
+            <label>工程地點</label>
             <input
                 id="projectLocation"
                 type="text">
-
         </div>
 
-
         <div class="field">
-
-            <label>
-                合約編號
-            </label>
-
+            <label>合約編號</label>
             <input
                 id="contractNo"
                 type="text">
-
         </div>
 
-
         <div class="field">
-
-            <label>
-                報價日期
-            </label>
-
+            <label>報價日期</label>
             <input
                 id="quoteDate"
                 type="date">
-
         </div>
 
-
         <div class="field">
-
-            <label>
-                開工日期
-            </label>
-
+            <label>開工日期</label>
             <input
                 id="startDate"
                 type="date">
-
         </div>
 
-
         <div class="field">
-
-            <label>
-                設計師
-            </label>
-
+            <label>設計師</label>
             <input
                 id="designerName"
                 type="text">
-
         </div>
 
     </div>
@@ -440,9 +398,9 @@ button:hover {
 </div>
 
 
-<!-- ==========================================
+<!-- ==========================================================
      裝修類型
-========================================== -->
+========================================================== -->
 
 <div class="card">
 
@@ -481,9 +439,9 @@ button:hover {
 </div>
 
 
-<!-- ==========================================
+<!-- ==========================================================
      新增報價
-========================================== -->
+========================================================== -->
 
 <div class="card">
 
@@ -491,12 +449,9 @@ button:hover {
 
     <div class="grid">
 
-
         <div class="field">
 
-            <label>
-                工程分類
-            </label>
+            <label>工程分類</label>
 
             <select id="categorySelect">
 
@@ -551,9 +506,7 @@ button:hover {
 
         <div class="field">
 
-            <label>
-                工程項目
-            </label>
+            <label>工程項目</label>
 
             <input
                 id="subCategorySelect"
@@ -564,9 +517,7 @@ button:hover {
 
         <div class="field">
 
-            <label>
-                數量
-            </label>
+            <label>數量</label>
 
             <input
                 id="itemQty"
@@ -579,9 +530,7 @@ button:hover {
 
         <div class="field">
 
-            <label>
-                單位
-            </label>
+            <label>單位</label>
 
             <input
                 id="itemUnit"
@@ -593,9 +542,7 @@ button:hover {
 
         <div class="field">
 
-            <label>
-                成本單價
-            </label>
+            <label>成本單價</label>
 
             <input
                 id="costPrice"
@@ -607,9 +554,7 @@ button:hover {
 
         <div class="field">
 
-            <label>
-                報價單價
-            </label>
+            <label>報價單價</label>
 
             <input
                 id="quotePrice"
@@ -621,16 +566,13 @@ button:hover {
 
         <div class="field">
 
-            <label>
-                備註
-            </label>
+            <label>備註</label>
 
             <input
                 id="itemNote"
                 type="text">
 
         </div>
-
 
     </div>
 
@@ -648,9 +590,9 @@ button:hover {
 </div>
 
 
-<!-- ==========================================
+<!-- ==========================================================
      報價明細
-========================================== -->
+========================================================== -->
 
 <div class="card">
 
@@ -688,9 +630,9 @@ button:hover {
 </div>
 
 
-<!-- ==========================================
+<!-- ==========================================================
      費用設定
-========================================== -->
+========================================================== -->
 
 <div class="card">
 
@@ -739,9 +681,9 @@ button:hover {
 </div>
 
 
-<!-- ==========================================
+<!-- ==========================================================
      備註
-========================================== -->
+========================================================== -->
 
 <div class="card">
 
@@ -755,9 +697,9 @@ button:hover {
 </div>
 
 
-<!-- ==========================================
+<!-- ==========================================================
      報價總計
-========================================== -->
+========================================================== -->
 
 <div class="card">
 
@@ -768,54 +710,23 @@ button:hover {
         <div class="summary-box">
 
             <div class="summary-row">
-
-                <span>
-                    工程小計
-                </span>
-
-                <strong id="summarySubtotal">
-                    0
-                </strong>
-
+                <span>工程小計</span>
+                <strong id="summarySubtotal">0</strong>
             </div>
-
 
             <div class="summary-row">
-
-                <span>
-                    管理費
-                </span>
-
-                <strong id="summaryManagement">
-                    0
-                </strong>
-
+                <span>管理費</span>
+                <strong id="summaryManagement">0</strong>
             </div>
-
 
             <div class="summary-row">
-
-                <span>
-                    稅金
-                </span>
-
-                <strong id="summaryTax">
-                    0
-                </strong>
-
+                <span>稅金</span>
+                <strong id="summaryTax">0</strong>
             </div>
-
 
             <div class="summary-row total">
-
-                <span>
-                    工程總價
-                </span>
-
-                <strong id="summaryGrandTotal">
-                    0
-                </strong>
-
+                <span>工程總價</span>
+                <strong id="summaryGrandTotal">0</strong>
             </div>
 
         </div>
@@ -825,9 +736,9 @@ button:hover {
 </div>
 
 
-<!-- ==========================================
+<!-- ==========================================================
      工程進度
-========================================== -->
+========================================================== -->
 
 <div class="card">
 
@@ -842,9 +753,9 @@ button:hover {
 </div>
 
 
-<!-- ==========================================
-     Excel 匯出
-========================================== -->
+<!-- ==========================================================
+     Excel
+========================================================== -->
 
 <div class="card">
 
@@ -853,15 +764,10 @@ button:hover {
     <div class="notice">
 
         Excel 範本檔案名稱必須為
-
-        <strong>
-            template.xlsx
-        </strong>
-
+        <strong>template.xlsx</strong>
         ，並且與本 HTML 放在同一個資料夾。
 
     </div>
-
 
     <div class="button-row">
 
@@ -877,7 +783,6 @@ button:hover {
 
 </div>
 
-
 </div>
 
 
@@ -885,7 +790,7 @@ button:hover {
 
 
 // ==========================================================
-// 全域資料
+// 全域
 // ==========================================================
 
 let currentItems = [];
@@ -908,13 +813,9 @@ window.onload = function() {
         'quoteDate'
     ).value = today;
 
-
     updateTestMonitor();
-
     renderQuoteTable();
-
     renderSummary();
-
     renderSchedule();
 
 };
@@ -928,7 +829,6 @@ function selectSiteType(button, type) {
 
     selectedSiteType = type;
 
-
     document
         .querySelectorAll(
             '.category-buttons button'
@@ -941,11 +841,9 @@ function selectSiteType(button, type) {
 
         });
 
-
     button.classList.add(
         'active'
     );
-
 
     document.getElementById(
         'siteTypeDisplay'
@@ -983,18 +881,15 @@ function loadTestData() {
     ).value =
         '劉隆穎';
 
-
     document.getElementById(
         'projectLocation'
     ).value =
         '桃園市中壢區高鐵站前路426號5樓';
 
-
     document.getElementById(
         'contractNo'
     ).value =
         '007006';
-
 
     document.getElementById(
         'designerName'
@@ -1037,7 +932,6 @@ function loadTestData() {
             note: ''
         },
 
-
         {
             category: '木作工程',
             name: '平釘天花板',
@@ -1071,7 +965,6 @@ function loadTestData() {
             note: ''
         },
 
-
         {
             category: '油漆工程',
             name: '牆面乳膠漆',
@@ -1082,7 +975,6 @@ function loadTestData() {
             priceSubtotal: 88000,
             note: ''
         },
-
 
         {
             category: '燈具工程',
@@ -1106,7 +998,6 @@ function loadTestData() {
             note: ''
         },
 
-
         {
             category: '雜項工程',
             name: '清潔工程',
@@ -1122,11 +1013,8 @@ function loadTestData() {
 
 
     renderQuoteTable();
-
     renderSummary();
-
     renderSchedule();
-
     updateTestMonitor();
 
 }
@@ -1146,23 +1034,18 @@ function clearAllItemsData() {
         return;
     }
 
-
     currentItems = [];
 
-
     renderQuoteTable();
-
     renderSummary();
-
     renderSchedule();
-
     updateTestMonitor();
 
 }
 
 
 // ==========================================================
-// 新增報價
+// 新增
 // ==========================================================
 
 function addItem() {
@@ -1172,12 +1055,10 @@ function addItem() {
             'categorySelect'
         ).value;
 
-
     const name =
         document.getElementById(
             'subCategorySelect'
         ).value.trim();
-
 
     const qty =
         Number(
@@ -1186,12 +1067,10 @@ function addItem() {
             ).value
         );
 
-
     const unit =
         document.getElementById(
             'itemUnit'
         ).value.trim();
-
 
     const costPrice =
         Number(
@@ -1200,14 +1079,12 @@ function addItem() {
             ).value
         );
 
-
     const price =
         Number(
             document.getElementById(
                 'quotePrice'
             ).value
         );
-
 
     const note =
         document.getElementById(
@@ -1286,11 +1163,8 @@ function addItem() {
 
 
     renderQuoteTable();
-
     renderSummary();
-
     renderSchedule();
-
     updateTestMonitor();
 
 
@@ -1298,26 +1172,21 @@ function addItem() {
         'subCategorySelect'
     ).value = '';
 
-
     document.getElementById(
         'itemQty'
     ).value = 1;
-
 
     document.getElementById(
         'itemUnit'
     ).value = '式';
 
-
     document.getElementById(
         'costPrice'
     ).value = '';
 
-
     document.getElementById(
         'quotePrice'
     ).value = '';
-
 
     document.getElementById(
         'itemNote'
@@ -1337,13 +1206,9 @@ function removeItem(index) {
         1
     );
 
-
     renderQuoteTable();
-
     renderSummary();
-
     renderSchedule();
-
     updateTestMonitor();
 
 }
@@ -1359,7 +1224,6 @@ function renderQuoteTable() {
         document.getElementById(
             'quoteTableBody'
         );
-
 
     tbody.innerHTML = '';
 
@@ -1431,7 +1295,7 @@ function renderQuoteTable() {
 
 
 // ==========================================================
-// HTML 安全
+// HTML
 // ==========================================================
 
 function escapeHtml(value) {
@@ -1439,31 +1303,11 @@ function escapeHtml(value) {
     return String(
         value ?? ''
     )
-
-    .replace(
-        /&/g,
-        '&amp;'
-    )
-
-    .replace(
-        /</g,
-        '&lt;'
-    )
-
-    .replace(
-        />/g,
-        '&gt;'
-    )
-
-    .replace(
-        /"/g,
-        '&quot;'
-    )
-
-    .replace(
-        /'/g,
-        '&#039;'
-    );
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;')
+    .replace(/'/g, '&#039;');
 
 }
 
@@ -1542,11 +1386,8 @@ function calculateTotals() {
     return {
 
         subtotal,
-
         managementFee,
-
         tax,
-
         grandTotal
 
     };
@@ -1555,7 +1396,7 @@ function calculateTotals() {
 
 
 // ==========================================================
-// 總計顯示
+// 總計
 // ==========================================================
 
 function renderSummary() {
@@ -1644,7 +1485,7 @@ function renderSchedule() {
 
 
 // ==========================================================
-// 儲存草稿
+// 儲存
 // ==========================================================
 
 function saveDraft() {
@@ -1705,7 +1546,7 @@ function saveDraft() {
 
 
 // ==========================================================
-// 載入草稿
+// 載入
 // ==========================================================
 
 function loadDraft() {
@@ -1777,11 +1618,8 @@ function loadDraft() {
 
 
     renderQuoteTable();
-
     renderSummary();
-
     renderSchedule();
-
     updateTestMonitor();
 
 
@@ -1940,9 +1778,8 @@ async function exportQuoteToExcel() {
 
     try {
 
-
         // ==================================================
-        // 讀取 Excel 範本
+        // 讀取範本
         // ==================================================
 
         const response =
@@ -1999,9 +1836,9 @@ async function exportQuoteToExcel() {
 
 
         // ==================================================
-        // 第一頁總表
+        // 第一頁
         //
-        // 這部分維持原本設定
+        // 不動目前第一頁設定
         // ==================================================
 
         ws.getCell(
@@ -2033,9 +1870,7 @@ async function exportQuoteToExcel() {
 
 
         // ==================================================
-        // 清除第二頁舊內容
-        //
-        // 只清除內容，不動格式
+        // 清除第二頁
         // ==================================================
 
         for (
@@ -2061,7 +1896,7 @@ async function exportQuoteToExcel() {
 
 
         // ==================================================
-        // 列印設定
+        // 分頁
         // ==================================================
 
         ws.pageSetup.printArea =
@@ -2087,10 +1922,6 @@ async function exportQuoteToExcel() {
         ws.pageSetup.paperSize =
             9;
 
-
-        // ==================================================
-        // 分頁線
-        // ==================================================
 
         if (
             ws.rowBreaks &&
@@ -2199,41 +2030,34 @@ async function exportQuoteToExcel() {
         };
 
 
-        // ==================================================
-        // 第二頁開始位置
-        // ==================================================
-
         let curRow = 49;
 
         let activeIdx = 0;
-
 
         const categoryTotals = {};
 
 
         // ==================================================
-        // 字體
+        // 第二頁字體
         // ==================================================
 
-        function setFont12(
+        function setSecondPageFont(
             cell,
             bold
         ) {
 
-            const oldFont =
-                cell.font || {};
-
-
             cell.font = {
-
-                ...oldFont,
 
                 name:
                     'Microsoft JhengHei',
 
                 size: 12,
 
-                bold: bold
+                bold: bold,
+
+                italic: false,
+
+                underline: false
 
             };
 
@@ -2241,26 +2065,24 @@ async function exportQuoteToExcel() {
 
 
         // ==================================================
-        // 靠左
+        // 第二頁靠左
+        //
+        // 注意：
+        // 不沿用範本 alignment
+        // 直接覆蓋
         // ==================================================
 
-        function setLeft(
+        function alignLeft(
             cell
         ) {
 
-            const oldAlignment =
-                cell.alignment || {};
-
-
             cell.alignment = {
 
-                ...oldAlignment,
+                horizontal: 'left',
 
-                horizontal:
-                    'left',
+                vertical: 'center',
 
-                vertical:
-                    'center'
+                wrapText: false
 
             };
 
@@ -2268,26 +2090,41 @@ async function exportQuoteToExcel() {
 
 
         // ==================================================
-        // 置中
+        // 第二頁置中
         // ==================================================
 
-        function setCenter(
+        function alignCenter(
             cell
         ) {
 
-            const oldAlignment =
-                cell.alignment || {};
+            cell.alignment = {
 
+                horizontal: 'center',
+
+                vertical: 'center',
+
+                wrapText: false
+
+            };
+
+        }
+
+
+        // ==================================================
+        // 第二頁數字靠右
+        // ==================================================
+
+        function alignRight(
+            cell
+        ) {
 
             cell.alignment = {
 
-                ...oldAlignment,
+                horizontal: 'right',
 
-                horizontal:
-                    'center',
+                vertical: 'center',
 
-                vertical:
-                    'center'
+                wrapText: false
 
             };
 
@@ -2310,7 +2147,7 @@ async function exportQuoteToExcel() {
 
 
                 // ==========================================
-                // 沒有該工種
+                // 沒有資料
                 // ==========================================
 
                 if (
@@ -2340,7 +2177,6 @@ async function exportQuoteToExcel() {
                     ws.getCell(
                         `F${mainRow}`
                     ).value = null;
-
 
                     return;
 
@@ -2388,22 +2224,30 @@ async function exportQuoteToExcel() {
 
 
                 // ==========================================
-                // 第二頁工種標題
+                // 第二頁
+                //
+                // 一、水電工程
                 //
                 // 粗體
-                // 12號
-                // 靠左
+                // 左對齊
                 // ==========================================
 
-                ws.getCell(
-                    `A${curRow}`
-                ).value =
+                const headerA =
+                    ws.getCell(
+                        `A${curRow}`
+                    );
+
+                const headerB =
+                    ws.getCell(
+                        `B${curRow}`
+                    );
+
+
+                headerA.value =
                     numStr;
 
 
-                ws.getCell(
-                    `B${curRow}`
-                ).value =
+                headerB.value =
                     cat;
 
 
@@ -2420,13 +2264,13 @@ async function exportQuoteToExcel() {
                         );
 
 
-                    setFont12(
+                    setSecondPageFont(
                         cell,
                         true
                     );
 
 
-                    setLeft(
+                    alignLeft(
                         cell
                     );
 
@@ -2437,94 +2281,97 @@ async function exportQuoteToExcel() {
 
 
                 // ==========================================
-                // 工程細項
+                // 細項
+                //
+                // 全部正常字體
+                // 全部靠左
                 // ==========================================
-
-                let catSum = 0;
-
 
                 items.forEach(
                     item => {
 
+                        const cellA =
+                            ws.getCell(
+                                `A${curRow}`
+                            );
 
-                        // A
-                        ws.getCell(
-                            `A${curRow}`
-                        ).value =
+                        const cellB =
+                            ws.getCell(
+                                `B${curRow}`
+                            );
+
+                        const cellC =
+                            ws.getCell(
+                                `C${curRow}`
+                            );
+
+                        const cellD =
+                            ws.getCell(
+                                `D${curRow}`
+                            );
+
+                        const cellE =
+                            ws.getCell(
+                                `E${curRow}`
+                            );
+
+                        const cellF =
+                            ws.getCell(
+                                `F${curRow}`
+                            );
+
+                        const cellG =
+                            ws.getCell(
+                                `G${curRow}`
+                            );
+
+
+                        cellA.value =
                             null;
 
 
-                        // B
-                        ws.getCell(
-                            `B${curRow}`
-                        ).value =
+                        cellB.value =
                             item.name;
 
 
-                        // C
-                        ws.getCell(
-                            `C${curRow}`
-                        ).value =
+                        cellC.value =
                             Number(
                                 item.qty
                             );
 
 
-                        // D
-                        ws.getCell(
-                            `D${curRow}`
-                        ).value =
+                        cellD.value =
                             item.unit;
 
 
-                        // E
-                        const priceCell =
-                            ws.getCell(
-                                `E${curRow}`
-                            );
-
-
-                        priceCell.value =
+                        cellE.value =
                             Number(
                                 item.price
                             );
 
 
-                        priceCell.numFmt =
+                        cellE.numFmt =
                             '#,##0';
 
 
-                        // F
-                        const subtotalCell =
-                            ws.getCell(
-                                `F${curRow}`
-                            );
-
-
-                        subtotalCell.value =
+                        cellF.value =
                             Number(
                                 item.priceSubtotal
                             );
 
 
-                        subtotalCell.numFmt =
+                        cellF.numFmt =
                             '#,##0';
 
 
-                        // G
-                        // 永遠留白
-                        ws.getCell(
-                            `G${curRow}`
-                        ).value =
+                        // G 永遠空白
+                        cellG.value =
                             null;
 
 
-                        // ==================================
-                        // 細項
-                        // 12號
-                        // 正常
-                        // 靠左
-                        // ==================================
+                        // ----------------------------------
+                        // 所有細項直接重新指定格式
+                        // ----------------------------------
 
                         for (
                             let c = 1;
@@ -2539,23 +2386,18 @@ async function exportQuoteToExcel() {
                                 );
 
 
-                            setFont12(
+                            setSecondPageFont(
                                 cell,
                                 false
                             );
 
 
-                            setLeft(
+                            // 全部先靠左
+                            alignLeft(
                                 cell
                             );
 
                         }
-
-
-                        catSum +=
-                            Number(
-                                item.priceSubtotal
-                            ) || 0;
 
 
                         curRow++;
@@ -2567,34 +2409,81 @@ async function exportQuoteToExcel() {
                 // ==========================================
                 // 工程小計
                 //
-                // 12號
-                // 正常
-                // 整列置中
+                // 只有「文字」置中
+                // 金額靠右
                 // ==========================================
 
-                ws.getCell(
-                    `A${curRow}`
-                ).value =
+                const subtotalA =
+                    ws.getCell(
+                        `A${curRow}`
+                    );
+
+                const subtotalB =
+                    ws.getCell(
+                        `B${curRow}`
+                    );
+
+                const subtotalC =
+                    ws.getCell(
+                        `C${curRow}`
+                    );
+
+                const subtotalD =
+                    ws.getCell(
+                        `D${curRow}`
+                    );
+
+                const subtotalE =
+                    ws.getCell(
+                        `E${curRow}`
+                    );
+
+                const subtotalF =
+                    ws.getCell(
+                        `F${curRow}`
+                    );
+
+                const subtotalG =
+                    ws.getCell(
+                        `G${curRow}`
+                    );
+
+
+                subtotalA.value =
                     null;
 
 
-                ws.getCell(
-                    `B${curRow}`
-                ).value =
+                subtotalB.value =
                     `${cat}小計`;
 
 
-                ws.getCell(
-                    `F${curRow}`
-                ).value =
+                subtotalC.value =
+                    null;
+
+
+                subtotalD.value =
+                    null;
+
+
+                subtotalE.value =
+                    null;
+
+
+                subtotalF.value =
                     catSum;
 
 
-                ws.getCell(
-                    `F${curRow}`
-                ).numFmt =
+                subtotalF.numFmt =
                     '#,##0';
 
+
+                subtotalG.value =
+                    null;
+
+
+                // ------------------------------------------
+                // 小計列全部正常字體
+                // ------------------------------------------
 
                 for (
                     let c = 1;
@@ -2609,17 +2498,57 @@ async function exportQuoteToExcel() {
                         );
 
 
-                    setFont12(
+                    setSecondPageFont(
                         cell,
                         false
                     );
 
-
-                    setCenter(
-                        cell
-                    );
-
                 }
+
+
+                // ------------------------------------------
+                // 小計文字
+                // B 欄置中
+                // ------------------------------------------
+
+                alignCenter(
+                    subtotalB
+                );
+
+
+                // ------------------------------------------
+                // 小計金額
+                // F 欄靠右
+                // ------------------------------------------
+
+                alignRight(
+                    subtotalF
+                );
+
+
+                // ------------------------------------------
+                // 其他空白欄位靠左
+                // ------------------------------------------
+
+                alignLeft(
+                    subtotalA
+                );
+
+                alignLeft(
+                    subtotalC
+                );
+
+                alignLeft(
+                    subtotalD
+                );
+
+                alignLeft(
+                    subtotalE
+                );
+
+                alignLeft(
+                    subtotalG
+                );
 
 
                 categoryTotals[cat] =
@@ -2627,7 +2556,7 @@ async function exportQuoteToExcel() {
 
 
                 // ==========================================
-                // 小計後空一列
+                // 小計後空一整列
                 // ==========================================
 
                 curRow++;
@@ -2682,7 +2611,6 @@ async function exportQuoteToExcel() {
             ]
         );
 
-
         fillTotalCell(
             'F11',
             categoryTotals[
@@ -2697,7 +2625,6 @@ async function exportQuoteToExcel() {
                 '燈具工程'
             ]
         );
-
 
         fillTotalCell(
             'F12',
@@ -2714,7 +2641,6 @@ async function exportQuoteToExcel() {
             ]
         );
 
-
         fillTotalCell(
             'F13',
             categoryTotals[
@@ -2729,7 +2655,6 @@ async function exportQuoteToExcel() {
                 '油漆工程'
             ]
         );
-
 
         fillTotalCell(
             'F14',
@@ -2746,7 +2671,6 @@ async function exportQuoteToExcel() {
             ]
         );
 
-
         fillTotalCell(
             'F15',
             categoryTotals[
@@ -2756,7 +2680,7 @@ async function exportQuoteToExcel() {
 
 
         // ==================================================
-        // 總金額
+        // 總計
         // ==================================================
 
         const totals =
@@ -2825,18 +2749,15 @@ async function exportQuoteToExcel() {
             p1
         );
 
-
         fillTotalCell(
             'F23',
             p2
         );
 
-
         fillTotalCell(
             'F24',
             p3
         );
-
 
         fillTotalCell(
             'F25',
@@ -2845,7 +2766,7 @@ async function exportQuoteToExcel() {
 
 
         // ==================================================
-        // 第二頁 G 欄全部清空
+        // G 欄全部清空
         // ==================================================
 
         for (
@@ -2863,7 +2784,7 @@ async function exportQuoteToExcel() {
 
 
         // ==================================================
-        // 產生 Excel
+        // 匯出
         // ==================================================
 
         const buffer =
@@ -2913,5 +2834,4 @@ async function exportQuoteToExcel() {
 </script>
 
 </body>
-
 </html>
