@@ -756,6 +756,7 @@
     window.print();
   }
 
+  // ⭐ 套印 Excel 報價單 (強寫指定欄寬 1cm, 5cm, 1.5cm, 1.5cm, 2cm, 2cm, 5cm 且無縫緊接細項)
   async function exportQuoteToExcel() {
     if (currentItems.length === 0) { alert("請先加入報價項目！"); return; }
 
@@ -777,93 +778,104 @@
       
       let wsQuote = wb.getWorksheet('估價單0906') || wb.worksheets[0];
 
+      // 🎯 【指定欄寬設定】：1cm=4.5, 5cm=22.5, 1.5cm=6.8, 2cm=9.0
+      wsQuote.getColumn(1).width = 4.5;  // A: 項次 (1cm)
+      wsQuote.getColumn(2).width = 22.5; // B: 項目說明 (5cm)
+      wsQuote.getColumn(3).width = 6.8;  // C: 數量 (1.5cm)
+      wsQuote.getColumn(4).width = 6.8;  // D: 單位 (1.5cm)
+      wsQuote.getColumn(5).width = 9.0;  // E: 單價 (2cm)
+      wsQuote.getColumn(6).width = 9.0;  // F: 複價小計 (2cm)
+      wsQuote.getColumn(7).width = 22.5; // G: 備註 (5cm)
+
+      // 抬頭資訊寫入 (頁面 1)
       wsQuote.getCell('A6').value = `客戶名稱 : ${clientName}`;
       wsQuote.getCell('G6').value = contractNo;
       wsQuote.getCell('A7').value = `工程地點 : ${projectLocation}`;
       if (quoteDate) wsQuote.getCell('G7').value = quoteDate;
 
+      // 清空舊樣板內容 48~95 列
       for (let r = 48; r <= 95; r++) {
         let row = wsQuote.getRow(r);
-        row.hidden = false;
-        for (let c = 1; c <= 7; c++) {
-          row.getCell(c).value = null;
-        }
+        row.hidden = true; // 預設全部隱藏
+        for (let c = 1; c <= 7; c++) { row.getCell(c).value = null; }
       }
 
+      // 依選取項目進行工種分組
       const grouped = {};
       currentItems.forEach(item => {
         if (!grouped[item.category]) grouped[item.category] = [];
         grouped[item.category].push(item);
       });
 
-      const catConfig = [
-        { cat: "水電工程", mainRow: 11, headerRow: 48, start: 49, maxCount: 8, subtotalRow: 57 },
-        { cat: "燈具工程", mainRow: 12, headerRow: 59, start: 60, maxCount: 2, subtotalRow: 62 },
-        { cat: "木作工程", mainRow: 13, headerRow: 64, start: 65, maxCount: 7, subtotalRow: 72 },
-        { cat: "油漆工程", mainRow: 14, headerRow: 74, start: 75, maxCount: 8, subtotalRow: 83 },
-        { cat: "雜項工程", mainRow: 15, headerRow: 85, start: 86, maxCount: 6, subtotalRow: 92 }
-      ];
-
+      const catOrderList = ["水電工程", "燈具工程", "木作工程", "油漆工程", "雜項工程"];
       const numMap = ["一", "二", "三", "四", "五", "六", "七", "八"];
       const categoryTotals = { "水電工程": 0, "燈具工程": 0, "木作工程": 0, "油漆工程": 0, "雜項工程": 0 };
-      let activeOrderIndex = 0;
+      
+      let curRow = 48; // 細項起始列 (頁面 2)
+      let activeIdx = 0;
 
-      wsQuote.getCell('A17').value = null;
-      wsQuote.getCell('A19').value = null;
-
-      catConfig.forEach(cfg => {
-        let items = grouped[cfg.cat] || [];
-        let catSum = 0;
-
+      // 🎯 【無縫緊接動態生成】：細項寫完緊接小計、空一列再接下一工種
+      catOrderList.forEach(cat => {
+        let items = grouped[cat] || [];
         if (items.length > 0) {
-          let numStr = numMap[activeOrderIndex] || (activeOrderIndex + 1);
-          activeOrderIndex++;
+          let numStr = numMap[activeIdx] || (activeIdx + 1);
+          activeIdx++;
 
-          wsQuote.getCell(`A${cfg.mainRow}`).value = numStr;
-          wsQuote.getCell(`B${cfg.mainRow}`).value = cfg.cat;
+          // 總表 (頁面 1) 紀錄
+          let mainRowMap = { "水電工程": 11, "燈具工程": 12, "木作工程": 13, "油漆工程": 14, "雜項工程": 15 };
+          wsQuote.getCell(`A${mainRowMap[cat]}`).value = numStr;
+          wsQuote.getCell(`B${mainRowMap[cat]}`).value = cat;
 
-          wsQuote.getCell(`A${cfg.headerRow}`).value = numStr;
-          wsQuote.getCell(`B${cfg.headerRow}`).value = cfg.cat;
+          // 明細標題列
+          let hRow = wsQuote.getRow(curRow);
+          hRow.hidden = false;
+          hRow.getCell(1).value = numStr;
+          hRow.getCell(2).value = cat;
+          curRow++;
 
-          items.forEach((item, idx) => {
-            if (idx < cfg.maxCount) {
-              let rNum = cfg.start + idx;
-              let row = wsQuote.getRow(rNum);
+          // 明細細項
+          let catSum = 0;
+          items.forEach(item => {
+            let row = wsQuote.getRow(curRow);
+            row.hidden = false;
+            row.getCell(2).value = item.name;
+            row.getCell(3).value = Number(item.qty);
+            row.getCell(4).value = item.unit;
+            row.getCell(5).value = Number(item.price);
+            row.getCell(6).value = Number(item.priceSubtotal);
+            row.getCell(7).value = item.note || null;
 
-              row.getCell(2).value = item.name;
-              row.getCell(3).value = Number(item.qty);
-              row.getCell(4).value = item.unit;
-              row.getCell(5).value = Number(item.price);
-              row.getCell(6).value = Number(item.priceSubtotal);
-              row.getCell(7).value = null;
-
-              catSum += Number(item.priceSubtotal);
-            }
+            catSum += Number(item.priceSubtotal);
+            curRow++;
           });
 
-          categoryTotals[cfg.cat] = catSum;
-          wsQuote.getCell(`F${cfg.subtotalRow}`).value = catSum;
+          // 工種小計列
+          let subRow = wsQuote.getRow(curRow);
+          subRow.hidden = false;
+          subRow.getCell(2).value = `${cat}小計`;
+          subRow.getCell(6).value = catSum;
+          categoryTotals[cat] = catSum;
+          curRow++;
+
+          // 空一列接下一個工種
+          let emptyRow = wsQuote.getRow(curRow);
+          emptyRow.hidden = false;
+          curRow++;
         } else {
-          wsQuote.getCell(`A${cfg.mainRow}`).value = null;
-          wsQuote.getCell(`B${cfg.mainRow}`).value = `${cfg.cat} (無施作)`;
-          
-          wsQuote.getCell(`A${cfg.headerRow}`).value = null;
-          wsQuote.getCell(`B${cfg.headerRow}`).value = `${cfg.cat} (無施作)`;
-          categoryTotals[cfg.cat] = 0;
+          let mainRowMap = { "水電工程": 11, "燈具工程": 12, "木作工程": 13, "油漆工程": 14, "雜項工程": 15 };
+          wsQuote.getCell(`A${mainRowMap[cat]}`).value = null;
+          wsQuote.getCell(`B${mainRowMap[cat]}`).value = `${cat} (無施作)`;
         }
       });
 
-      wsQuote.getCell('E11').value = categoryTotals["水電工程"];
-      wsQuote.getCell('F11').value = categoryTotals["水電工程"];
-      wsQuote.getCell('E12').value = categoryTotals["燈具工程"];
-      wsQuote.getCell('F12').value = categoryTotals["燈具工程"];
-      wsQuote.getCell('E13').value = categoryTotals["木作工程"];
-      wsQuote.getCell('F13').value = categoryTotals["木作工程"];
-      wsQuote.getCell('E14').value = categoryTotals["油漆工程"];
-      wsQuote.getCell('F14').value = categoryTotals["油漆工程"];
-      wsQuote.getCell('E15').value = categoryTotals["雜項工程"];
-      wsQuote.getCell('F15').value = categoryTotals["雜項工程"];
+      // 第一頁總表金額填寫
+      wsQuote.getCell('E11').value = categoryTotals["水電工程"]; wsQuote.getCell('F11').value = categoryTotals["水電工程"];
+      wsQuote.getCell('E12').value = categoryTotals["燈具工程"]; wsQuote.getCell('F12').value = categoryTotals["燈具工程"];
+      wsQuote.getCell('E13').value = categoryTotals["木作工程"]; wsQuote.getCell('F13').value = categoryTotals["木作工程"];
+      wsQuote.getCell('E14').value = categoryTotals["油漆工程"]; wsQuote.getCell('F14').value = categoryTotals["油漆工程"];
+      wsQuote.getCell('E15').value = categoryTotals["雜項工程"]; wsQuote.getCell('F15').value = categoryTotals["雜項工程"];
 
+      // 計算總計與付款期別
       let subtotal = currentItems.reduce((acc, i) => acc + Number(i.priceSubtotal), 0);
       let hasMgmt = document.getElementById('chkManagementFee').checked;
       let hasTax = document.getElementById('chkTax').checked;
@@ -889,10 +901,6 @@
       wsQuote.getCell('F25').value = p4;
 
       wsQuote.getCell('C38').value = grandTotal;
-
-      for (let r = 11; r <= 15; r++) {
-        wsQuote.getRow(r).getCell(7).value = null;
-      }
 
       const buffer = await wb.xlsx.writeBuffer();
       const fileName = clientName ? `裝修報價單-${clientName}-${quoteDate}.xlsx` : `裝修報價單-${quoteDate}.xlsx`;
