@@ -1,945 +1,639 @@
 <!DOCTYPE html>
 <html lang="zh-TW">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>室內裝修報價與工程進度管理系統</title>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>室內裝修報價與工程進度管理系統</title>
 
-  <script src="https://cdnjs.cloudflare.com/ajax/libs/exceljs/4.3.0/exceljs.min.js"></script>
-  <script src="https://cdnjs.cloudflare.com/ajax/libs/FileSaver.js/2.0.5/FileSaver.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/exceljs@4.3.0/dist/exceljs.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/file-saver@2.0.5/dist/FileSaver.min.js"></script>
 
-  <style>
-    :root {
-      --primary: #2c3e50;
-      --secondary: #27ae60;
-      --light-bg: #f8f9fa;
-      --border: #dee2e6;
+<style>
+* {
+    box-sizing: border-box;
+}
+
+body {
+    margin: 0;
+    padding: 20px;
+    background: #f3f4f6;
+    font-family:
+        "Microsoft JhengHei",
+        "Noto Sans TC",
+        Arial,
+        sans-serif;
+    color: #222;
+}
+
+.container {
+    max-width: 1400px;
+    margin: auto;
+}
+
+h1 {
+    margin: 0 0 20px;
+    font-size: 28px;
+}
+
+.card {
+    background: #fff;
+    border-radius: 12px;
+    padding: 20px;
+    margin-bottom: 20px;
+    box-shadow: 0 2px 10px rgba(0,0,0,.08);
+}
+
+.card h2 {
+    margin-top: 0;
+    font-size: 20px;
+}
+
+.grid {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 12px;
+}
+
+.field {
+    display: flex;
+    flex-direction: column;
+    gap: 5px;
+}
+
+.field label {
+    font-weight: bold;
+}
+
+input,
+select,
+textarea,
+button {
+    font-family: inherit;
+}
+
+input,
+select,
+textarea {
+    width: 100%;
+    padding: 9px 10px;
+    border: 1px solid #ccc;
+    border-radius: 7px;
+    font-size: 15px;
+}
+
+textarea {
+    min-height: 70px;
+    resize: vertical;
+}
+
+button {
+    border: 0;
+    border-radius: 7px;
+    padding: 10px 16px;
+    cursor: pointer;
+    font-size: 15px;
+}
+
+.btn {
+    background: #333;
+    color: white;
+}
+
+.btn:hover {
+    opacity: .85;
+}
+
+.btn-green {
+    background: #238636;
+    color: white;
+}
+
+.btn-blue {
+    background: #2563eb;
+    color: white;
+}
+
+.btn-red {
+    background: #dc2626;
+    color: white;
+}
+
+.btn-gray {
+    background: #e5e7eb;
+    color: #222;
+}
+
+.button-row {
+    display: flex;
+    gap: 10px;
+    flex-wrap: wrap;
+    margin-top: 15px;
+}
+
+.category-buttons {
+    display: flex;
+    gap: 8px;
+    flex-wrap: wrap;
+}
+
+.category-buttons button {
+    background: #eee;
+}
+
+.category-buttons button.active {
+    background: #222;
+    color: white;
+}
+
+.quote-table {
+    width: 100%;
+    border-collapse: collapse;
+    margin-top: 15px;
+}
+
+.quote-table th,
+.quote-table td {
+    border: 1px solid #ddd;
+    padding: 8px;
+    vertical-align: middle;
+}
+
+.quote-table th {
+    background: #f0f0f0;
+}
+
+.right {
+    text-align: right;
+}
+
+.center {
+    text-align: center;
+}
+
+.summary {
+    display: flex;
+    justify-content: flex-end;
+}
+
+.summary-box {
+    width: 400px;
+}
+
+.summary-row {
+    display: flex;
+    justify-content: space-between;
+    padding: 8px 0;
+    border-bottom: 1px solid #ddd;
+}
+
+.summary-row.total {
+    font-size: 20px;
+    font-weight: bold;
+}
+
+.checkbox-row {
+    display: flex;
+    gap: 20px;
+    flex-wrap: wrap;
+}
+
+.checkbox-row label {
+    display: flex;
+    align-items: center;
+    gap: 5px;
+}
+
+.checkbox-row input {
+    width: auto;
+}
+
+.test-panel {
+    display: none;
+    background: #fff7ed;
+    border: 1px solid #fdba74;
+}
+
+.test-panel.show {
+    display: block;
+}
+
+.notice {
+    padding: 12px;
+    border-radius: 8px;
+    background: #f0f9ff;
+    border: 1px solid #bae6fd;
+    margin-top: 10px;
+}
+
+@media (max-width: 900px) {
+    .grid {
+        grid-template-columns: repeat(2, 1fr);
     }
+}
 
+@media (max-width: 600px) {
     body {
-      font-family: "PingFang TC", "Microsoft JhengHei", sans-serif;
-      margin: 0;
-      padding: 20px;
-      background-color: #f4f6f8;
-      color: #333;
+        padding: 10px;
     }
 
-    .container {
-      max-width: 1200px;
-      margin: 0 auto;
-    }
-
-    h1, h3, h4 {
-      color: #2c3e50;
-      margin-top: 5px;
-    }
-
-    .card {
-      background: #fff;
-      border-radius: 8px;
-      padding: 20px;
-      margin-bottom: 20px;
-      box-shadow: 0 2px 8px rgba(0,0,0,0.08);
-    }
-
-    .grid-2 {
-      display: grid;
-      grid-template-columns: 1fr 1fr;
-      gap: 15px;
-    }
-
-    .grid-3 {
-      display: grid;
-      grid-template-columns: repeat(3, 1fr);
-      gap: 15px;
-    }
-
-    .grid-4 {
-      display: grid;
-      grid-template-columns: repeat(4, 1fr);
-      gap: 15px;
-    }
-
-    label {
-      font-weight: bold;
-      display: block;
-      margin-bottom: 5px;
-      font-size: 14px;
-    }
-
-    input,
-    select,
-    textarea {
-      width: 100%;
-      padding: 8px 12px;
-      border: 1px solid #dee2e6;
-      border-radius: 4px;
-      box-sizing: border-box;
-      font-size: 14px;
-    }
-
-    button {
-      cursor: pointer;
-      padding: 10px 18px;
-      border: none;
-      border-radius: 4px;
-      font-size: 14px;
-      font-weight: bold;
-    }
-
-    .btn-primary {
-      background: #2c3e50;
-      color: #fff;
-    }
-
-    .btn-success {
-      background: #27ae60;
-      color: #fff;
-    }
-
-    .btn-warning {
-      background: #f39c12;
-      color: #fff;
-    }
-
-    .btn-info {
-      background: #2980b9;
-      color: #fff;
-    }
-
-    .btn-purple {
-      background: #8e44ad;
-      color: #fff;
-    }
-
-    .btn-danger {
-      background: #e74c3c;
-      color: #fff;
-      padding: 6px 12px;
-    }
-
-    .mode-btn {
-      background: #e2e8f0;
-      color: #475569;
-      font-size: 15px;
-      padding: 10px 20px;
-      border-radius: 6px;
-      border: 2px solid transparent;
-      transition: all 0.2s;
-    }
-
-    .mode-btn.active {
-      background: #2c3e50;
-      color: #fff;
-      border-color: #1e293b;
-    }
-
-    table {
-      width: 100%;
-      border-collapse: collapse;
-      margin-top: 15px;
-    }
-
-    th,
-    td {
-      border: 1px solid #dee2e6;
-      padding: 10px;
-      text-align: left;
-      font-size: 14px;
-    }
-
-    th {
-      background: #f8f9fa;
-      color: #2c3e50;
-    }
-
-    .cost-col {
-      background: #fff8e7;
-      display: none;
-    }
-
-    .show-cost .cost-col {
-      display: table-cell;
+    .grid {
+        grid-template-columns: 1fr;
     }
 
     .summary-box {
-      background: #eef2f5;
-      padding: 15px;
-      border-radius: 6px;
-      margin-top: 15px;
+        width: 100%;
     }
-
-    .summary-row {
-      display: flex;
-      justify-content: space-between;
-      padding: 6px 0;
-      font-size: 15px;
-    }
-
-    .summary-row.total {
-      font-size: 18px;
-      font-weight: bold;
-      color: #c0392b;
-      border-top: 2px solid #ccc;
-      padding-top: 10px;
-    }
-
-    .admin-panel {
-      background: #eef7ee;
-      border: 1px dashed #27ae60;
-      padding: 15px;
-      border-radius: 6px;
-      margin-top: 15px;
-      display: none;
-    }
-
-    .payment-box {
-      background: #f8fafc;
-      border: 1px solid #cbd5e1;
-      padding: 12px;
-      border-radius: 6px;
-      margin-top: 10px;
-      font-size: 13px;
-    }
-
-    .schedule-preview {
-      background: #fffbe6;
-      border: 1px solid #ffe58f;
-      padding: 15px;
-      border-radius: 6px;
-      margin-top: 15px;
-    }
-
-    .test-page-panel {
-      background: #f3e8ff;
-      border: 2px solid #a855f7;
-      border-radius: 8px;
-      padding: 20px;
-      margin-bottom: 20px;
-      display: none;
-    }
-  </style>
+}
+</style>
 </head>
 
 <body>
 
 <div class="container">
 
-  <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:10px;">
-    <h1>🏢 室內裝修報價與工程進度管理系統</h1>
-
-    <div style="display:flex; gap:6px;">
-      <button class="btn-purple" onclick="toggleTestPage()">🧪 測試頁</button>
-      <button class="btn-warning" onclick="toggleAdminPanel()">⚙ 新增常用選單</button>
-      <button class="btn-primary" onclick="toggleCostDisplay()">🔒 切換成本/毛利</button>
-    </div>
-  </div>
+<h1>室內裝修報價與工程進度管理系統</h1>
 
 
-  <!-- 測試頁 -->
-  <div class="test-page-panel" id="testPagePanel">
+<!-- =========================
+     測試功能
+========================= -->
 
-    <div style="display:flex; justify-content:space-between; align-items:center; border-bottom:1px solid #c084fc; padding-bottom:10px; margin-bottom:15px;">
-
-      <h3 style="margin:0; color:#6b21a8;">
-        🧪 系統開發測試頁 (Test Mode)
-      </h3>
-
-      <button
-        class="btn-danger"
-        onclick="toggleTestPage()"
-        style="padding:4px 10px; font-size:12px;">
-        ✕ 關閉測試頁
-      </button>
-
-    </div>
-
-
-    <div class="grid-2">
-
-      <div>
-
-        <h4 style="margin-top:0; color:#581c87;">
-          ⚡ 一鍵自動帶入測試模擬資料
-        </h4>
-
-        <div style="display:flex; gap:10px;">
-
-          <button class="btn-purple" onclick="loadTestData()">
-            🚀 自動帶入完整測試資料
-          </button>
-
-          <button class="btn-warning" onclick="clearAllItemsData()">
-            🗑 清空目前所有項目
-          </button>
-
-        </div>
-
-      </div>
-
-
-      <div style="background:#ffffff; padding:12px; border-radius:6px; border:1px solid #d8b4fe;">
-
-        <h4 style="margin-top:0; color:#581c87;">
-          📊 系統目前運作狀態監視器
-        </h4>
-
-        <ul style="font-size:13px; line-height:1.8; margin:0; padding-left:20px;">
-
-          <li>
-            <b>已儲存草稿數量：</b>
-            <span id="testDraftCount">0</span> 份
-          </li>
-
-          <li>
-            <b>當前報價項目總數：</b>
-            <span id="testItemCount">0</span> 項
-          </li>
-
-          <li>
-            <b>目前未含稅報價小計：</b>
-            <span id="testSubtotalVal">$0</span>
-          </li>
-
-          <li>
-            <b>目前計算完工日：</b>
-            <span id="testEndDateVal">-</span>
-          </li>
-
-        </ul>
-
-      </div>
-
-    </div>
-
-  </div>
-
-
-  <!-- 案場類型 -->
-  <div class="card" style="background:#f1f5f9; border:1px solid #cbd5e1;">
-
-    <h3 style="margin-top:0;">
-      🏠 請選擇案場類型：
-    </h3>
-
-    <div style="display:flex; gap:12px; flex-wrap:wrap;">
-
-      <button
-        class="mode-btn"
-        id="btnModeSimple"
-        onclick="switchMode('simple')">
-        🔨 簡易局部裝修
-      </button>
-
-      <button
-        class="mode-btn active"
-        id="btnModeNew"
-        onclick="switchMode('new')">
-        🏢 新成屋標準裝修
-      </button>
-
-      <button
-        class="mode-btn"
-        id="btnModeOld"
-        onclick="switchMode('old')">
-        🏚 老屋翻新 & 毛胚屋
-      </button>
-
-    </div>
-
-  </div>
-
-
-  <!-- 草稿 -->
-  <div class="card" style="background:#f0fdf4; border:1px solid #bbf7d0;">
-
-    <div style="display:flex; justify-content:space-between; align-items:center;">
-
-      <h3 style="margin:0; color:#166534;">
-        💾 專案草稿箱
-      </h3>
-
-      <div style="display:flex; gap:8px;">
-
-        <select
-          id="savedDraftsSelect"
-          style="width:auto; min-width:200px;">
-          <option value="">
-            -- 選擇已儲存的報價草稿 --
-          </option>
-        </select>
-
-        <button class="btn-info" onclick="loadSelectedDraft()">
-          📖 載入草稿
+<div class="card">
+    <div class="button-row">
+        <button class="btn-gray" onclick="toggleTestPage()">
+            測試資料
         </button>
 
-        <button class="btn-success" onclick="saveCurrentDraft()">
-          💾 儲存目前報價
+        <button class="btn-blue" onclick="saveDraft()">
+            儲存草稿
         </button>
 
-        <button
-          class="btn-danger"
-          onclick="deleteSelectedDraft()"
-          style="padding:8px 12px;">
-          🗑 刪除
+        <button class="btn-gray" onclick="loadDraft()">
+            載入草稿
         </button>
 
-      </div>
-
+        <button class="btn-red" onclick="clearAllItemsData()">
+            清除報價
+        </button>
     </div>
-
-  </div>
-
-
-  <!-- 管理員 -->
-  <div class="admin-panel card" id="adminPanel">
-
-    <h3 style="margin-top:0; color:#27ae60;">
-      ⚙ 新增常用項目至下拉選單
-    </h3>
-
-    <div
-      class="grid-4"
-      style="grid-template-columns:2fr 2fr 1fr 1fr;">
-
-      <div>
-        <label>目標類別</label>
-        <select id="newCatSelect"></select>
-      </div>
-
-      <div>
-        <label>新項目名稱</label>
-        <input
-          type="text"
-          id="newName"
-          placeholder="例如：9.5cm LED 崁燈">
-      </div>
-
-      <div>
-        <label>單位</label>
-        <input
-          type="text"
-          id="newUnit"
-          placeholder="米/顆/組/坪">
-      </div>
-
-      <div>
-        <label>廠商底價</label>
-        <input
-          type="number"
-          id="newCost"
-          value="0">
-      </div>
-
-    </div>
+</div>
 
 
-    <div
-      class="grid-4"
-      style="margin-top:10px; grid-template-columns:2fr 4fr 2fr;">
+<div id="testPanel" class="card test-panel">
 
-      <div>
-        <label>客戶報價</label>
-        <input
-          type="number"
-          id="newPrice"
-          value="0">
-      </div>
+    <h2>測試資料</h2>
 
-      <div>
-        <label>預設備註</label>
-        <input
-          type="text"
-          id="newNote"
-          placeholder="例如：含基本安裝">
-      </div>
-
-      <div style="display:flex; align-items:flex-end;">
-
-        <button
-          class="btn-success"
-          onclick="addNewPresetItem()"
-          style="width:100%;">
-          ➕ 儲存至常用選單
+    <div class="button-row">
+        <button class="btn-blue" onclick="loadTestData()">
+            載入測試資料
         </button>
 
-      </div>
-
+        <button class="btn-red" onclick="clearAllItemsData()">
+            清除全部
+        </button>
     </div>
 
-  </div>
+    <div id="testMonitor" class="notice">
+        目前尚無資料
+    </div>
+
+</div>
 
 
-  <!-- 客戶資料 -->
-  <div class="card">
+<!-- =========================
+     基本資料
+========================= -->
 
-    <h3>📋 客戶、案場與工程開工資訊</h3>
+<div class="card">
 
-    <div class="grid-4">
+<h2>基本資料</h2>
 
-      <div>
-        <label>客戶姓名</label>
-        <input
-          type="text"
-          id="clientName"
-          placeholder="例如：劉隆穎">
-      </div>
+<div class="grid">
 
-      <div>
+    <div class="field">
+        <label>客戶名稱</label>
+        <input id="clientName" type="text">
+    </div>
+
+    <div class="field">
         <label>工程地點</label>
-        <input
-          type="text"
-          id="projectLocation"
-          placeholder="例如：桃園市中壢區高鐵站前路426號5樓">
-      </div>
+        <input id="projectLocation" type="text">
+    </div>
 
-      <div>
-        <label>合約書編號</label>
-        <input
-          type="text"
-          id="contractNo"
-          placeholder="例如：007006">
-      </div>
+    <div class="field">
+        <label>合約編號</label>
+        <input id="contractNo" type="text">
+    </div>
 
-      <div>
+    <div class="field">
         <label>報價日期</label>
-        <input type="date" id="quoteDate">
-      </div>
+        <input id="quoteDate" type="date">
+    </div>
+
+    <div class="field">
+        <label>開工日期</label>
+        <input id="startDate" type="date">
+    </div>
+
+    <div class="field">
+        <label>設計師</label>
+        <input id="designerName" type="text">
+    </div>
+
+</div>
+
+</div>
+
+
+<!-- =========================
+     工程類型
+========================= -->
+
+<div class="card">
+
+<h2>裝修類型</h2>
+
+<div class="category-buttons">
+
+    <button onclick="selectSiteType(this,'簡易局部裝修')">
+        簡易局部裝修
+    </button>
+
+    <button onclick="selectSiteType(this,'新成屋標準裝修')">
+        新成屋標準裝修
+    </button>
+
+    <button onclick="selectSiteType(this,'老屋翻新')">
+        老屋翻新
+    </button>
+
+    <button onclick="selectSiteType(this,'毛胚屋')">
+        毛胚屋
+    </button>
+
+</div>
+
+<div id="siteTypeDisplay" class="notice">
+    尚未選擇
+</div>
+
+</div>
+
+
+<!-- =========================
+     報價項目
+========================= -->
+
+<div class="card">
+
+<h2>新增報價項目</h2>
+
+<div class="grid">
+
+    <div class="field">
+        <label>工程分類</label>
+
+        <select id="categorySelect">
+            <option value="">請選擇</option>
+            <option value="水電工程">水電工程</option>
+            <option value="燈具工程">燈具工程</option>
+            <option value="木作工程">木作工程</option>
+            <option value="油漆工程">油漆工程</option>
+            <option value="雜項工程">雜項工程</option>
+            <option value="保護工程">保護工程</option>
+            <option value="拆除工程">拆除工程</option>
+            <option value="泥作工程">泥作工程</option>
+            <option value="玻璃工程">玻璃工程</option>
+            <option value="木地板工程">木地板工程</option>
+        </select>
 
     </div>
 
 
-    <div class="grid-4" style="margin-top:12px;">
-
-      <div>
-
-        <label style="color:#d97706;">
-          📅 預計開工日期
-        </label>
-
-        <input
-          type="date"
-          id="startDate"
-          onchange="calculateSchedulePreview()">
-
-      </div>
-
-
-      <div>
-
-        <label>設計師 / 負責人</label>
-
-        <input
-          type="text"
-          id="designerName"
-          placeholder="例如：陳昭宇 設計師">
-
-      </div>
-
-
-      <div style="grid-column:span 2;">
-
-        <label>預計完工與總工期推算</label>
-
-        <div
-          id="scheduleSummaryText"
-          style="padding:8px; font-weight:bold; color:#2563eb;">
-          選擇開工日後自動推算工期...
-        </div>
-
-      </div>
-
+    <div class="field">
+        <label>工程項目</label>
+        <input id="subCategorySelect" type="text">
     </div>
 
-  </div>
 
-
-  <!-- 新增工程 -->
-  <div class="card">
-
-    <h3>➕ 新增工程項目</h3>
-
-    <div
-      class="grid-4"
-      style="grid-template-columns:2fr 2fr 1fr 2fr;">
-
-      <div>
-
-        <label>工程類別 (第一層)</label>
-
-        <select
-          id="categorySelect"
-          onchange="updateSubCategoryOptions()">
-
-          <option value="">
-            -- 請選擇工程類別 --
-          </option>
-
-        </select>
-
-      </div>
-
-
-      <div>
-
-        <label>工程細項 (第二層)</label>
-
-        <select
-          id="subCategorySelect"
-          onchange="autoFillItemDefaults()">
-
-          <option value="">
-            -- 請先選擇工程類別 --
-          </option>
-
-        </select>
-
-      </div>
-
-
-      <div>
-
+    <div class="field">
         <label>數量</label>
-
-        <input
-          type="number"
-          id="itemQty"
-          value="1"
-          min="-999"
-          step="0.1">
-
-      </div>
+        <input id="itemQty" type="number" step="0.01" value="1">
+    </div>
 
 
-      <div>
-
+    <div class="field">
         <label>單位</label>
-
-        <input
-          type="text"
-          id="itemUnit"
-          placeholder="坪/尺/組/式/顆">
-
-      </div>
-
+        <input id="itemUnit" type="text" value="式">
     </div>
 
 
-    <div class="grid-4" style="margin-top:12px;">
-
-      <div
-        class="cost-col"
-        style="padding:8px; border-radius:4px;">
-
-        <label>廠商底價 (內部成本)</label>
-
-        <input
-          type="number"
-          id="costPrice"
-          value="0">
-
-      </div>
-
-
-      <div>
-
-        <label>對外報價 (客戶單價)</label>
-
-        <input
-          type="number"
-          id="quotePrice"
-          value="0">
-
-      </div>
-
-
-      <div style="grid-column:span 2;">
-
-        <label>施工備註 / 規格</label>
-
-        <input
-          type="text"
-          id="itemNote"
-          placeholder="例如：TV牆下、追加項目說明">
-
-      </div>
-
+    <div class="field">
+        <label>成本單價</label>
+        <input id="costPrice" type="number" step="1">
     </div>
 
 
-    <div style="margin-top:12px; text-align:right;">
-
-      <button
-        class="btn-success"
-        onclick="addItemToQuote()">
-        加入報價單
-      </button>
-
-    </div>
-
-  </div>
-
-
-  <!-- 報價表 -->
-  <div class="card" id="quoteContainer">
-
-    <h3>📝 報價項目清單與利潤分析</h3>
-
-    <table id="quoteTable">
-
-      <thead>
-
-        <tr>
-
-          <th>大類</th>
-          <th>工程項目 / 備註</th>
-          <th>數量</th>
-          <th>單位</th>
-
-          <th class="cost-col">
-            廠商單價
-          </th>
-
-          <th class="cost-col">
-            廠商成本小計
-          </th>
-
-          <th>客戶單價</th>
-          <th>客戶報價小計</th>
-
-          <th class="cost-col">
-            內部預估毛利
-          </th>
-
-          <th>操作</th>
-
-        </tr>
-
-      </thead>
-
-      <tbody id="quoteTbody"></tbody>
-
-    </table>
-
-
-    <div class="grid-2" style="margin-top:20px;">
-
-      <div>
-
-        <h4>⚙ 費用與付款方式設定</h4>
-
-
-        <div>
-
-          <input
-            type="checkbox"
-            id="chkManagementFee"
-            checked
-            onchange="renderSummary()"
-            style="width:auto;">
-
-          <label style="display:inline;">
-            計入 10% 工程監工管理費
-          </label>
-
-        </div>
-
-
-        <div>
-
-          <input
-            type="checkbox"
-            id="chkTax"
-            checked
-            onchange="renderSummary()"
-            style="width:auto;">
-
-          <label style="display:inline;">
-            計入 5% 營業稅
-          </label>
-
-        </div>
-
-
-        <div style="margin-top:15px;">
-
-          <input
-            type="checkbox"
-            id="chkShowPayment"
-            checked
-            onchange="renderSummary()"
-            style="width:auto;">
-
-          <label
-            style="display:inline; font-weight:bold; color:#2b6cb0;">
-            📑 自動計算標準四期付款 (30%/30%/30%/10%)
-          </label>
-
-          <div
-            class="payment-box"
-            id="paymentDetailsDisplay">
-          </div>
-
-        </div>
-
-
-        <div style="margin-top:15px;">
-
-          <label>
-            🏷️ 常用合約條款與注意事項：
-          </label>
-
-          <div style="font-size:13px; line-height:1.8;">
-
-            <div>
-
-              <input
-                type="checkbox"
-                class="note-preset"
-                value="1. 本估價單項目不包含燈具、家電設備與軟裝佈置。"
-                checked
-                onchange="updateCustomNotes()">
-
-              1. 不包含燈具、家電與軟裝。
-
-            </div>
-
-
-            <div>
-
-              <input
-                type="checkbox"
-                class="note-preset"
-                value="2. 施工期間工程保固一年，消耗性材料與人為因素除外。"
-                checked
-                onchange="updateCustomNotes()">
-
-              2. 提供施工保固一年。
-
-            </div>
-
-
-            <div>
-
-              <input
-                type="checkbox"
-                class="note-preset"
-                value="3. 施工過程中如有任何工程變更或追加項目，需另行簽認計價。"
-                checked
-                onchange="updateCustomNotes()">
-
-              3. 額外追加項目需另行估價簽認。
-
-            </div>
-
-
-            <div>
-
-              <input
-                type="checkbox"
-                class="note-preset"
-                value="4. 工程報價有效期限為 30 天。"
-                checked
-                onchange="updateCustomNotes()">
-
-              4. 報價有效期 30 天。
-
-            </div>
-
-          </div>
-
-
-          <textarea
-            id="customNotesText"
-            rows="3"
-            style="margin-top:8px;"
-            placeholder="可在這裡自訂補充注意事項...">
-          </textarea>
-
-        </div>
-
-      </div>
-
-
-      <div class="summary-box">
-
-        <div class="summary-row">
-
-          <span>工程小計：</span>
-          <span id="sumSubtotal">$0</span>
-
-        </div>
-
-
-        <div class="summary-row">
-
-          <span>管理費 (10%)：</span>
-          <span id="sumMgmt">$0</span>
-
-        </div>
-
-
-        <div class="summary-row">
-
-          <span>營業稅 (5%)：</span>
-          <span id="sumTax">$0</span>
-
-        </div>
-
-
-        <div class="summary-row total">
-
-          <span>報價總計：</span>
-          <span id="sumTotal">$0</span>
-
-        </div>
-
-      </div>
-
+    <div class="field">
+        <label>報價單價</label>
+        <input id="quotePrice" type="number" step="1">
     </div>
 
 
-    <!-- 工程進度 -->
-    <div class="schedule-preview">
-
-      <h4 style="margin-top:0; color:#b45309;">
-        📅 裝修工程進度預覽
-      </h4>
-
-      <div id="scheduleTablePreview">
-        請先加入報價項目並選擇預計開工日期...
-      </div>
-
+    <div class="field">
+        <label>備註</label>
+        <input id="itemNote" type="text">
     </div>
 
+</div>
 
-    <!-- 匯出 -->
-    <div
-      style="margin-top:25px; text-align:right; display:flex; justify-content:flex-end; gap:12px;">
 
-      <button
-        class="btn-success"
-        onclick="exportQuoteToExcel()"
-        style="font-size:16px; padding:14px 28px;">
+<div class="button-row">
 
-        📊 匯出完美 Excel 報價單 (.xlsx)
+    <button class="btn-green" onclick="addItem()">
+        加入報價
+    </button>
 
-      </button>
+</div>
 
+</div>
+
+
+<!-- =========================
+     報價明細
+========================= -->
+
+<div class="card">
+
+<h2>報價明細</h2>
+
+<div style="overflow-x:auto;">
+
+<table class="quote-table">
+
+<thead>
+
+<tr>
+    <th>工種</th>
+    <th>項目</th>
+    <th>數量</th>
+    <th>單位</th>
+    <th>成本</th>
+    <th>報價單價</th>
+    <th>複價</th>
+    <th>備註</th>
+    <th>操作</th>
+</tr>
+
+</thead>
+
+<tbody id="quoteTableBody"></tbody>
+
+</table>
+
+</div>
+
+</div>
+
+
+<!-- =========================
+     金額設定
+========================= -->
+
+<div class="card">
+
+<h2>費用設定</h2>
+
+<div class="checkbox-row">
+
+<label>
+    <input type="checkbox" id="chkManagementFee" checked onchange="renderSummary()">
+    管理費 10%
+</label>
+
+<label>
+    <input type="checkbox" id="chkTax" onchange="renderSummary()">
+    稅金 5%
+</label>
+
+<label>
+    <input type="checkbox" id="chkShowPayment" checked>
+    顯示付款方式
+</label>
+
+</div>
+
+</div>
+
+
+<!-- =========================
+     預設備註
+========================= -->
+
+<div class="card">
+
+<h2>備註</h2>
+
+<textarea id="presetNotes"
+placeholder="可輸入報價單備註"></textarea>
+
+</div>
+
+
+<!-- =========================
+     總計
+========================= -->
+
+<div class="card">
+
+<h2>報價總計</h2>
+
+<div class="summary">
+
+<div class="summary-box">
+
+    <div class="summary-row">
+        <span>工程小計</span>
+        <strong id="summarySubtotal">0</strong>
     </div>
 
-  </div>
+    <div class="summary-row">
+        <span>管理費</span>
+        <strong id="summaryManagement">0</strong>
+    </div>
+
+    <div class="summary-row">
+        <span>稅金</span>
+        <strong id="summaryTax">0</strong>
+    </div>
+
+    <div class="summary-row total">
+        <span>工程總價</span>
+        <strong id="summaryGrandTotal">0</strong>
+    </div>
+
+</div>
+
+</div>
+
+</div>
+
+
+<!-- =========================
+     排程
+========================= -->
+
+<div class="card">
+
+<h2>工程進度預覽</h2>
+
+<div id="schedulePreview" class="notice">
+    尚無工程資料
+</div>
+
+</div>
+
+
+<!-- =========================
+     匯出
+========================= -->
+
+<div class="card">
+
+<h2>Excel 套印</h2>
+
+<div class="notice">
+    Excel 範本檔案名稱必須為
+    <strong>template.xlsx</strong>，
+    並且與本 HTML 放在同一個資料夾。
+</div>
+
+<div class="button-row">
+
+    <button
+        class="btn-green"
+        onclick="exportQuoteToExcel()">
+        套印匯出 Excel
+    </button>
+
+</div>
+
+</div>
 
 </div>
 
 
 <script>
 
-  // ==========================================================
-  // 基本資料
-  // ==========================================================
+/* ============================================================
+   全域資料
+============================================================ */
 
-  const categoryOrder = [
+let currentItems = [];
+
+let selectedSiteType = '';
+
+const categoryOrder = [
     "水電工程",
     "燈具工程",
     "木作工程",
@@ -950,2558 +644,1635 @@
     "泥作工程",
     "玻璃工程",
     "木地板工程"
-  ];
+];
 
 
-  const scheduleRules = {
+/* ============================================================
+   初始化
+============================================================ */
 
-    "水電工程": {
-      days: 2,
-      note: "新增專用迴路、水電改管配線"
-    },
+window.onload = function () {
 
-    "燈具工程": {
-      days: 1,
-      note: "燈具與開關開孔及燈飾安裝"
-    },
+    const today =
+        new Date().toISOString().split('T')[0];
 
-    "木作工程": {
-      days: 4,
-      note: "平釘天花板、窗簾盒與木作門"
-    },
-
-    "油漆工程": {
-      days: 5,
-      note: "牆面/天花板批土過色與噴塗"
-    },
-
-    "雜項工程": {
-      days: 2,
-      note: "粗清、細清與完工驗收點交"
-    }
-
-  };
-
-
-  const fullItemMaster = {
-
-    "水電工程": [
-
-      {
-        name: "新增插座",
-        unit: "組",
-        cost: 2500,
-        price: 4000,
-        note: "TV牆下、主臥衣櫃、孝親衣櫃"
-      },
-
-      {
-        name: "新增專用迴路110V",
-        unit: "組",
-        cost: 4500,
-        price: 7000,
-        note: "餐櫃"
-      },
-
-      {
-        name: "新增專用迴路220V",
-        unit: "組",
-        cost: 4500,
-        price: 7000,
-        note: "餐櫃平台、主臥吹風機"
-      },
-
-      {
-        name: "弱電及網路線拉設",
-        unit: "式",
-        cost: 3500,
-        price: 5500,
-        note: "CAT6 網路線加強"
-      }
-
-    ],
-
-
-    "木作工程": [
-
-      {
-        name: "平釘天花板(局部高低差)",
-        unit: "坪",
-        cost: 4200,
-        price: 6200,
-        note: "日本麗仕矽酸鈣板"
-      },
-
-      {
-        name: "窗簾盒+冷氣盒",
-        unit: "尺",
-        cost: 550,
-        price: 900,
-        note: "雙層防潮木作"
-      },
-
-      {
-        name: "客廳電視造型牆結構",
-        unit: "式",
-        cost: 25000,
-        price: 42000,
-        note: "含隱藏美化線槽"
-      }
-
-    ],
-
-
-    "油漆工程": [
-
-      {
-        name: "平釘天花板過色",
-        unit: "坪",
-        cost: 1500,
-        price: 2400,
-        note: "得利乳膠漆刷塗"
-      },
-
-      {
-        name: "全室牆面局部批土修補過色",
-        unit: "式",
-        cost: 8000,
-        price: 15000,
-        note: "含交屋前二次修補"
-      }
-
-    ],
-
-
-    "燈具工程": [
-
-      {
-        name: "客廳、主臥崁入式燈條含變壓器",
-        unit: "米",
-        cost: 700,
-        price: 1200,
-        note: "軟燈條"
-      },
-
-      {
-        name: "15cm Led崁燈及挖孔配線",
-        unit: "顆",
-        cost: 650,
-        price: 1200,
-        note: "客廳 4000K 自然光"
-      }
-
-    ],
-
-
-    "雜項工程": [
-
-      {
-        name: "全室保護",
-        unit: "坪",
-        cost: 500,
-        price: 800,
-        note: "防潮布+軟墊"
-      },
-
-      {
-        name: "細清工程",
-        unit: "式",
-        cost: 18000,
-        price: 30000,
-        note: "入住級細清"
-      }
-
-    ]
-
-  };
-
-
-  let itemDatabase = fullItemMaster;
-
-  let currentItems = [];
-
-
-  // ==========================================================
-  // 初始化
-  // ==========================================================
-
-  window.onload = function() {
-
-    document.getElementById('quoteDate').valueAsDate = new Date();
-
-    document.getElementById('startDate').valueAsDate = new Date();
-
-    updateCustomNotes();
-
-    refreshDraftsDropdown();
-
-    initCategoryDropdowns();
+    document.getElementById('quoteDate').value =
+        today;
 
     updateTestMonitor();
+    renderQuoteTable();
+    renderSummary();
+    renderSchedule();
 
-  };
-
-
-  // ==========================================================
-  // 測試頁
-  // ==========================================================
-
-  function toggleTestPage() {
-
-    const panel =
-      document.getElementById('testPagePanel');
-
-    panel.style.display =
-      panel.style.display === 'block'
-        ? 'none'
-        : 'block';
-
-    updateTestMonitor();
-
-  }
+};
 
 
-  function loadTestData() {
+/* ============================================================
+   裝修類型
+============================================================ */
+
+function selectSiteType(button, type) {
+
+    selectedSiteType = type;
+
+    document.querySelectorAll('.category-buttons button')
+        .forEach(btn => btn.classList.remove('active'));
+
+    button.classList.add('active');
+
+    document.getElementById('siteTypeDisplay').innerText =
+        `目前選擇：${type}`;
+
+}
+
+
+/* ============================================================
+   測試頁
+============================================================ */
+
+function toggleTestPage() {
+
+    document
+        .getElementById('testPanel')
+        .classList.toggle('show');
+
+}
+
+
+function loadTestData() {
 
     document.getElementById('clientName').value =
-      '劉隆穎';
+        '劉隆穎';
 
     document.getElementById('projectLocation').value =
-      '桃園市中壢區高鐵站前路426號5樓';
+        '桃園市中壢區高鐵站前路426號5樓';
 
     document.getElementById('contractNo').value =
-      '007006';
+        '007006';
 
     document.getElementById('designerName').value =
-      '陳昭宇 設計師';
-
-    document.getElementById('startDate').valueAsDate =
-      new Date();
+        '陳昭宇 設計師';
 
 
     currentItems = [
 
-      {
-        id: 1,
-        category: "水電工程",
-        name: "新增插座",
-        qty: 3,
-        unit: "組",
-        cost: 2500,
-        costSubtotal: 7500,
-        price: 4000,
-        priceSubtotal: 12000,
-        profit: 4500,
-        note: "TV牆下、主臥衣櫃、孝親衣櫃"
-      },
+        {
+            category: '水電工程',
+            name: '新增插座',
+            qty: 8,
+            unit: '處',
+            costPrice: 800,
+            price: 1500,
+            priceSubtotal: 12000,
+            note: ''
+        },
 
-      {
-        id: 2,
-        category: "水電工程",
-        name: "新增專用迴路110V",
-        qty: 1,
-        unit: "組",
-        cost: 4500,
-        costSubtotal: 4500,
-        price: 7000,
-        priceSubtotal: 7000,
-        profit: 2500,
-        note: "餐櫃"
-      },
+        {
+            category: '水電工程',
+            name: '新增開關',
+            qty: 5,
+            unit: '處',
+            costPrice: 600,
+            price: 1200,
+            priceSubtotal: 6000,
+            note: ''
+        },
 
-      {
-        id: 3,
-        category: "水電工程",
-        name: "新增專用迴路220V",
-        qty: 2,
-        unit: "組",
-        cost: 4500,
-        costSubtotal: 9000,
-        price: 7000,
-        priceSubtotal: 14000,
-        profit: 5000,
-        note: "餐櫃平台、主臥吹風機"
-      },
+        {
+            category: '水電工程',
+            name: '網路線路配置',
+            qty: 1,
+            unit: '式',
+            costPrice: 8000,
+            price: 15000,
+            priceSubtotal: 15000,
+            note: ''
+        },
 
-      {
-        id: 4,
-        category: "水電工程",
-        name: "弱電及網路線拉設",
-        qty: 1,
-        unit: "式",
-        cost: 3500,
-        costSubtotal: 3500,
-        price: 5500,
-        priceSubtotal: 5500,
-        profit: 2000,
-        note: "CAT6 網路線加強"
-      },
+        {
+            category: '木作工程',
+            name: '平釘天花板',
+            qty: 20,
+            unit: '坪',
+            costPrice: 3200,
+            price: 5000,
+            priceSubtotal: 100000,
+            note: ''
+        },
 
-      {
-        id: 5,
-        category: "木作工程",
-        name: "平釘天花板(局部高低差)",
-        qty: 12,
-        unit: "坪",
-        cost: 4200,
-        costSubtotal: 50400,
-        price: 6200,
-        priceSubtotal: 74400,
-        profit: 24000,
-        note: "日本麗仕矽酸鈣板"
-      },
+        {
+            category: '木作工程',
+            name: '窗簾盒',
+            qty: 3,
+            unit: '座',
+            costPrice: 2500,
+            price: 4500,
+            priceSubtotal: 13500,
+            note: ''
+        },
 
-      {
-        id: 6,
-        category: "木作工程",
-        name: "窗簾盒+冷氣盒",
-        qty: 25,
-        unit: "尺",
-        cost: 550,
-        costSubtotal: 13750,
-        price: 900,
-        priceSubtotal: 22500,
-        profit: 8750,
-        note: "雙層防潮木作"
-      },
+        {
+            category: '木作工程',
+            name: '電視牆造型',
+            qty: 1,
+            unit: '式',
+            costPrice: 18000,
+            price: 32000,
+            priceSubtotal: 32000,
+            note: ''
+        },
 
-      {
-        id: 7,
-        category: "油漆工程",
-        name: "平釘天花板過色",
-        qty: 12,
-        unit: "坪",
-        cost: 1500,
-        costSubtotal: 18000,
-        price: 2400,
-        priceSubtotal: 28800,
-        profit: 10800,
-        note: "得利乳膠漆刷塗"
-      },
+        {
+            category: '油漆工程',
+            name: '牆面乳膠漆',
+            qty: 80,
+            unit: '坪',
+            costPrice: 700,
+            price: 1100,
+            priceSubtotal: 88000,
+            note: ''
+        },
 
-      {
-        id: 8,
-        category: "油漆工程",
-        name: "全室牆面局部批土修補過色",
-        qty: 1,
-        unit: "式",
-        cost: 8000,
-        costSubtotal: 8000,
-        price: 15000,
-        priceSubtotal: 15000,
-        profit: 7000,
-        note: "含交屋前二次修補"
-      },
+        {
+            category: '燈具工程',
+            name: '吸頂燈安裝',
+            qty: 6,
+            unit: '盞',
+            costPrice: 500,
+            price: 1000,
+            priceSubtotal: 6000,
+            note: ''
+        },
 
-      {
-        id: 9,
-        category: "燈具工程",
-        name: "客廳、主臥崁入式燈條含變壓器",
-        qty: 15,
-        unit: "米",
-        cost: 700,
-        costSubtotal: 10500,
-        price: 1200,
-        priceSubtotal: 18000,
-        profit: 7500,
-        note: "軟燈條"
-      },
+        {
+            category: '燈具工程',
+            name: '間接照明',
+            qty: 15,
+            unit: '尺',
+            costPrice: 500,
+            price: 900,
+            priceSubtotal: 13500,
+            note: ''
+        },
 
-      {
-        id: 10,
-        category: "燈具工程",
-        name: "15cm Led崁燈及挖孔配線",
-        qty: 12,
-        unit: "顆",
-        cost: 650,
-        costSubtotal: 7800,
-        price: 1200,
-        priceSubtotal: 14400,
-        profit: 6600,
-        note: "客廳 4000K 自然光"
-      }
+        {
+            category: '雜項工程',
+            name: '清潔工程',
+            qty: 1,
+            unit: '式',
+            costPrice: 5000,
+            price: 8000,
+            priceSubtotal: 8000,
+            note: ''
+        }
 
     ];
 
 
     renderQuoteTable();
+    renderSummary();
+    renderSchedule();
+    updateTestMonitor();
 
-    alert("已成功帶入劉隆穎先生案場測試資料！");
-
-  }
+}
 
 
-  function clearAllItemsData() {
+/* ============================================================
+   清除
+============================================================ */
+
+function clearAllItemsData() {
 
     if (
-      confirm(
-        "確定要清空目前報價單上的所有項目嗎？"
-      )
+        !confirm('確定要清除目前所有報價項目嗎？')
     ) {
-
-      currentItems = [];
-
-      renderQuoteTable();
-
+        return;
     }
 
-  }
+    currentItems = [];
 
+    renderQuoteTable();
+    renderSummary();
+    renderSchedule();
+    updateTestMonitor();
 
-  function updateTestMonitor() {
+}
 
-    document.getElementById('testDraftCount').textContent =
-      localStorage.length;
 
-    document.getElementById('testItemCount').textContent =
-      currentItems.length;
+/* ============================================================
+   新增報價
+============================================================ */
 
+function addItem() {
 
-    const subtotal =
-      currentItems.reduce(
-        (sum, i) => sum + i.priceSubtotal,
-        0
-      );
-
-
-    document.getElementById('testSubtotalVal').textContent =
-      `$${subtotal.toLocaleString()}`;
-
-
-    const summaryText =
-      document.getElementById('scheduleSummaryText').textContent;
-
-
-    document.getElementById('testEndDateVal').textContent =
-      summaryText.includes('預計完工日')
-        ? summaryText
-            .split('(')[0]
-            .replace('預計完工日：', '')
-        : '-';
-
-  }
-
-
-  // ==========================================================
-  // 案場模式
-  // ==========================================================
-
-  function switchMode(mode) {
-
-    document
-      .querySelectorAll('.mode-btn')
-      .forEach(btn =>
-        btn.classList.remove('active')
-      );
-
-
-    if (mode === 'simple')
-      document
-        .getElementById('btnModeSimple')
-        .classList.add('active');
-
-
-    if (mode === 'new')
-      document
-        .getElementById('btnModeNew')
-        .classList.add('active');
-
-
-    if (mode === 'old')
-      document
-        .getElementById('btnModeOld')
-        .classList.add('active');
-
-
-    initCategoryDropdowns();
-
-  }
-
-
-  // ==========================================================
-  // 類別
-  // ==========================================================
-
-  function initCategoryDropdowns() {
-
-    const catSelect =
-      document.getElementById('categorySelect');
-
-    const newCatSelect =
-      document.getElementById('newCatSelect');
-
-
-    catSelect.innerHTML =
-      '<option value="">-- 請選擇工程類別 --</option>';
-
-    newCatSelect.innerHTML = '';
-
-
-    categoryOrder.forEach(cat => {
-
-      const opt1 =
-        document.createElement('option');
-
-      opt1.value = cat;
-
-      opt1.textContent = cat;
-
-      catSelect.appendChild(opt1);
-
-
-      const opt2 =
-        document.createElement('option');
-
-      opt2.value = cat;
-
-      opt2.textContent = cat;
-
-      newCatSelect.appendChild(opt2);
-
-    });
-
-
-    updateSubCategoryOptions();
-
-  }
-
-
-  function toggleAdminPanel() {
-
-    const panel =
-      document.getElementById('adminPanel');
-
-    panel.style.display =
-      panel.style.display === 'block'
-        ? 'none'
-        : 'block';
-
-  }
-
-
-  function toggleCostDisplay() {
-
-    document
-      .getElementById('quoteContainer')
-      .classList
-      .toggle('show-cost');
-
-  }
-
-
-  // ==========================================================
-  // 備註
-  // ==========================================================
-
-  function updateCustomNotes() {
-
-    const selected = [];
-
-    document
-      .querySelectorAll('.note-preset:checked')
-      .forEach(cb =>
-        selected.push(cb.value)
-      );
-
-
-    document.getElementById('customNotesText').value =
-      selected.join('\n');
-
-  }
-
-
-  // ==========================================================
-  // 日期
-  // ==========================================================
-
-  function addWorkDays(startDate, days) {
-
-    const curDate =
-      new Date(startDate);
-
-    let added = 0;
-
-
-    while (added < days) {
-
-      curDate.setDate(
-        curDate.getDate() + 1
-      );
-
-
-      const dayOfWeek =
-        curDate.getDay();
-
-
-      if (
-        dayOfWeek !== 0 &&
-        dayOfWeek !== 6
-      ) {
-        added++;
-      }
-
-    }
-
-
-    return curDate;
-
-  }
-
-
-  function formatDateStr(d) {
-
-    const month =
-      (d.getMonth() + 1)
-        .toString()
-        .padStart(2, '0');
-
-
-    const date =
-      d.getDate()
-        .toString()
-        .padStart(2, '0');
-
-
-    const dayNames = [
-      '日',
-      '一',
-      '二',
-      '三',
-      '四',
-      '五',
-      '六'
-    ];
-
-
-    return `${d.getFullYear()}/${month}/${date} (${dayNames[d.getDay()]})`;
-
-  }
-
-
-  // ==========================================================
-  // 工程進度
-  // ==========================================================
-
-  function calculateSchedulePreview() {
-
-    const startInput =
-      document.getElementById('startDate').value;
-
-
-    if (
-      !startInput ||
-      currentItems.length === 0
-    ) {
-
-      document.getElementById(
-        'scheduleTablePreview'
-      ).innerHTML =
-        '請先加入項目並選擇預計開工日期...';
-
-
-      document.getElementById(
-        'scheduleSummaryText'
-      ).textContent =
-        '請先選擇預計開工日期...';
-
-
-      return [];
-
-    }
-
-
-    const activeCategories =
-      [
-        ...new Set(
-          currentItems.map(i => i.category)
-        )
-      ];
-
-
-    activeCategories.sort(
-      (a, b) =>
-        categoryOrder.indexOf(a) -
-        categoryOrder.indexOf(b)
-    );
-
-
-    let currDate =
-      new Date(startInput);
-
-    let scheduleList = [];
-
-    let idx = 1;
-
-
-    activeCategories.forEach(cat => {
-
-      const rule =
-        scheduleRules[cat] || {
-          days: 2,
-          note: "依現場施工為準"
-        };
-
-
-      const sDate =
-        new Date(currDate);
-
-
-      const eDate =
-        addWorkDays(
-          sDate,
-          rule.days - 1
-        );
-
-
-      scheduleList.push({
-
-        idx: idx++,
-
-        catName: cat,
-
-        days: rule.days,
-
-        startDate: sDate,
-
-        endDate: eDate,
-
-        startDateStr:
-          formatDateStr(sDate),
-
-        endDateStr:
-          formatDateStr(eDate),
-
-        note: rule.note
-
-      });
-
-
-      currDate =
-        addWorkDays(
-          eDate,
-          1
-        );
-
-    });
-
-
-    if (scheduleList.length === 0)
-      return [];
-
-
-    const finalEndDate =
-      scheduleList[
-        scheduleList.length - 1
-      ].endDate;
-
-
-    const totalDiffDays =
-      Math.ceil(
-        (
-          finalEndDate -
-          new Date(startInput)
-        ) /
-        (1000 * 60 * 60 * 24)
-      ) + 1;
-
-
-    document.getElementById(
-      'scheduleSummaryText'
-    ).textContent =
-      `預計完工日：${formatDateStr(finalEndDate)} (全案共需約 ${totalDiffDays} 日曆天 / 扣假日工作天)`;
-
-
-    let html = `
-      <table
-        style="
-          width:100%;
-          font-size:13px;
-          background:#fff;
-        ">
-
-        <thead>
-
-          <tr style="background:#fef3c7;">
-
-            <th>項次</th>
-            <th>工種階段</th>
-            <th>估算工時</th>
-            <th>預計開工日</th>
-            <th>預計完工日</th>
-            <th>施工說明/備註</th>
-
-          </tr>
-
-        </thead>
-
-        <tbody>
-    `;
-
-
-    scheduleList.forEach(s => {
-
-      html += `
-        <tr>
-
-          <td style="text-align:center;">
-            <b>${s.idx}</b>
-          </td>
-
-          <td>
-            <b>${s.catName}</b>
-          </td>
-
-          <td style="text-align:center;">
-            ${s.days} 天
-          </td>
-
-          <td>
-            ${s.startDateStr}
-          </td>
-
-          <td>
-            ${s.endDateStr}
-          </td>
-
-          <td>
-            <small style="color:#666;">
-              ${s.note}
-            </small>
-          </td>
-
-        </tr>
-      `;
-
-    });
-
-
-    html += `
-        </tbody>
-      </table>
-    `;
-
-
-    document.getElementById(
-      'scheduleTablePreview'
-    ).innerHTML = html;
-
-
-    return scheduleList;
-
-  }
-
-
-  // ==========================================================
-  // 草稿
-  // ==========================================================
-
-  function saveCurrentDraft() {
+    const category =
+        document.getElementById('categorySelect').value;
 
     const name =
-      document.getElementById('clientName').value ||
-      '未命名客戶';
+        document.getElementById('subCategorySelect').value.trim();
+
+    const qty =
+        Number(document.getElementById('itemQty').value);
+
+    const unit =
+        document.getElementById('itemUnit').value.trim();
+
+    const costPrice =
+        Number(document.getElementById('costPrice').value);
+
+    const price =
+        Number(document.getElementById('quotePrice').value);
+
+    const note =
+        document.getElementById('itemNote').value.trim();
 
 
-    const location =
-      document.getElementById('projectLocation').value ||
-      '';
+    if (!category) {
+        alert('請選擇工程分類');
+        return;
+    }
+
+    if (!name) {
+        alert('請輸入工程項目');
+        return;
+    }
+
+    if (!qty || qty <= 0) {
+        alert('請輸入正確數量');
+        return;
+    }
+
+    if (!unit) {
+        alert('請輸入單位');
+        return;
+    }
+
+    if (!price || price < 0) {
+        alert('請輸入報價單價');
+        return;
+    }
 
 
-    const key =
-      `draft_${name}_${location}`
-        .replace(/\s+/g, '');
+    const priceSubtotal =
+        Math.round(qty * price);
 
 
-    const draftData = {
+    currentItems.push({
 
-      clientName: name,
+        category,
+        name,
+        qty,
+        unit,
+        costPrice,
+        price,
+        priceSubtotal,
+        note
 
-      projectLocation: location,
+    });
 
-      contractNo:
-        document.getElementById('contractNo').value,
 
-      quoteDate:
-        document.getElementById('quoteDate').value,
+    renderQuoteTable();
+    renderSummary();
+    renderSchedule();
+    updateTestMonitor();
 
-      startDate:
-        document.getElementById('startDate').value,
 
-      designerName:
-        document.getElementById('designerName').value,
+    document.getElementById('subCategorySelect').value = '';
+    document.getElementById('itemQty').value = 1;
+    document.getElementById('itemUnit').value = '式';
+    document.getElementById('costPrice').value = '';
+    document.getElementById('quotePrice').value = '';
+    document.getElementById('itemNote').value = '';
 
-      items: currentItems,
+}
 
-      hasMgmt:
+
+/* ============================================================
+   刪除
+============================================================ */
+
+function removeItem(index) {
+
+    currentItems.splice(index, 1);
+
+    renderQuoteTable();
+    renderSummary();
+    renderSchedule();
+    updateTestMonitor();
+
+}
+
+
+/* ============================================================
+   報價表
+============================================================ */
+
+function renderQuoteTable() {
+
+    const tbody =
+        document.getElementById('quoteTableBody');
+
+    tbody.innerHTML = '';
+
+
+    currentItems.forEach((item, index) => {
+
+        const tr =
+            document.createElement('tr');
+
+
+        tr.innerHTML = `
+
+            <td>${escapeHtml(item.category)}</td>
+
+            <td>${escapeHtml(item.name)}</td>
+
+            <td class="center">
+                ${item.qty}
+            </td>
+
+            <td class="center">
+                ${escapeHtml(item.unit)}
+            </td>
+
+            <td class="right">
+                ${formatMoney(item.costPrice)}
+            </td>
+
+            <td class="right">
+                ${formatMoney(item.price)}
+            </td>
+
+            <td class="right">
+                ${formatMoney(item.priceSubtotal)}
+            </td>
+
+            <td>
+                ${escapeHtml(item.note || '')}
+            </td>
+
+            <td class="center">
+
+                <button
+                    class="btn-red"
+                    onclick="removeItem(${index})">
+                    刪除
+                </button>
+
+            </td>
+        `;
+
+
+        tbody.appendChild(tr);
+
+    });
+
+}
+
+
+function escapeHtml(value) {
+
+    return String(value ?? '')
+        .replace(/&/g, '&amp;')
+        .replace(/</g, '&lt;')
+        .replace(/>/g, '&gt;')
+        .replace(/"/g, '&quot;')
+        .replace(/'/g, '&#039;');
+
+}
+
+
+/* ============================================================
+   金額
+============================================================ */
+
+function formatMoney(value) {
+
+    return Number(value || 0)
+        .toLocaleString('zh-TW');
+
+}
+
+
+function calculateTotals() {
+
+    const subtotal =
+        currentItems.reduce(
+            (sum, item) =>
+                sum + Number(item.priceSubtotal || 0),
+            0
+        );
+
+
+    const hasMgmt =
         document.getElementById(
-          'chkManagementFee'
-        ).checked,
+            'chkManagementFee'
+        ).checked;
 
-      hasTax:
+
+    const hasTax =
         document.getElementById(
-          'chkTax'
-        ).checked
+            'chkTax'
+        ).checked;
+
+
+    const managementFee =
+        hasMgmt
+            ? Math.round(subtotal * 0.1)
+            : 0;
+
+
+    const subtotalWithManagement =
+        subtotal + managementFee;
+
+
+    const tax =
+        hasTax
+            ? Math.round(
+                subtotalWithManagement * 0.05
+            )
+            : 0;
+
+
+    const grandTotal =
+        subtotalWithManagement + tax;
+
+
+    return {
+
+        subtotal,
+        managementFee,
+        tax,
+        grandTotal
+
+    };
+
+}
+
+
+function renderSummary() {
+
+    const totals =
+        calculateTotals();
+
+
+    document.getElementById(
+        'summarySubtotal'
+    ).innerText =
+        formatMoney(totals.subtotal);
+
+
+    document.getElementById(
+        'summaryManagement'
+    ).innerText =
+        formatMoney(totals.managementFee);
+
+
+    document.getElementById(
+        'summaryTax'
+    ).innerText =
+        formatMoney(totals.tax);
+
+
+    document.getElementById(
+        'summaryGrandTotal'
+    ).innerText =
+        formatMoney(totals.grandTotal);
+
+}
+
+
+/* ============================================================
+   工程排程
+============================================================ */
+
+function renderSchedule() {
+
+    const box =
+        document.getElementById(
+            'schedulePreview'
+        );
+
+
+    if (currentItems.length === 0) {
+
+        box.innerText =
+            '尚無工程資料';
+
+        return;
+
+    }
+
+
+    const categories =
+        [...new Set(
+            currentItems.map(
+                item => item.category
+            )
+        )];
+
+
+    box.innerHTML =
+        categories
+            .map(
+                (cat, index) =>
+                    `${index + 1}. ${escapeHtml(cat)}`
+            )
+            .join('<br>');
+
+}
+
+
+/* ============================================================
+   草稿
+============================================================ */
+
+function saveDraft() {
+
+    const data = {
+
+        clientName:
+            document.getElementById('clientName').value,
+
+        projectLocation:
+            document.getElementById('projectLocation').value,
+
+        contractNo:
+            document.getElementById('contractNo').value,
+
+        quoteDate:
+            document.getElementById('quoteDate').value,
+
+        startDate:
+            document.getElementById('startDate').value,
+
+        designerName:
+            document.getElementById('designerName').value,
+
+        presetNotes:
+            document.getElementById('presetNotes').value,
+
+        currentItems
 
     };
 
 
     localStorage.setItem(
-      key,
-      JSON.stringify(draftData)
+        'renovationQuoteDraft',
+        JSON.stringify(data)
     );
 
 
-    alert(
-      `成功儲存客戶【${name}】的報價草稿！`
-    );
+    alert('草稿已儲存');
 
+}
 
-    refreshDraftsDropdown();
 
-  }
+function loadDraft() {
 
-
-  function refreshDraftsDropdown() {
-
-    const select =
-      document.getElementById(
-        'savedDraftsSelect'
-      );
-
-
-    select.innerHTML =
-      '<option value="">-- 選擇已儲存的報價草稿 --</option>';
-
-
-    for (
-      let i = 0;
-      i < localStorage.length;
-      i++
-    ) {
-
-      const key =
-        localStorage.key(i);
-
-
-      if (
-        key.startsWith('draft_')
-      ) {
-
-        const item =
-          JSON.parse(
-            localStorage.getItem(key)
-          );
-
-
-        const opt =
-          document.createElement('option');
-
-
-        opt.value = key;
-
-
-        opt.textContent =
-          `${item.clientName} - ${item.projectLocation} (${item.quoteDate})`;
-
-
-        select.appendChild(opt);
-
-      }
-
-    }
-
-
-    updateTestMonitor();
-
-  }
-
-
-  function loadSelectedDraft() {
-
-    const key =
-      document.getElementById(
-        'savedDraftsSelect'
-      ).value;
-
-
-    if (!key) {
-
-      alert(
-        "請先選擇要讀取的草稿！"
-      );
-
-      return;
-
-    }
-
-
-    const draft =
-      JSON.parse(
-        localStorage.getItem(key)
-      );
-
-
-    document.getElementById(
-      'clientName'
-    ).value =
-      draft.clientName;
-
-
-    document.getElementById(
-      'projectLocation'
-    ).value =
-      draft.projectLocation;
-
-
-    document.getElementById(
-      'contractNo'
-    ).value =
-      draft.contractNo;
-
-
-    document.getElementById(
-      'quoteDate'
-    ).value =
-      draft.quoteDate;
-
-
-    if (draft.startDate)
-      document.getElementById(
-        'startDate'
-      ).value =
-        draft.startDate;
-
-
-    if (draft.designerName)
-      document.getElementById(
-        'designerName'
-      ).value =
-        draft.designerName;
-
-
-    document.getElementById(
-      'chkManagementFee'
-    ).checked =
-      draft.hasMgmt;
-
-
-    document.getElementById(
-      'chkTax'
-    ).checked =
-      draft.hasTax;
-
-
-    currentItems =
-      draft.items || [];
-
-
-    renderQuoteTable();
-
-
-    alert(
-      `已順利載入【${draft.clientName}】的報價草稿！`
-    );
-
-  }
-
-
-  function deleteSelectedDraft() {
-
-    const key =
-      document.getElementById(
-        'savedDraftsSelect'
-      ).value;
-
-
-    if (!key) {
-
-      alert(
-        "請先選擇要刪除的草稿！"
-      );
-
-      return;
-
-    }
-
-
-    if (
-      confirm(
-        "確定要刪除這份報價草稿嗎？"
-      )
-    ) {
-
-      localStorage.removeItem(key);
-
-      refreshDraftsDropdown();
-
-      alert("草稿已刪除！");
-
-    }
-
-  }
-
-
-  // ==========================================================
-  // 常用項目
-  // ==========================================================
-
-  function addNewPresetItem() {
-
-    const cat =
-      document.getElementById(
-        'newCatSelect'
-      ).value;
-
-
-    const name =
-      document.getElementById(
-        'newName'
-      ).value.trim();
-
-
-    const unit =
-      document.getElementById(
-        'newUnit'
-      ).value.trim() ||
-      '式';
-
-
-    const cost =
-      parseFloat(
-        document.getElementById(
-          'newCost'
-        ).value
-      ) || 0;
-
-
-    const price =
-      parseFloat(
-        document.getElementById(
-          'newPrice'
-        ).value
-      ) || 0;
-
-
-    const note =
-      document.getElementById(
-        'newNote'
-      ).value.trim();
-
-
-    if (!name) {
-
-      alert(
-        "請輸入新項目名稱！"
-      );
-
-      return;
-
-    }
-
-
-    if (!itemDatabase[cat])
-      itemDatabase[cat] = [];
-
-
-    itemDatabase[cat].push({
-
-      name,
-      unit,
-      cost,
-      price,
-      note
-
-    });
-
-
-    alert(
-      `成功新增「${name}」至【${cat}】常用選單！`
-    );
-
-
-    document.getElementById(
-      'newName'
-    ).value = '';
-
-
-    document.getElementById(
-      'newCost'
-    ).value = '0';
-
-
-    document.getElementById(
-      'newPrice'
-    ).value = '0';
-
-
-    document.getElementById(
-      'newNote'
-    ).value = '';
-
-
-    initCategoryDropdowns();
-
-
-    document.getElementById(
-      'categorySelect'
-    ).value = cat;
-
-
-    updateSubCategoryOptions();
-
-  }
-
-
-  function updateSubCategoryOptions() {
-
-    const cat =
-      document.getElementById(
-        'categorySelect'
-      ).value;
-
-
-    const subSelect =
-      document.getElementById(
-        'subCategorySelect'
-      );
-
-
-    subSelect.innerHTML =
-      '<option value="">-- 請選擇細項 --</option>';
-
-
-    if (
-      cat &&
-      itemDatabase[cat]
-    ) {
-
-      itemDatabase[cat]
-        .forEach(
-          (item, index) => {
-
-            const opt =
-              document.createElement(
-                'option'
-              );
-
-
-            opt.value = index;
-
-            opt.textContent =
-              item.name;
-
-
-            subSelect.appendChild(
-              opt
-            );
-
-          }
+    const raw =
+        localStorage.getItem(
+            'renovationQuoteDraft'
         );
 
-    }
 
-  }
+    if (!raw) {
 
+        alert('目前沒有草稿');
 
-  function autoFillItemDefaults() {
-
-    const cat =
-      document.getElementById(
-        'categorySelect'
-      ).value;
-
-
-    const subIdx =
-      document.getElementById(
-        'subCategorySelect'
-      ).value;
-
-
-    if (
-      cat &&
-      subIdx !== ""
-    ) {
-
-      const itemData =
-        itemDatabase[cat][subIdx];
-
-
-      document.getElementById(
-        'itemUnit'
-      ).value =
-        itemData.unit;
-
-
-      document.getElementById(
-        'costPrice'
-      ).value =
-        itemData.cost;
-
-
-      document.getElementById(
-        'quotePrice'
-      ).value =
-        itemData.price;
-
-
-      document.getElementById(
-        'itemNote'
-      ).value =
-        itemData.note;
-
-    }
-
-  }
-
-
-  // ==========================================================
-  // 新增報價項目
-  // ==========================================================
-
-  function addItemToQuote() {
-
-    const cat =
-      document.getElementById(
-        'categorySelect'
-      ).value;
-
-
-    const subSelect =
-      document.getElementById(
-        'subCategorySelect'
-      );
-
-
-    if (
-      !cat ||
-      subSelect.value === ""
-    ) {
-
-      alert(
-        "請選擇工程類別與細項！"
-      );
-
-      return;
+        return;
 
     }
 
 
-    const itemName =
-      subSelect.options[
-        subSelect.selectedIndex
-      ].text;
+    const data =
+        JSON.parse(raw);
 
 
-    const qty =
-      parseFloat(
-        document.getElementById(
-          'itemQty'
-        ).value
-      ) || 0;
+    document.getElementById(
+        'clientName'
+    ).value =
+        data.clientName || '';
 
 
-    const unit =
-      document.getElementById(
-        'itemUnit'
-      ).value ||
-      '式';
+    document.getElementById(
+        'projectLocation'
+    ).value =
+        data.projectLocation || '';
 
 
-    const cost =
-      parseFloat(
-        document.getElementById(
-          'costPrice'
-        ).value
-      ) || 0;
+    document.getElementById(
+        'contractNo'
+    ).value =
+        data.contractNo || '';
 
 
-    const price =
-      parseFloat(
-        document.getElementById(
-          'quotePrice'
-        ).value
-      ) || 0;
+    document.getElementById(
+        'quoteDate'
+    ).value =
+        data.quoteDate || '';
 
 
-    const note =
-      document.getElementById(
-        'itemNote'
-      ).value;
+    document.getElementById(
+        'startDate'
+    ).value =
+        data.startDate || '';
 
 
-    const existingItem =
-      currentItems.find(
-        i =>
-          i.category === cat &&
-          i.name === itemName &&
-          i.note === note
-      );
+    document.getElementById(
+        'designerName'
+    ).value =
+        data.designerName || '';
 
 
-    if (existingItem) {
+    document.getElementById(
+        'presetNotes'
+    ).value =
+        data.presetNotes || '';
 
-      existingItem.qty += qty;
-
-      existingItem.costSubtotal =
-        existingItem.qty *
-        existingItem.cost;
-
-      existingItem.priceSubtotal =
-        existingItem.qty *
-        existingItem.price;
-
-      existingItem.profit =
-        existingItem.priceSubtotal -
-        existingItem.costSubtotal;
-
-    } else {
-
-      currentItems.push({
-
-        id: Date.now(),
-
-        category: cat,
-
-        name: itemName,
-
-        qty: qty,
-
-        unit: unit,
-
-        cost: cost,
-
-        costSubtotal:
-          qty * cost,
-
-        price: price,
-
-        priceSubtotal:
-          qty * price,
-
-        profit:
-          (qty * price) -
-          (qty * cost),
-
-        note: note
-
-      });
-
-    }
-
-
-    currentItems.sort(
-      (a, b) =>
-        categoryOrder.indexOf(a.category) -
-        categoryOrder.indexOf(b.category)
-    );
-
-
-    renderQuoteTable();
-
-  }
-
-
-  function removeItem(id) {
 
     currentItems =
-      currentItems.filter(
-        item => item.id !== id
-      );
+        data.currentItems || [];
 
 
     renderQuoteTable();
-
-  }
-
-
-  // ==========================================================
-  // 報價表
-  // ==========================================================
-
-  function renderQuoteTable() {
-
-    const tbody =
-      document.getElementById(
-        'quoteTbody'
-      );
-
-
-    tbody.innerHTML = '';
-
-
-    currentItems.forEach(item => {
-
-      const tr =
-        document.createElement('tr');
-
-
-      tr.innerHTML = `
-
-        <td>
-          <b>${item.category}</b>
-        </td>
-
-        <td>
-          ${item.name}
-          <br>
-          <small style="color:#666">
-            ${item.note}
-          </small>
-        </td>
-
-        <td>
-          <b>${item.qty}</b>
-        </td>
-
-        <td>
-          ${item.unit}
-        </td>
-
-        <td class="cost-col">
-          $${item.cost.toLocaleString()}
-        </td>
-
-        <td class="cost-col">
-          $${item.costSubtotal.toLocaleString()}
-        </td>
-
-        <td>
-          $${item.price.toLocaleString()}
-        </td>
-
-        <td>
-          <b>
-            $${item.priceSubtotal.toLocaleString()}
-          </b>
-        </td>
-
-        <td
-          class="cost-col"
-          style="
-            color:#27ae60;
-            font-weight:bold;
-          ">
-          $${item.profit.toLocaleString()}
-        </td>
-
-        <td>
-
-          <button
-            class="btn-danger"
-            onclick="removeItem(${item.id})">
-            刪除
-          </button>
-
-        </td>
-
-      `;
-
-
-      tbody.appendChild(tr);
-
-    });
-
-
     renderSummary();
-
-    calculateSchedulePreview();
-
+    renderSchedule();
     updateTestMonitor();
 
-  }
+
+    alert('草稿已載入');
+
+}
 
 
-  // ==========================================================
-  // 金額
-  // ==========================================================
+/* ============================================================
+   測試監控
+============================================================ */
 
-  function renderSummary() {
+function updateTestMonitor() {
 
-    const totalPriceSum =
-      currentItems.reduce(
-        (acc, i) =>
-          acc + i.priceSubtotal,
-        0
-      );
+    const box =
+        document.getElementById(
+            'testMonitor'
+        );
 
 
-    const hasMgmt =
-      document.getElementById(
-        'chkManagementFee'
-      ).checked;
+    if (!box) return;
 
-
-    const hasTax =
-      document.getElementById(
-        'chkTax'
-      ).checked;
-
-
-    const mgmtFee =
-      hasMgmt
-        ? Math.round(
-            totalPriceSum * 0.1
-          )
-        : 0;
-
-
-    const taxFee =
-      hasTax
-        ? Math.round(
-            (
-              totalPriceSum +
-              mgmtFee
-            ) * 0.05
-          )
-        : 0;
-
-
-    const finalTotal =
-      totalPriceSum +
-      mgmtFee +
-      taxFee;
-
-
-    document.getElementById(
-      'sumSubtotal'
-    ).textContent =
-      `$${totalPriceSum.toLocaleString()}`;
-
-
-    document.getElementById(
-      'sumMgmt'
-    ).textContent =
-      `$${mgmtFee.toLocaleString()}`;
-
-
-    document.getElementById(
-      'sumTax'
-    ).textContent =
-      `$${taxFee.toLocaleString()}`;
-
-
-    document.getElementById(
-      'sumTotal'
-    ).textContent =
-      `$${finalTotal.toLocaleString()}`;
-
-
-    const p1 =
-      Math.round(
-        finalTotal * 0.3
-      );
-
-
-    const p2 =
-      Math.round(
-        finalTotal * 0.3
-      );
-
-
-    const p3 =
-      Math.round(
-        finalTotal * 0.3
-      );
-
-
-    const p4 =
-      finalTotal -
-      p1 -
-      p2 -
-      p3;
-
-
-    const showPay =
-      document.getElementById(
-        'chkShowPayment'
-      ).checked;
-
-
-    const payDisplay =
-      document.getElementById(
-        'paymentDetailsDisplay'
-      );
-
-
-    if (showPay) {
-
-      payDisplay.style.display =
-        'block';
-
-
-      payDisplay.innerHTML = `
-
-        <strong>
-          第一期 (簽約訂金 30%)：
-        </strong>
-        $${p1.toLocaleString()}元
-
-        <br>
-
-        <strong>
-          第二期 (拆除/泥作工程進場 30%)：
-        </strong>
-        $${p2.toLocaleString()}元
-
-        <br>
-
-        <strong>
-          第三期 (油漆/木作工程完工 30%)：
-        </strong>
-        $${p3.toLocaleString()}元
-
-        <br>
-
-        <strong>
-          第四期 (完工驗收交屋 10%)：
-        </strong>
-        $${p4.toLocaleString()}元
-
-      `;
-
-    } else {
-
-      payDisplay.style.display =
-        'none';
-
-    }
-
-  }
-
-
-  // ==========================================================
-  // ⭐ Excel 匯出
-  //
-  // 這裡是這次主要修改的地方
-  //
-  // 原則：
-  //
-  // 1. template.xlsx 是版型
-  // 2. 不重新設定字型
-  // 3. 不重新設定欄寬
-  // 4. 不重新設定列高
-  // 5. 不重新設定框線
-  // 6. 不重新設定底色
-  // 7. 只寫入 VALUE
-  // ==========================================================
-
-  async function exportQuoteToExcel() {
 
     if (currentItems.length === 0) {
 
-      alert(
-        "請先加入報價項目！"
-      );
+        box.innerText =
+            '目前尚無報價資料';
 
-      return;
+        return;
+
+    }
+
+
+    const totals =
+        calculateTotals();
+
+
+    box.innerHTML = `
+
+        報價項目：
+        <strong>${currentItems.length}</strong> 項
+
+        <br>
+
+        工程小計：
+        <strong>${formatMoney(totals.subtotal)}</strong>
+
+        <br>
+
+        工程總價：
+        <strong>${formatMoney(totals.grandTotal)}</strong>
+
+    `;
+
+}
+
+
+/* ============================================================
+   Excel 匯出
+============================================================ */
+
+async function exportQuoteToExcel() {
+
+    if (currentItems.length === 0) {
+
+        alert('請先加入報價項目！');
+
+        return;
 
     }
 
 
     const clientName =
-      document.getElementById(
-        'clientName'
-      ).value || '';
+        document.getElementById(
+            'clientName'
+        ).value || '';
 
 
     const projectLocation =
-      document.getElementById(
-        'projectLocation'
-      ).value || '';
+        document.getElementById(
+            'projectLocation'
+        ).value || '';
 
 
     const contractNo =
-      document.getElementById(
-        'contractNo'
-      ).value || '';
+        document.getElementById(
+            'contractNo'
+        ).value || '';
 
 
     const quoteDateInput =
-      document.getElementById(
-        'quoteDate'
-      ).value || '';
+        document.getElementById(
+            'quoteDate'
+        ).value || '';
 
 
-    // ========================================================
-    // 日期
-    // ========================================================
+    /* ========================================================
+       日期
+    ======================================================== */
 
     let dateStr =
-      quoteDateInput;
+        quoteDateInput;
 
 
     if (quoteDateInput) {
 
-      const d =
-        new Date(quoteDateInput);
+        const d =
+            new Date(quoteDateInput);
 
 
-      const rocYear =
-        d.getFullYear() -
-        1911;
+        const rocYear =
+            d.getFullYear() - 1911;
 
 
-      const m =
-        (d.getMonth() + 1)
-          .toString()
-          .padStart(2, '0');
+        const m =
+            String(
+                d.getMonth() + 1
+            ).padStart(2, '0');
 
 
-      const day =
-        d.getDate()
-          .toString()
-          .padStart(2, '0');
+        const day =
+            String(
+                d.getDate()
+            ).padStart(2, '0');
 
 
-      dateStr =
-        `${rocYear} 年 ${m}月${day}日`;
+        dateStr =
+            `${rocYear} 年 ${m}月${day}日`;
 
     }
 
 
     try {
 
-      // ======================================================
-      // 讀取 template.xlsx
-      // ======================================================
-
-      const response =
-        await fetch(
-          './template.xlsx',
-          {
-            cache: 'no-store'
-          }
-        );
-
-
-      if (!response.ok) {
-
-        alert(
-          "找不到 template.xlsx，請確認 template.xlsx 與 HTML 放在同一個位置。"
-        );
-
-        return;
-
-      }
-
-
-      const arrayBuffer =
-        await response.arrayBuffer();
-
-
-      const wb =
-        new ExcelJS.Workbook();
-
-
-      await wb.xlsx.load(
-        arrayBuffer
-      );
-
-
-      const ws =
-        wb.getWorksheet(
-          '估價單0906'
-        ) ||
-        wb.worksheets[0];
-
-
-      const numFmt =
-        '#,##0';
-
-
-      // ======================================================
-      // 分頁
-      //
-      // ★ 只控制分頁
-      // ★ 不碰欄寬
-      // ★ 不碰列高
-      // ★ 不碰字型
-      // ======================================================
-
-      ws.pageSetup.paperSize = 9;
-
-      ws.pageSetup.orientation =
-        'portrait';
-
-      ws.pageSetup.fitToPage =
-        true;
-
-      ws.pageSetup.fitToWidth =
-        1;
-
-      ws.pageSetup.fitToHeight =
-        0;
-
-      ws.pageSetup.printArea =
-        'A1:G150';
-
-
-      // 第 47 列後換頁
-      //
-      // 第 1 頁：
-      // 1～47
-      //
-      // 第 2 頁：
-      // 48 開始
-
-      if (
-        typeof ws.addRowBreak ===
-        'function'
-      ) {
-
-        ws.addRowBreak(47);
-
-      }
-
-
-      // ======================================================
-      // 第一頁：客戶資料
-      // ======================================================
-
-      ws.getCell('A6').value =
-        `客戶名稱 :${clientName}`;
-
-
-      ws.getCell('G6').value =
-        contractNo;
-
-
-      ws.getCell('A7').value =
-        `工程地點 :${projectLocation}`;
-
-
-      if (dateStr) {
-
-        ws.getCell('G7').value =
-          dateStr;
-
-      }
-
-
-      // ======================================================
-      // 第二頁：清除舊內容
-      //
-      // ★ 只清除內容
-      // ★ 不動格式
-      //
-      // 特別注意：
-      // 不再使用 row.hidden = false
-      // ======================================================
-
-      for (
-        let r = 48;
-        r <= 150;
-        r++
-      ) {
-
-        for (
-          let c = 1;
-          c <= 7;
-          c++
-        ) {
-
-          ws.getCell(
-            r,
-            c
-          ).value = null;
-
-        }
-
-      }
-
-
-      // ======================================================
-      // 分類
-      // ======================================================
-
-      const grouped = {};
-
-
-      currentItems.forEach(
-        item => {
-
-          if (
-            !grouped[item.category]
-          ) {
-
-            grouped[item.category] =
-              [];
-
-          }
-
-
-          grouped[item.category]
-            .push(item);
-
-        }
-      );
-
-
-      const catOrderList = [
-
-        "水電工程",
-
-        "燈具工程",
-
-        "木作工程",
-
-        "油漆工程",
-
-        "雜項工程"
-
-      ];
-
-
-      const numMap = [
-
-        "一",
-        "二",
-        "三",
-        "四",
-        "五",
-        "六",
-        "七",
-        "八"
-
-      ];
-
-
-      const categoryTotals = {};
-
-
-      const mainRowMap = {
-
-        "水電工程": 11,
-
-        "燈具工程": 12,
-
-        "木作工程": 13,
-
-        "油漆工程": 14,
-
-        "雜項工程": 15
-
-      };
-
-
-      // 第二頁起始列
-      let curRow = 48;
-
-
-      // 第一頁工種項次
-      let activeIdx = 0;
-
-
-      // ======================================================
-      // 填入各工種
-      // ======================================================
-
-      catOrderList.forEach(
-        cat => {
-
-          const items =
-            grouped[cat] || [];
-
-
-          const mainRow =
-            mainRowMap[cat];
-
-
-          // --------------------------------------------------
-          // 沒有施作
-          // --------------------------------------------------
-
-          if (
-            items.length === 0
-          ) {
-
-            ws.getCell(
-              `A${mainRow}`
-            ).value = null;
-
-            ws.getCell(
-              `B${mainRow}`
-            ).value = null;
-
-            ws.getCell(
-              `C${mainRow}`
-            ).value = null;
-
-            ws.getCell(
-              `D${mainRow}`
-            ).value = null;
-
-            ws.getCell(
-              `E${mainRow}`
-            ).value = null;
-
-            ws.getCell(
-              `F${mainRow}`
-            ).value = null;
-
-            return;
-
-          }
-
-
-          // --------------------------------------------------
-          // 工種編號
-          // --------------------------------------------------
-
-          const numStr =
-            numMap[activeIdx] ||
-            String(activeIdx + 1);
-
-
-          activeIdx++;
-
-
-          // ==================================================
-          // 第一頁總表
-          // ==================================================
-
-          ws.getCell(
-            `A${mainRow}`
-          ).value =
-            numStr;
-
-
-          ws.getCell(
-            `B${mainRow}`
-          ).value =
-            cat;
-
-
-          ws.getCell(
-            `C${mainRow}`
-          ).value =
-            1;
-
-
-          ws.getCell(
-            `D${mainRow}`
-          ).value =
-            "式";
-
-
-          // ==================================================
-          // 第二頁工種標題
-          // ==================================================
-
-          ws.getCell(
-            `A${curRow}`
-          ).value =
-            numStr;
-
-
-          ws.getCell(
-            `B${curRow}`
-          ).value =
-            cat;
-
-
-          curRow++;
-
-
-          // ==================================================
-          // 細項
-          // ==================================================
-
-          let catSum = 0;
-
-
-          items.forEach(
-            item => {
-
-              // A：空白
-              ws.getCell(
-                `A${curRow}`
-              ).value =
-                null;
-
-
-              // B：項目名稱
-              ws.getCell(
-                `B${curRow}`
-              ).value =
-                item.name;
-
-
-              // C：數量
-              ws.getCell(
-                `C${curRow}`
-              ).value =
-                Number(item.qty);
-
-
-              // D：單位
-              ws.getCell(
-                `D${curRow}`
-              ).value =
-                item.unit;
-
-
-              // E：客戶單價
-              const priceCell =
-                ws.getCell(
-                  `E${curRow}`
-                );
-
-
-              priceCell.value =
-                Number(item.price);
-
-
-              priceCell.numFmt =
-                numFmt;
-
-
-              // F：客戶小計
-              const subtotalCell =
-                ws.getCell(
-                  `F${curRow}`
-                );
-
-
-              subtotalCell.value =
-                Number(
-                  item.priceSubtotal
-                );
-
-
-              subtotalCell.numFmt =
-                numFmt;
-
-
-              // G：備註
-              ws.getCell(
-                `G${curRow}`
-              ).value =
-                item.note
-                  ? item.note
-                  : null;
-
-
-              catSum +=
-                Number(
-                  item.priceSubtotal || 0
-                );
-
-
-              curRow++;
-
-            }
-          );
-
-
-          // ==================================================
-          // 工種小計
-          // ==================================================
-
-          ws.getCell(
-            `A${curRow}`
-          ).value =
-            null;
-
-
-          ws.getCell(
-            `B${curRow}`
-          ).value =
-            `${cat}小計`;
-
-
-          const subtotalCell =
-            ws.getCell(
-              `F${curRow}`
+        /* ====================================================
+           讀取範本
+        ==================================================== */
+
+        const response =
+            await fetch(
+                './template.xlsx',
+                {
+                    cache: 'no-store'
+                }
             );
 
 
-          subtotalCell.value =
-            catSum;
+        if (!response.ok) {
 
+            alert(
+                '找不到 template.xlsx，請確認它與 HTML 放在同一個資料夾。'
+            );
 
-          subtotalCell.numFmt =
-            numFmt;
-
-
-          categoryTotals[cat] =
-            catSum;
-
-
-          curRow++;
+            return;
 
         }
-      );
 
 
-      // ======================================================
-      // 第一頁總表金額
-      // ======================================================
+        const arrayBuffer =
+            await response.arrayBuffer();
 
-      function fillTotalCell(
-        cellRef,
-        value
-      ) {
 
-        const cell =
-          ws.getCell(
-            cellRef
-          );
+        const wb =
+            new ExcelJS.Workbook();
+
+
+        await wb.xlsx.load(
+            arrayBuffer
+        );
+
+
+        /* ====================================================
+           工作表
+        ==================================================== */
+
+        const ws =
+            wb.getWorksheet(
+                '估價單0906'
+            ) ||
+            wb.worksheets[0];
+
+
+        if (!ws) {
+
+            alert(
+                '找不到報價單工作表！'
+            );
+
+            return;
+
+        }
+
+
+        /* ====================================================
+           第一頁基本資料
+        ==================================================== */
+
+        ws.getCell('A6').value =
+            `客戶名稱 :${clientName}`;
+
+
+        ws.getCell('G6').value =
+            contractNo;
+
+
+        ws.getCell('A7').value =
+            `工程地點 :${projectLocation}`;
+
+
+        if (dateStr) {
+
+            ws.getCell('G7').value =
+                dateStr;
+
+        }
+
+
+        /* ====================================================
+           清除第二頁舊資料
+           
+           只清除內容
+           不碰欄寬
+           不碰列高
+           不碰框線
+           不碰底色
+        ==================================================== */
+
+        for (
+            let r = 48;
+            r <= 150;
+            r++
+        ) {
+
+            for (
+                let c = 1;
+                c <= 7;
+                c++
+            ) {
+
+                ws.getCell(
+                    r,
+                    c
+                ).value = null;
+
+            }
+
+        }
+
+
+        /* ====================================================
+           分頁設定
+           
+           第一頁：
+           1～47
+
+           第二頁：
+           48 開始
+
+           第48列保留空白
+           實際資料從49開始
+        ==================================================== */
+
+        ws.pageSetup.printArea =
+            'A1:G150';
+
+
+        ws.pageSetup.fitToPage =
+            true;
+
+
+        ws.pageSetup.fitToWidth =
+            1;
+
+
+        ws.pageSetup.fitToHeight =
+            0;
+
+
+        ws.pageSetup.orientation =
+            'portrait';
+
+
+        ws.pageSetup.paperSize =
+            9;
+
+
+        /* ====================================================
+           清除舊的 row breaks
+        ==================================================== */
+
+        if (
+            ws.rowBreaks &&
+            Array.isArray(ws.rowBreaks.brk)
+        ) {
+
+            ws.rowBreaks.brk = [];
+
+        }
 
 
         if (
-          value !== undefined &&
-          value !== null &&
-          Number(value) > 0
+            typeof ws.addRowBreak ===
+            'function'
         ) {
 
-          cell.value =
-            Number(value);
-
-
-          cell.numFmt =
-            numFmt;
-
-        } else {
-
-          cell.value =
-            null;
+            ws.addRowBreak(47);
 
         }
 
-      }
+
+        /* ====================================================
+           分類
+        ==================================================== */
+
+        const grouped = {};
 
 
-      fillTotalCell(
-        'E11',
-        categoryTotals["水電工程"]
-      );
+        currentItems.forEach(item => {
 
-      fillTotalCell(
-        'F11',
-        categoryTotals["水電工程"]
-      );
+            if (
+                !grouped[item.category]
+            ) {
 
+                grouped[item.category] =
+                    [];
 
-      fillTotalCell(
-        'E12',
-        categoryTotals["燈具工程"]
-      );
-
-      fillTotalCell(
-        'F12',
-        categoryTotals["燈具工程"]
-      );
+            }
 
 
-      fillTotalCell(
-        'E13',
-        categoryTotals["木作工程"]
-      );
+            grouped[item.category]
+                .push(item);
 
-      fillTotalCell(
-        'F13',
-        categoryTotals["木作工程"]
-      );
+        });
 
 
-      fillTotalCell(
-        'E14',
-        categoryTotals["油漆工程"]
-      );
+        /* ====================================================
+           分類順序
+        ==================================================== */
 
-      fillTotalCell(
-        'F14',
-        categoryTotals["油漆工程"]
-      );
+        const catOrderList = [
 
+            '水電工程',
+            '燈具工程',
+            '木作工程',
+            '油漆工程',
+            '雜項工程'
 
-      fillTotalCell(
-        'E15',
-        categoryTotals["雜項工程"]
-      );
-
-      fillTotalCell(
-        'F15',
-        categoryTotals["雜項工程"]
-      );
+        ];
 
 
-      // ======================================================
-      // 總金額
-      // ======================================================
+        /* ====================================================
+           中文編號
+        ==================================================== */
 
-      const subtotal =
-        currentItems.reduce(
-          (sum, item) =>
-            sum +
-            Number(
-              item.priceSubtotal || 0
+        const numMap = [
+
+            '一',
+            '二',
+            '三',
+            '四',
+            '五',
+            '六',
+            '七',
+            '八'
+
+        ];
+
+
+        /* ====================================================
+           第一頁分類位置
+        ==================================================== */
+
+        const mainRowMap = {
+
+            '水電工程': 11,
+            '燈具工程': 12,
+            '木作工程': 13,
+            '油漆工程': 14,
+            '雜項工程': 15
+
+        };
+
+
+        /* ====================================================
+           第二頁從49開始
+        ==================================================== */
+
+        let curRow = 49;
+
+        let activeIdx = 0;
+
+        const categoryTotals = {};
+
+
+        /* ====================================================
+           字體
+        ==================================================== */
+
+        function setFont12(
+            cell,
+            bold
+        ) {
+
+            const oldFont =
+                cell.font || {};
+
+
+            cell.font = {
+
+                ...oldFont,
+
+                name:
+                    'Microsoft JhengHei',
+
+                size: 12,
+
+                bold:
+                    bold
+
+            };
+
+        }
+
+
+        /* ====================================================
+           工種
+        ==================================================== */
+
+        catOrderList.forEach(
+            cat => {
+
+                const items =
+                    grouped[cat] || [];
+
+
+                const mainRow =
+                    mainRowMap[cat];
+
+
+                /* ============================================
+                   沒有資料
+                ============================================ */
+
+                if (
+                    items.length === 0
+                ) {
+
+                    ws.getCell(
+                        `A${mainRow}`
+                    ).value = null;
+
+                    ws.getCell(
+                        `B${mainRow}`
+                    ).value = null;
+
+                    ws.getCell(
+                        `C${mainRow}`
+                    ).value = null;
+
+                    ws.getCell(
+                        `D${mainRow}`
+                    ).value = null;
+
+                    ws.getCell(
+                        `E${mainRow}`
+                    ).value = null;
+
+                    ws.getCell(
+                        `F${mainRow}`
+                    ).value = null;
+
+                    return;
+
+                }
+
+
+                const numStr =
+                    numMap[activeIdx] ||
+                    String(activeIdx + 1);
+
+
+                activeIdx++;
+
+
+                /* ============================================
+                   第一頁
+                ============================================ */
+
+                ws.getCell(
+                    `A${mainRow}`
+                ).value =
+                    numStr;
+
+
+                ws.getCell(
+                    `B${mainRow}`
+                ).value =
+                    cat;
+
+
+                ws.getCell(
+                    `C${mainRow}`
+                ).value =
+                    1;
+
+
+                ws.getCell(
+                    `D${mainRow}`
+                ).value =
+                    '式';
+
+
+                /* ============================================
+                   第二頁工種標題
+                ============================================ */
+
+                ws.getCell(
+                    `A${curRow}`
+                ).value =
+                    numStr;
+
+
+                ws.getCell(
+                    `B${curRow}`
+                ).value =
+                    cat;
+
+
+                for (
+                    let c = 1;
+                    c <= 7;
+                    c++
+                ) {
+
+                    setFont12(
+                        ws.getCell(
+                            curRow,
+                            c
+                        ),
+                        true
+                    );
+
+                }
+
+
+                curRow++;
+
+
+                /* ============================================
+                   明細
+                ============================================ */
+
+                let catSum = 0;
+
+
+                items.forEach(
+                    item => {
+
+                        ws.getCell(
+                            `A${curRow}`
+                        ).value =
+                            null;
+
+
+                        ws.getCell(
+                            `B${curRow}`
+                        ).value =
+                            item.name;
+
+
+                        ws.getCell(
+                            `C${curRow}`
+                        ).value =
+                            Number(
+                                item.qty
+                            );
+
+
+                        ws.getCell(
+                            `D${curRow}`
+                        ).value =
+                            item.unit;
+
+
+                        const priceCell =
+                            ws.getCell(
+                                `E${curRow}`
+                            );
+
+
+                        priceCell.value =
+                            Number(
+                                item.price
+                            );
+
+
+                        priceCell.numFmt =
+                            '#,##0';
+
+
+                        const subtotalCell =
+                            ws.getCell(
+                                `F${curRow}`
+                            );
+
+
+                        subtotalCell.value =
+                            Number(
+                                item.priceSubtotal
+                            );
+
+
+                        subtotalCell.numFmt =
+                            '#,##0';
+
+
+                        /* ==================================
+                           G 欄刻意留白
+                        ================================== */
+
+                        ws.getCell(
+                            `G${curRow}`
+                        ).value = null;
+
+
+                        /* ==================================
+                           明細字體
+                        ================================== */
+
+                        for (
+                            let c = 1;
+                            c <= 7;
+                            c++
+                        ) {
+
+                            setFont12(
+                                ws.getCell(
+                                    curRow,
+                                    c
+                                ),
+                                false
+                            );
+
+                        }
+
+
+                        catSum +=
+                            Number(
+                                item.priceSubtotal
+                            ) || 0;
+
+
+                        curRow++;
+
+                    }
+                );
+
+
+                /* ============================================
+                   小計
+                ============================================ */
+
+                ws.getCell(
+                    `A${curRow}`
+                ).value =
+                    null;
+
+
+                ws.getCell(
+                    `B${curRow}`
+                ).value =
+                    `${cat}小計`;
+
+
+                const subCell =
+                    ws.getCell(
+                        `F${curRow}`
+                    );
+
+
+                subCell.value =
+                    catSum;
+
+
+                subCell.numFmt =
+                    '#,##0';
+
+
+                for (
+                    let c = 1;
+                    c <= 7;
+                    c++
+                ) {
+
+                    setFont12(
+                        ws.getCell(
+                            curRow,
+                            c
+                        ),
+                        false
+                    );
+
+                }
+
+
+                categoryTotals[cat] =
+                    catSum;
+
+
+                curRow++;
+
+            }
+        );
+
+
+        /* ====================================================
+           第一頁分類金額
+        ==================================================== */
+
+        function fillTotalCell(
+            cellRef,
+            value
+        ) {
+
+            const cell =
+                ws.getCell(cellRef);
+
+
+            if (
+                value !== undefined &&
+                value !== null &&
+                Number(value) > 0
+            ) {
+
+                cell.value =
+                    Number(value);
+
+
+                cell.numFmt =
+                    '#,##0';
+
+            } else {
+
+                cell.value = null;
+
+            }
+
+        }
+
+
+        fillTotalCell(
+            'E11',
+            categoryTotals[
+                '水電工程'
+            ]
+        );
+
+        fillTotalCell(
+            'F11',
+            categoryTotals[
+                '水電工程'
+            ]
+        );
+
+
+        fillTotalCell(
+            'E12',
+            categoryTotals[
+                '燈具工程'
+            ]
+        );
+
+        fillTotalCell(
+            'F12',
+            categoryTotals[
+                '燈具工程'
+            ]
+        );
+
+
+        fillTotalCell(
+            'E13',
+            categoryTotals[
+                '木作工程'
+            ]
+        );
+
+        fillTotalCell(
+            'F13',
+            categoryTotals[
+                '木作工程'
+            ]
+        );
+
+
+        fillTotalCell(
+            'E14',
+            categoryTotals[
+                '油漆工程'
+            ]
+        );
+
+        fillTotalCell(
+            'F14',
+            categoryTotals[
+                '油漆工程'
+            ]
+        );
+
+
+        fillTotalCell(
+            'E15',
+            categoryTotals[
+                '雜項工程'
+            ]
+        );
+
+        fillTotalCell(
+            'F15',
+            categoryTotals[
+                '雜項工程'
+            ]
+        );
+
+
+        /* ====================================================
+           總金額
+        ==================================================== */
+
+        const totals =
+            calculateTotals();
+
+
+        fillTotalCell(
+            'E17',
+            totals.managementFee
+        );
+
+
+        fillTotalCell(
+            'F18',
+            totals.subtotal +
+            totals.managementFee
+        );
+
+
+        fillTotalCell(
+            'E19',
+            totals.tax
+        );
+
+
+        fillTotalCell(
+            'F20',
+            totals.grandTotal
+        );
+
+
+        /* ====================================================
+           付款比例
+        ==================================================== */
+
+        const p1 =
+            Math.round(
+                totals.grandTotal * 0.3
+            );
+
+
+        const p2 =
+            Math.round(
+                totals.grandTotal * 0.3
+            );
+
+
+        const p3 =
+            Math.round(
+                totals.grandTotal * 0.3
+            );
+
+
+        const p4 =
+            totals.grandTotal -
+            p1 -
+            p2 -
+            p3;
+
+
+        fillTotalCell(
+            'F22',
+            p1
+        );
+
+
+        fillTotalCell(
+            'F23',
+            p2
+        );
+
+
+        fillTotalCell(
+            'F24',
+            p3
+        );
+
+
+        fillTotalCell(
+            'F25',
+            p4
+        );
+
+
+        /* ====================================================
+           G 欄最後再清一次
+        ==================================================== */
+
+        for (
+            let r = 48;
+            r <= 150;
+            r++
+        ) {
+
+            ws.getCell(
+                `G${r}`
+            ).value = null;
+
+        }
+
+
+        /* ====================================================
+           寫出 Excel
+        ==================================================== */
+
+        const buffer =
+            await wb.xlsx.writeBuffer();
+
+
+        const fileName =
+            clientName
+
+                ? `裝修報價單-${clientName}-${quoteDateInput}.xlsx`
+
+                : `裝修報價單-${quoteDateInput}.xlsx`;
+
+
+        saveAs(
+
+            new Blob(
+                [buffer],
+                {
+                    type:
+                        'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'
+                }
             ),
-          0
+
+            fileName
+
         );
-
-
-      const hasMgmt =
-        document.getElementById(
-          'chkManagementFee'
-        ).checked;
-
-
-      const hasTax =
-        document.getElementById(
-          'chkTax'
-        ).checked;
-
-
-      const mgmtFee =
-        hasMgmt
-          ? Math.round(
-              subtotal * 0.1
-            )
-          : 0;
-
-
-      const subWithMgmt =
-        subtotal +
-        mgmtFee;
-
-
-      const taxFee =
-        hasTax
-          ? Math.round(
-              subWithMgmt * 0.05
-            )
-          : 0;
-
-
-      const grandTotal =
-        subWithMgmt +
-        taxFee;
-
-
-      fillTotalCell(
-        'E17',
-        mgmtFee
-      );
-
-
-      fillTotalCell(
-        'F18',
-        subWithMgmt
-      );
-
-
-      fillTotalCell(
-        'E19',
-        taxFee
-      );
-
-
-      fillTotalCell(
-        'F20',
-        grandTotal
-      );
-
-
-      // ======================================================
-      // 四期付款
-      // ======================================================
-
-      const p1 =
-        Math.round(
-          grandTotal * 0.3
-        );
-
-
-      const p2 =
-        Math.round(
-          grandTotal * 0.3
-        );
-
-
-      const p3 =
-        Math.round(
-          grandTotal * 0.3
-        );
-
-
-      const p4 =
-        grandTotal -
-        p1 -
-        p2 -
-        p3;
-
-
-      fillTotalCell(
-        'F22',
-        p1
-      );
-
-
-      fillTotalCell(
-        'F23',
-        p2
-      );
-
-
-      fillTotalCell(
-        'F24',
-        p3
-      );
-
-
-      fillTotalCell(
-        'F25',
-        p4
-      );
-
-
-      // ======================================================
-      // 匯出 Excel
-      // ======================================================
-
-      const buffer =
-        await wb.xlsx.writeBuffer();
-
-
-      const fileName =
-        clientName
-          ? `裝修報價單-${clientName}-${quoteDateInput}.xlsx`
-          : `裝修報價單-${quoteDateInput}.xlsx`;
-
-
-      saveAs(
-
-        new Blob(
-          [buffer],
-          {
-            type:
-              'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'
-          }
-        ),
-
-        fileName
-
-      );
 
 
     } catch (err) {
 
-      console.error(
-        "Excel 匯出錯誤：",
-        err
-      );
+        console.error(
+            'Excel 匯出錯誤：',
+            err
+        );
 
 
-      alert(
-        "套印匯出發生錯誤：\n" +
-        err.message
-      );
+        alert(
+            '套印匯出發生錯誤：' +
+            err.message
+        );
 
     }
 
-  }
+}
 
 </script>
 
