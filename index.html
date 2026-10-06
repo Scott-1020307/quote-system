@@ -225,7 +225,7 @@
     </div>
 
     <div style="margin-top: 25px; text-align: right; display: flex; justify-content: flex-end; gap: 12px;">
-      <button class="btn-success" onclick="exportQuoteToExcel()" style="font-size: 16px; padding: 14px 28px;">📊 匯出完美 Excel 報價單 (.xlsx)</button>
+      <button class="btn-success" onclick="exportQuoteToExcel()" style="font-size: 16px; padding: 14px 28px;">📊 匯出完美雙 Tab Excel 報價單 (.xlsx)</button>
     </div>
   </div>
 </div>
@@ -600,7 +600,7 @@
         <td>$${item.price.toLocaleString()}</td>
         <td><b>$${item.priceSubtotal.toLocaleString()}</b></td>
         <td class="cost-col" style="color:#27ae60; font-weight:bold;">$${item.profit.toLocaleString()}</td>
-        <td><button class="btn-danger" onclick="removeItem(${item.id})">刪除</button> instruction</td>
+        <td><button class="btn-danger" onclick="removeItem(${item.id})">刪除</button></td>
       `;
       tbody.appendChild(tr);
     });
@@ -642,7 +642,7 @@
     }
   }
 
-  // ⭐ 完全完美排版匯出 (加入數值格式鎖死 + 欄寬自動防溢出)
+  // ⭐【終極雙 Tab 解法】建立兩個獨立工作表，徹底徹底解決分頁擠壓問題！
   async function exportQuoteToExcel() {
     if (currentItems.length === 0) { alert("請先加入報價項目！"); return; }
 
@@ -662,28 +662,25 @@
       const wb = new ExcelJS.Workbook();
       await wb.xlsx.load(arrayBuffer);
       
-      let wsQuote = wb.getWorksheet('估價單0906') || wb.worksheets[0];
+      let wsMain = wb.getWorksheet('估價單0906') || wb.worksheets[0];
+      wsMain.name = '估價總表';
 
-      // 1. 強制設定數值千分位格式 (絕對防死 ######)
       const numFmt = '#,##0';
 
-      // 2. 微調 E/F 欄寬度，避開萬位/十萬位數溢出問題
-      wsQuote.getColumn(5).width = 15.0;  // E: 單價
-      wsQuote.getColumn(6).width = 16.0;  // F: 複價小計
+      // 1. 設定【第一頁：估價總表】抬頭資訊
+      wsMain.getCell('A6').value = `客戶名稱 : ${clientName}`;
+      wsMain.getCell('G6').value = contractNo;
+      wsMain.getCell('A7').value = `工程地點 : ${projectLocation}`;
+      if (quoteDate) wsMain.getCell('G7').value = quoteDate;
 
-      // 3. 填寫抬頭資訊
-      wsQuote.getCell('A6').value = `客戶名稱 : ${clientName}`;
-      wsQuote.getCell('G6').value = contractNo;
-      wsQuote.getCell('A7').value = `工程地點 : ${projectLocation}`;
-      if (quoteDate) wsQuote.getCell('G7').value = quoteDate;
-
-      // 4. 清空舊樣板預留細項 (48~95 列)
-      for (let r = 48; r <= 95; r++) {
-        let row = wsQuote.getRow(r);
+      // 2. 徹底擦除第一頁總表 48 列以下所有殘留的文字與框線，保持第一頁 100% 乾淨獨立！
+      for (let r = 48; r <= 100; r++) {
+        let row = wsMain.getRow(r);
+        row.hidden = true; // 隱藏第一頁底下的預留空白，防印出
         for (let c = 1; c <= 7; c++) { row.getCell(c).value = null; }
       }
 
-      // 按工種分組
+      // 依工種分組
       const grouped = {};
       currentItems.forEach(item => {
         if (!grouped[item.category]) grouped[item.category] = [];
@@ -694,42 +691,74 @@
       const numMap = ["一", "二", "三", "四", "五", "六", "七", "八"];
       const categoryTotals = { "水電工程": 0, "燈具工程": 0, "木作工程": 0, "油漆工程": 0, "雜項工程": 0 };
       
-      let curRow = 48; // 明細表起始列 (確定從第二頁開頭)
       let activeIdx = 0;
 
-      // 5. 填寫第二頁明細項目 (套用 numFmt 格式化數字)
+      // 3. 建立【第二頁 Tab：工程細項明細】
+      let wsDetail = wb.addWorksheet('工程細項明細');
+      
+      // 設定第二頁欄寬
+      wsDetail.getColumn(1).width = 8.0;   // A: 項次
+      wsDetail.getColumn(2).width = 30.0;  // B: 工程項目 / 細項名稱
+      wsDetail.getColumn(3).width = 10.0;  // C: 數量
+      wsDetail.getColumn(4).width = 8.0;   // D: 單位
+      wsDetail.getColumn(5).width = 15.0;  // E: 單價
+      wsDetail.getColumn(6).width = 16.0;  // F: 複價小計
+      wsDetail.getColumn(7).width = 25.0;  // G: 備註/規格說明
+
+      // 第二頁表頭
+      wsDetail.mergeCells('A1:G1');
+      let titleCell = wsDetail.getCell('A1');
+      titleCell.value = "工 種 施 工 項 目 明 細 表";
+      titleCell.font = { name: '標楷體', size: 16, bold: true };
+      titleCell.alignment = { horizontal: 'center', vertical: 'middle' };
+      wsDetail.getRow(1).height = 30;
+
+      wsDetail.getCell('A2').value = `客戶名稱：${clientName}`;
+      wsDetail.getCell('E2').value = `合約編號：${contractNo}`;
+      wsDetail.getCell('A3').value = `工程地點：${projectLocation}`;
+      wsDetail.getCell('E3').value = `報價日期：${quoteDate}`;
+
+      // 第二頁欄位抬頭
+      let headers = ["項次", "工程項目 / 施工規格細項", "數量", "單位", "單價", "複價小計", "備註说明"];
+      let headerRow = wsDetail.getRow(5);
+      headers.forEach((h, i) => {
+        let cell = headerRow.getCell(i + 1);
+        cell.value = h;
+        cell.font = { name: '標楷體', size: 11, bold: true };
+        cell.alignment = { horizontal: 'center', vertical: 'middle' };
+        cell.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: 'FFE5E7EB' } };
+      });
+
+      let curRow = 6;
+
+      // 4. 填寫第二頁明細與計算第一頁總表
       catOrderList.forEach(cat => {
         let items = grouped[cat] || [];
         if (items.length > 0) {
           let numStr = numMap[activeIdx] || (activeIdx + 1);
           activeIdx++;
 
-          // 第一頁總表標題
+          // 填寫第一頁總表標題
           let mainRowMap = { "水電工程": 11, "燈具工程": 12, "木作工程": 13, "油漆工程": 14, "雜項工程": 15 };
-          wsQuote.getCell(`A${mainRowMap[cat]}`).value = numStr;
-          wsQuote.getCell(`B${mainRowMap[cat]}`).value = cat;
+          wsMain.getCell(`A${mainRowMap[cat]}`).value = numStr;
+          wsMain.getCell(`B${mainRowMap[cat]}`).value = cat;
 
-          // 明細工種標題
-          let hRow = wsQuote.getRow(curRow);
+          // 第二頁工種標題列
+          let hRow = wsDetail.getRow(curRow);
           hRow.getCell(1).value = numStr;
           hRow.getCell(2).value = cat;
+          hRow.font = { name: '標楷體', size: 12, bold: true };
           curRow++;
 
-          // 明細細項
           let catSum = 0;
           items.forEach(item => {
-            let row = wsQuote.getRow(curRow);
+            let row = wsDetail.getRow(curRow);
             row.getCell(2).value = item.name;
             row.getCell(3).value = Number(item.qty);
             row.getCell(4).value = item.unit;
 
-            let c5 = row.getCell(5);
-            c5.value = Number(item.price);
-            c5.numFmt = numFmt;
-
-            let c6 = row.getCell(6);
-            c6.value = Number(item.priceSubtotal);
-            c6.numFmt = numFmt;
+            let c5 = row.getCell(5); c5.value = Number(item.price); c5.numFmt = numFmt;
+            let c6 = row.getCell(6); c6.value = Number(item.priceSubtotal); c6.numFmt = numFmt;
 
             row.getCell(7).value = item.note || null;
 
@@ -737,9 +766,10 @@
             curRow++;
           });
 
-          // 工種小計
-          let subRow = wsQuote.getRow(curRow);
+          // 工種小計列
+          let subRow = wsDetail.getRow(curRow);
           subRow.getCell(2).value = `${cat}小計`;
+          subRow.font = { name: '標楷體', size: 11, bold: true };
           let subC6 = subRow.getCell(6);
           subC6.value = catSum;
           subC6.numFmt = numFmt;
@@ -749,14 +779,14 @@
           curRow++; // 空一列
         } else {
           let mainRowMap = { "水電工程": 11, "燈具工程": 12, "木作工程": 13, "油漆工程": 14, "雜項工程": 15 };
-          wsQuote.getCell(`A${mainRowMap[cat]}`).value = null;
-          wsQuote.getCell(`B${mainRowMap[cat]}`).value = `${cat} (無施作)`;
+          wsMain.getCell(`A${mainRowMap[cat]}`).value = null;
+          wsMain.getCell(`B${mainRowMap[cat]}`).value = `${cat} (無施作)`;
         }
       });
 
-      // 6. 填寫第一頁總表金額 (套用 numFmt 格式化數字)
+      // 5. 填寫第一頁總表金額
       const fillTotalCell = (cellRef, val) => {
-        let cell = wsQuote.getCell(cellRef);
+        let cell = wsMain.getCell(cellRef);
         cell.value = Number(val);
         cell.numFmt = numFmt;
       };
@@ -767,7 +797,7 @@
       fillTotalCell('E14', categoryTotals["油漆工程"]); fillTotalCell('F14', categoryTotals["油漆工程"]);
       fillTotalCell('E15', categoryTotals["雜項工程"]); fillTotalCell('F15', categoryTotals["雜項工程"]);
 
-      // 7. 計算總計與付款期別 (套用 numFmt 格式化數字)
+      // 計算總計與付款期別
       let subtotal = currentItems.reduce((acc, i) => acc + Number(i.priceSubtotal), 0);
       let hasMgmt = document.getElementById('chkManagementFee').checked;
       let hasTax = document.getElementById('chkTax').checked;
