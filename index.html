@@ -1,163 +1,81 @@
-// ⭐ 完美繼承原檔美工與排版（保留完整報價單質感）
-  async function exportQuoteToExcel() {
-    if (currentItems.length === 0) { alert("請先加入報價項目！"); return; }
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>室內裝修報價與工程進度管理系統</title>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/exceljs/4.3.0/exceljs.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/FileSaver.js/2.0.5/FileSaver.min.js"></script>
+  <style>
+    :root { --primary: #2c3e50; --secondary: #27ae60; --light-bg: #f8f9fa; --border: #dee2e6; }
+    body { font-family: "PingFang TC", "Microsoft JhengHei", sans-serif; margin: 0; padding: 20px; background-color: #f4f6f8; color: #333; }
+    .container { max-width: 1200px; margin: 0 auto; }
+    h1, h3, h4 { color: #2c3e50; margin-top: 5px; }
+    .card { background: #fff; border-radius: 8px; padding: 20px; margin-bottom: 20px; box-shadow: 0 2px 8px rgba(0,0,0,0.08); }
+    .grid-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 15px; }
+    .grid-3 { display: grid; grid-template-columns: repeat(3, 1fr); gap: 15px; }
+    .grid-4 { display: grid; grid-template-columns: repeat(4, 1fr); gap: 15px; }
+    label { font-weight: bold; display: block; margin-bottom: 5px; font-size: 14px; }
+    input, select, textarea { width: 100%; padding: 8px 12px; border: 1px solid #dee2e6; border-radius: 4px; box-sizing: border-box; font-size: 14px; }
+    button { cursor: pointer; padding: 10px 18px; border: none; border-radius: 4px; font-size: 14px; font-weight: bold; }
+    .btn-primary { background: #2c3e50; color: #fff; }
+    .btn-success { background: #27ae60; color: #fff; }
+    .btn-warning { background: #f39c12; color: #fff; }
+    .btn-info { background: #2980b9; color: #fff; }
+    .btn-purple { background: #8e44ad; color: #fff; }
+    .btn-danger { background: #e74c3c; color: #fff; padding: 6px 12px; }
+    .mode-btn { background: #e2e8f0; color: #475569; font-size: 15px; padding: 10px 20px; border-radius: 6px; border: 2px solid transparent; transition: all 0.2s; }
+    .mode-btn.active { background: #2c3e50; color: #fff; border-color: #1e293b; }
+    table { width: 100%; border-collapse: collapse; margin-top: 15px; }
+    th, td { border: 1px solid #dee2e6; padding: 10px; text-align: left; font-size: 14px; }
+    th { background: #f8f9fa; color: #2c3e50; }
+    .cost-col { background: #fff8e7; display: none; }
+    .show-cost .cost-col { display: table-cell; }
+    .summary-box { background: #eef2f5; padding: 15px; border-radius: 6px; margin-top: 15px; }
+    .summary-row { display: flex; justify-content: space-between; padding: 6px 0; font-size: 15px; }
+    .summary-row.total { font-size: 18px; font-weight: bold; color: #c0392b; border-top: 2px solid #ccc; padding-top: 10px; }
+    .admin-panel { background: #eef7ee; border: 1px dashed #27ae60; padding: 15px; border-radius: 6px; margin-top: 15px; display: none; }
+    .payment-box { background: #f8fafc; border: 1px solid #cbd5e1; padding: 12px; border-radius: 6px; margin-top: 10px; font-size: 13px; }
+    .schedule-preview { background: #fffbe6; border: 1px solid #ffe58f; padding: 15px; border-radius: 6px; margin-top: 15px; }
+    
+    .test-page-panel { background: #f3e8ff; border: 2px solid #a855f7; border-radius: 8px; padding: 20px; margin-bottom: 20px; display: none; }
 
-    const clientName = document.getElementById('clientName').value || '';
-    const projectLocation = document.getElementById('projectLocation').value || '';
-    const contractNo = document.getElementById('contractNo').value || '';
-    const quoteDate = document.getElementById('quoteDate').value || '';
-
-    try {
-      const response = await fetch('./template.xlsx');
-      if(!response.ok) {
-        alert("🚨 找不到原檔範本 template.xlsx，請確認檔案已上傳至 GitHub！");
-        return;
+    #pdfPrintArea { display: none; }
+    @media print {
+      body * { visibility: hidden; }
+      #pdfPrintArea, #pdfPrintArea * { visibility: visible; }
+      #pdfPrintArea {
+        display: block !important;
+        position: absolute;
+        left: 0; top: 0; width: 100%;
+        background: #fff; padding: 15px; color: #000;
       }
-      const arrayBuffer = await response.arrayBuffer();
-
-      const wb = new ExcelJS.Workbook();
-      await wb.xlsx.load(arrayBuffer);
-      
-      let wsQuote = wb.getWorksheet('估價單0906') || wb.worksheets[0];
-
-      // 🛡️ 確保原檔的 FitToWidth (1頁寬) 與手動分頁被完整保留
-      wsQuote.pageSetup.fitToPage = true;
-      wsQuote.pageSetup.fitToWidth = 1;
-      wsQuote.pageSetup.fitToHeight = 0; // 高度順延
-
-      // 1. 抬頭資訊寫入
-      wsQuote.getCell('A6').value = `客戶名稱 : ${clientName}`;
-      wsQuote.getCell('G6').value = contractNo;
-      wsQuote.getCell('A7').value = `工程地點 : ${projectLocation}`;
-      if (quoteDate) wsQuote.getCell('G7').value = quoteDate;
-
-      // 2. 清空 48~95 列細項舊內容 (維持原本漂亮格式)
-      for (let r = 48; r <= 95; r++) {
-        let row = wsQuote.getRow(r);
-        row.hidden = false;
-        for (let c = 1; c <= 7; c++) {
-          row.getCell(c).value = null;
-        }
-      }
-
-      // 依選取項目進行工種分組
-      const grouped = {};
-      currentItems.forEach(item => {
-        if (!grouped[item.category]) grouped[item.category] = [];
-        grouped[item.category].push(item);
-      });
-
-      // 5 大工種對照
-      const catConfig = [
-        { cat: "水電工程", mainRow: 11, headerRow: 48, start: 49, maxCount: 8, subtotalRow: 57 },
-        { cat: "燈具工程", mainRow: 12, headerRow: 59, start: 60, maxCount: 2, subtotalRow: 62 },
-        { cat: "木作工程", mainRow: 13, headerRow: 64, start: 65, maxCount: 7, subtotalRow: 72 },
-        { cat: "油漆工程", mainRow: 14, headerRow: 74, start: 75, maxCount: 8, subtotalRow: 83 },
-        { cat: "雜項工程", mainRow: 15, headerRow: 85, start: 86, maxCount: 6, subtotalRow: 92 }
-      ];
-
-      const numMap = ["一", "二", "三", "四", "五", "六", "七", "八"];
-      const categoryTotals = { "水電工程": 0, "燈具工程": 0, "木作工程": 0, "油漆工程": 0, "雜項工程": 0 };
-      let activeOrderIndex = 0;
-
-      wsQuote.getCell('A17').value = null;
-      wsQuote.getCell('A19').value = null;
-
-      // 3. 填入細項數據
-      catConfig.forEach(cfg => {
-        let items = grouped[cfg.cat] || [];
-        let catSum = 0;
-
-        if (items.length > 0) {
-          let numStr = numMap[activeOrderIndex] || (activeOrderIndex + 1);
-          activeOrderIndex++;
-
-          wsQuote.getCell(`A${cfg.mainRow}`).value = numStr;
-          wsQuote.getCell(`B${cfg.mainRow}`).value = cfg.cat;
-
-          wsQuote.getCell(`A${cfg.headerRow}`).value = numStr;
-          wsQuote.getCell(`B${cfg.headerRow}`).value = cfg.cat;
-
-          items.forEach((item, idx) => {
-            if (idx < cfg.maxCount) {
-              let rNum = cfg.start + idx;
-              let row = wsQuote.getRow(rNum);
-
-              row.getCell(2).value = item.name;
-              row.getCell(3).value = Number(item.qty);
-              row.getCell(4).value = item.unit;
-              row.getCell(5).value = Number(item.price);
-              row.getCell(6).value = Number(item.priceSubtotal);
-              row.getCell(7).value = null;
-
-              catSum += Number(item.priceSubtotal);
-            }
-          });
-
-          categoryTotals[cfg.cat] = catSum;
-          wsQuote.getCell(`F${cfg.subtotalRow}`).value = catSum;
-        } else {
-          wsQuote.getCell(`A${cfg.mainRow}`).value = null;
-          wsQuote.getCell(`B${cfg.mainRow}`).value = `${cfg.cat} (無施作)`;
-          
-          wsQuote.getCell(`A${cfg.headerRow}`).value = null;
-          wsQuote.getCell(`B${cfg.headerRow}`).value = `${cfg.cat} (無施作)`;
-          categoryTotals[cfg.cat] = 0;
-        }
-      });
-
-      // 4. 第一頁總金額
-      wsQuote.getCell('E11').value = categoryTotals["水電工程"];
-      wsQuote.getCell('F11').value = categoryTotals["水電工程"];
-
-      wsQuote.getCell('E12').value = categoryTotals["燈具工程"];
-      wsQuote.getCell('F12').value = categoryTotals["燈具工程"];
-
-      wsQuote.getCell('E13').value = categoryTotals["木作工程"];
-      wsQuote.getCell('F13').value = categoryTotals["木作工程"];
-
-      wsQuote.getCell('E14').value = categoryTotals["油漆工程"];
-      wsQuote.getCell('F14').value = categoryTotals["油漆工程"];
-
-      wsQuote.getCell('E15').value = categoryTotals["雜項工程"];
-      wsQuote.getCell('F15').value = categoryTotals["雜項工程"];
-
-      // 5. 總計與付款期別
-      let subtotal = currentItems.reduce((acc, i) => acc + Number(i.priceSubtotal), 0);
-      let hasMgmt = document.getElementById('chkManagementFee').checked;
-      let hasTax = document.getElementById('chkTax').checked;
-
-      let mgmtFee = hasMgmt ? Math.round(subtotal * 0.1) : 0;
-      let subWithMgmt = subtotal + mgmtFee;
-      let taxFee = hasTax ? Math.round(subWithMgmt * 0.05) : 0;
-      let grandTotal = subWithMgmt + taxFee;
-
-      wsQuote.getCell('E17').value = mgmtFee;
-      wsQuote.getCell('F18').value = subWithMgmt;
-      wsQuote.getCell('E19').value = taxFee;
-      wsQuote.getCell('F20').value = grandTotal;
-
-      let p1 = Math.round(grandTotal * 0.3);
-      let p2 = Math.round(grandTotal * 0.3);
-      let p3 = Math.round(grandTotal * 0.3);
-      let p4 = grandTotal - p1 - p2 - p3;
-
-      wsQuote.getCell('F22').value = p1;
-      wsQuote.getCell('F23').value = p2;
-      wsQuote.getCell('F24').value = p3;
-      wsQuote.getCell('F25').value = p4;
-
-      wsQuote.getCell('C38').value = grandTotal;
-
-      for (let r = 11; r <= 15; r++) {
-        wsQuote.getRow(r).getCell(7).value = null;
-      }
-
-      // 下載產出的報價單
-      const buffer = await wb.xlsx.writeBuffer();
-      const fileName = clientName ? `裝修報價單-${clientName}-${quoteDate}.xlsx` : `裝修报價單-${quoteDate}.xlsx`;
-      saveAs(new Blob([buffer]), fileName);
-    } catch(err) {
-      alert("⚠️ 套印匯出發生錯誤：" + err.message);
+      .page-break { page-break-after: always; }
+      @page { size: A4 portrait; margin: 10mm; }
     }
-  }
+  </style>
+</head>
+<body>
+
+<div class="container">
+  <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px;">
+    <h1>🏢 室內裝修報價與工程進度管理系統</h1>
+    <div style="display: flex; gap: 6px;">
+      <button class="btn-purple" onclick="toggleTestPage()">🧪 測試頁</button>
+      <button class="btn-warning" onclick="toggleAdminPanel()">⚙ 新增常用選單</button>
+      <button class="btn-primary" onclick="toggleCostDisplay()">🔒 切換成本/毛利</button>
+    </div>
+  </div>
+
+  <div class="test-page-panel" id="testPagePanel">
+    <div style="display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid #c084fc; padding-bottom: 10px; margin-bottom: 15px;">
+      <h3 style="margin: 0; color: #6b21a8;">🧪 系統開發測試頁 (Test Mode)</h3>
+      <button class="btn-danger" onclick="toggleTestPage()" style="padding: 4px 10px; font-size: 12px;">✕ 關閉測試頁</button>
+    </div>
+    
+    <div class="grid-2">
+      <div>
+        <h4 style="margin-top:0; color:#581c87;">⚡ 一鍵自動帶入測試模擬資料</h4>
+        <div style="display: flex; gap: 10px;">
+          <button class="btn-purple" onclick="loadTestData()">🚀 自動帶入完整測試資料</button>
+          <button class="btn-warning" onclick="clearAllItemsData()">🗑 清空目前所有項目</button>
