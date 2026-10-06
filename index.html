@@ -101,7 +101,7 @@
   </div>
 
   <div class="admin-panel card" id="adminPanel">
-    <h3 style="margin-top:0; color:#27ae60;">⚙️ 新增常用項目至下拉選單</h3>
+    <h3 style="margin-top:0; color:#27ae60;">⚙️️ 新增常用項目至下拉選單</h3>
     <div class="grid-4" style="grid-template-columns: 2fr 2fr 1fr 1fr;">
       <div><label>目標類別</label><select id="newCatSelect"></select></div>
       <div><label>新項目名稱</label><input type="text" id="newName" placeholder="例如：9.5cm LED 崁燈"></div>
@@ -200,7 +200,7 @@
           <div class="payment-box" id="paymentDetailsDisplay"></div>
         </div>
         <div style="margin-top: 15px;">
-          <label>🏷️️ 常用合約條款與注意事項：</label>
+          <label>🏷️ 常用合約條款與注意事項：</label>
           <div style="font-size:13px; line-height:1.8;">
             <div><input type="checkbox" class="note-preset" value="1. 本估價單項目不包含燈具、家電設備與軟裝佈置。" checked onchange="updateCustomNotes()"> 1. 不包含燈具、家電與軟裝。</div>
             <div><input type="checkbox" class="note-preset" value="2. 施工期間工程保固一年，消耗性材料與人為因素除外。" checked onchange="updateCustomNotes()"> 2. 提供施工保固一年。</div>
@@ -225,7 +225,7 @@
     </div>
 
     <div style="margin-top: 25px; text-align: right; display: flex; justify-content: flex-end; gap: 12px;">
-      <button class="btn-success" onclick="exportQuoteToExcel()" style="font-size: 16px; padding: 14px 28px;">📊 匯出完美 Excel 報價單 (.xlsx)</button>
+      <button class="btn-success" onclick="exportQuoteToExcel()" style="font-size: 16px; padding: 14px 28px;">📊 匯出完美單頁連貫 Excel 報價單 (.xlsx)</button>
     </div>
   </div>
 </div>
@@ -243,9 +243,9 @@
 
   const fullItemMaster = {
     "水電工程": [
-      { name: "新增插座", unit: "組", cost: 2500, price: 4000, note: "TV牆下、主臥改櫃" },
+      { name: "新增插座", unit: "組", cost: 2500, price: 4000, note: "TV牆下、主臥衣櫃、孝親衣櫃" },
       { name: "新增專用迴路110V", unit: "組", cost: 4500, price: 7000, note: "餐櫃" },
-      { name: "新增專用迴路220V", unit: "組", cost: 4500, price: 7000, note: "餐櫃平台、主臥" },
+      { name: "新增專用迴路220V", unit: "組", cost: 4500, price: 7000, note: "餐櫃平台、主臥吹風機" },
       { name: "弱電及網路線拉設", unit: "式", cost: 3500, price: 5500, note: "CAT6 網路線加強" }
     ],
     "木作工程": [
@@ -306,7 +306,7 @@
     ];
 
     renderQuoteTable();
-    alert("已成功載入測試資料！");
+    alert("已成功帶入劉隆穎先生案場測試資料！");
   }
 
   function clearAllItemsData() {
@@ -641,14 +641,24 @@
     }
   }
 
-  // ⭐【100% 精準對齊欄位 匯出邏輯】
+  // ⭐【100% 精準連貫套印單一工作表】
   async function exportQuoteToExcel() {
     if (currentItems.length === 0) { alert("請先加入報價項目！"); return; }
 
     const clientName = document.getElementById('clientName').value || '';
     const projectLocation = document.getElementById('projectLocation').value || '';
     const contractNo = document.getElementById('contractNo').value || '';
-    const quoteDate = document.getElementById('quoteDate').value || '';
+    const quoteDateInput = document.getElementById('quoteDate').value || '';
+
+    // 日期轉換為 115 年 09月13日 格式
+    let dateStr = quoteDateInput;
+    if (quoteDateInput) {
+      const d = new Date(quoteDateInput);
+      const rocYear = d.getFullYear() - 1911;
+      const m = (d.getMonth() + 1).toString().padStart(2, '0');
+      const day = d.getDate().toString().padStart(2, '0');
+      dateStr = `${rocYear} 年 ${m}月${day}日`;
+    }
 
     try {
       const response = await fetch('./template.xlsx');
@@ -661,24 +671,24 @@
       const wb = new ExcelJS.Workbook();
       await wb.xlsx.load(arrayBuffer);
       
-      let wsMain = wb.getWorksheet('估價單0906') || wb.worksheets[0];
+      let ws = wb.getWorksheet('估價單0906') || wb.worksheets[0];
 
       const numFmt = '#,##0';
 
-      // 1. 填寫【估價單0906】抬頭資訊
-      wsMain.getCell('A6').value = `客戶名稱 : ${clientName}`;
-      wsMain.getCell('G6').value = contractNo;
-      wsMain.getCell('A7').value = `工程地點 : ${projectLocation}`;
-      if (quoteDate) wsMain.getCell('G7').value = quoteDate;
+      // 1. 正確套入客戶資料 (解決「客戶客戶名稱」多餘字問題)
+      ws.getCell('A6').value = `客戶名稱 :${clientName}`;
+      ws.getCell('G6').value = contractNo;
+      ws.getCell('A7').value = `工程地點 :${projectLocation}`;
+      if (dateStr) ws.getCell('G7').value = dateStr;
 
-      // 2. 擦除第一頁 48 列以下殘留的預留文字，鎖定第一頁獨佔總表
-      for (let r = 48; r <= 100; r++) {
-        let row = wsMain.getRow(r);
-        row.hidden = true;
+      // 2. 清空舊樣板從 48 列開始的所有預留文字與公式
+      for (let r = 48; r <= 120; r++) {
+        let row = ws.getRow(r);
+        row.hidden = false;
         for (let c = 1; c <= 7; c++) { row.getCell(c).value = null; }
       }
 
-      // 按工種分組
+      // 按工種進行分組
       const grouped = {};
       currentItems.forEach(item => {
         if (!grouped[item.category]) grouped[item.category] = [];
@@ -687,71 +697,35 @@
 
       const catOrderList = ["水電工程", "燈具工程", "木作工程", "油漆工程", "雜項工程"];
       const numMap = ["一", "二", "三", "四", "五", "六", "七", "八"];
-      const categoryTotals = { "水電工程": 0, "燈具工程": 0, "木作工程": 0, "油漆工程": 0, "雜項工程": 0 };
+      const categoryTotals = {};
       
+      let mainRowMap = { "水電工程": 11, "燈具工程": 12, "木作工程": 13, "油漆工程": 14, "雜項工程": 15 };
       let activeIdx = 0;
+      let curRow = 48; // 明細從 48 列順著往下寫
 
-      // 3. 建立【第二頁：工程細項明細】Tab
-      let wsDetail = wb.addWorksheet('工程細項明細');
-      
-      wsDetail.getColumn(1).width = 8.0;   // A: 項次
-      wsDetail.getColumn(2).width = 30.0;  // B: 工程項目 / 細項名稱
-      wsDetail.getColumn(3).width = 10.0;  // C: 數量
-      wsDetail.getColumn(4).width = 8.0;   // D: 單位
-      wsDetail.getColumn(5).width = 15.0;  // E: 單價
-      wsDetail.getColumn(6).width = 16.0;  // F: 複價小計
-      wsDetail.getColumn(7).width = 25.0;  // G: 備註/規格說明
-
-      wsDetail.mergeCells('A1:G1');
-      let titleCell = wsDetail.getCell('A1');
-      titleCell.value = "工 種 施 工 項 目 明 細 表";
-      titleCell.font = { name: '標楷體', size: 16, bold: true };
-      titleCell.alignment = { horizontal: 'center', vertical: 'middle' };
-      wsDetail.getRow(1).height = 30;
-
-      wsDetail.getCell('A2').value = `客戶名稱：${clientName}`;
-      wsDetail.getCell('E2').value = `合約編號：${contractNo}`;
-      wsDetail.getCell('A3').value = `工程地點：${projectLocation}`;
-      wsDetail.getCell('E3').value = `報價日期：${quoteDate}`;
-
-      let headers = ["項次", "工程項目 / 施工規格細項", "數量", "單位", "單價", "複價小計", "備註說明"];
-      let headerRow = wsDetail.getRow(5);
-      headers.forEach((h, i) => {
-        let cell = headerRow.getCell(i + 1);
-        cell.value = h;
-        cell.font = { name: '標楷體', size: 11, bold: true };
-        cell.alignment = { horizontal: 'center', vertical: 'middle' };
-        cell.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: 'FFE5E7EB' } };
-      });
-
-      let curRow = 6;
-
-      // 4. 精確寫入：第一頁總表正確欄位為 B:項次, C:項目, D:數量, E:單位, F:單價, G:總價
       catOrderList.forEach(cat => {
         let items = grouped[cat] || [];
+        let rNum = mainRowMap[cat];
+
         if (items.length > 0) {
           let numStr = numMap[activeIdx] || (activeIdx + 1);
           activeIdx++;
 
-          let mainRowMap = { "水電工程": 11, "燈具工程": 12, "木作工程": 13, "油漆工程": 14, "雜項工程": 15 };
-          let rNum = mainRowMap[cat];
+          // 第一頁總表：有施作才填入項次與名稱
+          ws.getCell(`A${rNum}`).value = numStr;
+          ws.getCell(`B${rNum}`).value = cat;
+          ws.getCell(`C${rNum}`).value = 1;
+          ws.getCell(`D${rNum}`).value = "式";
 
-          // ⭐ 精準填寫第一頁總表 (對齊範本 B~G 欄)
-          wsMain.getCell(`B${rNum}`).value = numStr;
-          wsMain.getCell(`C${rNum}`).value = cat;
-          wsMain.getCell(`D${rNum}`).value = 1;
-          wsMain.getCell(`E${rNum}`).value = "式";
-
-          // 第二頁工種標題
-          let hRow = wsDetail.getRow(curRow);
+          // 下方明細：填寫工種大類抬頭
+          let hRow = ws.getRow(curRow);
           hRow.getCell(1).value = numStr;
           hRow.getCell(2).value = cat;
-          hRow.font = { name: '標楷體', size: 12, bold: true };
           curRow++;
 
           let catSum = 0;
           items.forEach(item => {
-            let row = wsDetail.getRow(curRow);
+            let row = ws.getRow(curRow);
             row.getCell(2).value = item.name;
             row.getCell(3).value = Number(item.qty);
             row.getCell(4).value = item.unit;
@@ -765,39 +739,42 @@
             curRow++;
           });
 
-          // 工種小計列
-          let subRow = wsDetail.getRow(curRow);
+          // 明細工種小計列
+          let subRow = ws.getRow(curRow);
           subRow.getCell(2).value = `${cat}小計`;
-          subRow.font = { name: '標楷體', size: 11, bold: true };
           let subC6 = subRow.getCell(6);
           subC6.value = catSum;
           subC6.numFmt = numFmt;
 
           categoryTotals[cat] = catSum;
-          curRow++;
-          curRow++; // 空列
+          curRow++; // 移至下一列
         } else {
-          let mainRowMap = { "水電工程": 11, "燈具工程": 12, "木作工程": 13, "油漆工程": 14, "雜項工程": 15 };
-          let rNum = mainRowMap[cat];
-          wsMain.getCell(`B${rNum}`).value = null;
-          wsMain.getCell(`C${rNum}`).value = `${cat} (無施作)`;
-          wsMain.getCell(`D${rNum}`).value = null;
-          wsMain.getCell(`E${rNum}`).value = null;
+          // ⭐ 沒有的工程完全不特別寫上去，整列清空！
+          ws.getCell(`A${rNum}`).value = null;
+          ws.getCell(`B${rNum}`).value = null;
+          ws.getCell(`C${rNum}`).value = null;
+          ws.getCell(`D${rNum}`).value = null;
+          ws.getCell(`E${rNum}`).value = null;
+          ws.getCell(`F${rNum}`).value = null;
         }
       });
 
-      // 5. 填寫第一頁總表金額 (F 欄與 G 欄)
+      // 3. 填寫第一頁總表金額與計算
       const fillTotalCell = (cellRef, val) => {
-        let cell = wsMain.getCell(cellRef);
-        cell.value = Number(val);
-        cell.numFmt = numFmt;
+        let cell = ws.getCell(cellRef);
+        if (val !== undefined && val !== null && val > 0) {
+          cell.value = Number(val);
+          cell.numFmt = numFmt;
+        } else {
+          cell.value = null;
+        }
       };
 
-      fillTotalCell('F11', categoryTotals["水電工程"]); fillTotalCell('G11', categoryTotals["水電工程"]);
-      fillTotalCell('F12', categoryTotals["燈具工程"]); fillTotalCell('G12', categoryTotals["燈具工程"]);
-      fillTotalCell('F13', categoryTotals["木作工程"]); fillTotalCell('G13', categoryTotals["木作工程"]);
-      fillTotalCell('F14', categoryTotals["油漆工程"]); fillTotalCell('G14', categoryTotals["油漆工程"]);
-      fillTotalCell('F15', categoryTotals["雜項工程"]); fillTotalCell('G15', categoryTotals["雜項工程"]);
+      fillTotalCell('E11', categoryTotals["水電工程"]); fillTotalCell('F11', categoryTotals["水電工程"]);
+      fillTotalCell('E12', categoryTotals["燈具工程"]); fillTotalCell('F12', categoryTotals["燈具工程"]);
+      fillTotalCell('E13', categoryTotals["木作工程"]); fillTotalCell('F13', categoryTotals["木作工程"]);
+      fillTotalCell('E14', categoryTotals["油漆工程"]); fillTotalCell('F14', categoryTotals["油漆工程"]);
+      fillTotalCell('E15', categoryTotals["雜項工程"]); fillTotalCell('F15', categoryTotals["雜項工程"]);
 
       // 計算總計與付款期別
       let subtotal = currentItems.reduce((acc, i) => acc + Number(i.priceSubtotal), 0);
@@ -809,24 +786,24 @@
       let taxFee = hasTax ? Math.round(subWithMgmt * 0.05) : 0;
       let grandTotal = subWithMgmt + taxFee;
 
-      fillTotalCell('F17', mgmtFee);
-      fillTotalCell('G18', subWithMgmt);
-      fillTotalCell('F19', taxFee);
-      fillTotalCell('G20', grandTotal);
+      fillTotalCell('E17', mgmtFee);
+      fillTotalCell('F18', subWithMgmt);
+      fillTotalCell('E19', taxFee);
+      fillTotalCell('F20', grandTotal);
 
       let p1 = Math.round(grandTotal * 0.3);
       let p2 = Math.round(grandTotal * 0.3);
       let p3 = Math.round(grandTotal * 0.3);
       let p4 = grandTotal - p1 - p2 - p3;
 
-      fillTotalCell('G22', p1);
-      fillTotalCell('G23', p2);
-      fillTotalCell('G24', p3);
-      fillTotalCell('G25', p4);
+      fillTotalCell('F22', p1);
+      fillTotalCell('F23', p2);
+      fillTotalCell('F24', p3);
+      fillTotalCell('F25', p4);
 
-      // 下載檔案
+      // 4. 下載檔案
       const buffer = await wb.xlsx.writeBuffer();
-      const fileName = clientName ? `裝修報價單-${clientName}-${quoteDate}.xlsx` : `裝修報價單-${quoteDate}.xlsx`;
+      const fileName = clientName ? `裝修報價單-${clientName}-${quoteDateInput}.xlsx` : `裝修報價單-${quoteDateInput}.xlsx`;
       saveAs(new Blob([buffer]), fileName);
     } catch(err) {
       alert("⚠️ 套印匯出發生錯誤：" + err.message);
