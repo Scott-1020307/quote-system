@@ -600,7 +600,7 @@
         <td>$${item.price.toLocaleString()}</td>
         <td><b>$${item.priceSubtotal.toLocaleString()}</b></td>
         <td class="cost-col" style="color:#27ae60; font-weight:bold;">$${item.profit.toLocaleString()}</td>
-        <td><button class="btn-danger" onclick="removeItem(${item.id})">刪除</button></td>
+        <td><button class="btn-danger" onclick="removeItem(${item.id})">刪除</button> instruction</td>
       `;
       tbody.appendChild(tr);
     });
@@ -642,7 +642,7 @@
     }
   }
 
-  // ⭐ 完全保留範本原始樣式之 Excel 匯出
+  // ⭐ 完全完美排版匯出 (加入數值格式鎖死 + 欄寬自動防溢出)
   async function exportQuoteToExcel() {
     if (currentItems.length === 0) { alert("請先加入報價項目！"); return; }
 
@@ -664,19 +664,26 @@
       
       let wsQuote = wb.getWorksheet('估價單0906') || wb.worksheets[0];
 
-      // 1. 填寫抬頭資訊 (完全沿用範本內部預設格式)
+      // 1. 強制設定數值千分位格式 (絕對防死 ######)
+      const numFmt = '#,##0';
+
+      // 2. 微調 E/F 欄寬度，避開萬位/十萬位數溢出問題
+      wsQuote.getColumn(5).width = 15.0;  // E: 單價
+      wsQuote.getColumn(6).width = 16.0;  // F: 複價小計
+
+      // 3. 填寫抬頭資訊
       wsQuote.getCell('A6').value = `客戶名稱 : ${clientName}`;
       wsQuote.getCell('G6').value = contractNo;
       wsQuote.getCell('A7').value = `工程地點 : ${projectLocation}`;
       if (quoteDate) wsQuote.getCell('G7').value = quoteDate;
 
-      // 2. 清空舊樣板預留細項 (48~95 列)
+      // 4. 清空舊樣板預留細項 (48~95 列)
       for (let r = 48; r <= 95; r++) {
         let row = wsQuote.getRow(r);
         for (let c = 1; c <= 7; c++) { row.getCell(c).value = null; }
       }
 
-      // 依選取項目進行工種分組
+      // 按工種分組
       const grouped = {};
       currentItems.forEach(item => {
         if (!grouped[item.category]) grouped[item.category] = [];
@@ -687,22 +694,22 @@
       const numMap = ["一", "二", "三", "四", "五", "六", "七", "八"];
       const categoryTotals = { "水電工程": 0, "燈具工程": 0, "木作工程": 0, "油漆工程": 0, "雜項工程": 0 };
       
-      let curRow = 48; // 明細表起始列
+      let curRow = 48; // 明細表起始列 (確定從第二頁開頭)
       let activeIdx = 0;
 
-      // 3. 填寫第二頁明細項目
+      // 5. 填寫第二頁明細項目 (套用 numFmt 格式化數字)
       catOrderList.forEach(cat => {
         let items = grouped[cat] || [];
         if (items.length > 0) {
           let numStr = numMap[activeIdx] || (activeIdx + 1);
           activeIdx++;
 
-          // 填寫第一頁總表項目名稱
+          // 第一頁總表標題
           let mainRowMap = { "水電工程": 11, "燈具工程": 12, "木作工程": 13, "油漆工程": 14, "雜項工程": 15 };
           wsQuote.getCell(`A${mainRowMap[cat]}`).value = numStr;
           wsQuote.getCell(`B${mainRowMap[cat]}`).value = cat;
 
-          // 明細表工種大類標題
+          // 明細工種標題
           let hRow = wsQuote.getRow(curRow);
           hRow.getCell(1).value = numStr;
           hRow.getCell(2).value = cat;
@@ -715,18 +722,27 @@
             row.getCell(2).value = item.name;
             row.getCell(3).value = Number(item.qty);
             row.getCell(4).value = item.unit;
-            row.getCell(5).value = Number(item.price);
-            row.getCell(6).value = Number(item.priceSubtotal);
+
+            let c5 = row.getCell(5);
+            c5.value = Number(item.price);
+            c5.numFmt = numFmt;
+
+            let c6 = row.getCell(6);
+            c6.value = Number(item.priceSubtotal);
+            c6.numFmt = numFmt;
+
             row.getCell(7).value = item.note || null;
 
             catSum += Number(item.priceSubtotal);
             curRow++;
           });
 
-          // 工種小計列
+          // 工種小計
           let subRow = wsQuote.getRow(curRow);
           subRow.getCell(2).value = `${cat}小計`;
-          subRow.getCell(6).value = catSum;
+          let subC6 = subRow.getCell(6);
+          subC6.value = catSum;
+          subC6.numFmt = numFmt;
 
           categoryTotals[cat] = catSum;
           curRow++;
@@ -738,14 +754,20 @@
         }
       });
 
-      // 4. 填寫第一頁總表金額
-      wsQuote.getCell('E11').value = categoryTotals["水電工程"]; wsQuote.getCell('F11').value = categoryTotals["水電工程"];
-      wsQuote.getCell('E12').value = categoryTotals["燈具工程"]; wsQuote.getCell('F12').value = categoryTotals["燈具工程"];
-      wsQuote.getCell('E13').value = categoryTotals["木作工程"]; wsQuote.getCell('F13').value = categoryTotals["木作工程"];
-      wsQuote.getCell('E14').value = categoryTotals["油漆工程"]; wsQuote.getCell('F14').value = categoryTotals["油漆工程"];
-      wsQuote.getCell('E15').value = categoryTotals["雜項工程"]; wsQuote.getCell('F15').value = categoryTotals["雜項工程"];
+      // 6. 填寫第一頁總表金額 (套用 numFmt 格式化數字)
+      const fillTotalCell = (cellRef, val) => {
+        let cell = wsQuote.getCell(cellRef);
+        cell.value = Number(val);
+        cell.numFmt = numFmt;
+      };
 
-      // 5. 計算總計與付款期數
+      fillTotalCell('E11', categoryTotals["水電工程"]); fillTotalCell('F11', categoryTotals["水電工程"]);
+      fillTotalCell('E12', categoryTotals["燈具工程"]); fillTotalCell('F12', categoryTotals["燈具工程"]);
+      fillTotalCell('E13', categoryTotals["木作工程"]); fillTotalCell('F13', categoryTotals["木作工程"]);
+      fillTotalCell('E14', categoryTotals["油漆工程"]); fillTotalCell('F14', categoryTotals["油漆工程"]);
+      fillTotalCell('E15', categoryTotals["雜項工程"]); fillTotalCell('F15', categoryTotals["雜項工程"]);
+
+      // 7. 計算總計與付款期別 (套用 numFmt 格式化數字)
       let subtotal = currentItems.reduce((acc, i) => acc + Number(i.priceSubtotal), 0);
       let hasMgmt = document.getElementById('chkManagementFee').checked;
       let hasTax = document.getElementById('chkTax').checked;
@@ -755,22 +777,22 @@
       let taxFee = hasTax ? Math.round(subWithMgmt * 0.05) : 0;
       let grandTotal = subWithMgmt + taxFee;
 
-      wsQuote.getCell('E17').value = mgmtFee;
-      wsQuote.getCell('F18').value = subWithMgmt;
-      wsQuote.getCell('E19').value = taxFee;
-      wsQuote.getCell('F20').value = grandTotal;
+      fillTotalCell('E17', mgmtFee);
+      fillTotalCell('F18', subWithMgmt);
+      fillTotalCell('E19', taxFee);
+      fillTotalCell('F20', grandTotal);
 
       let p1 = Math.round(grandTotal * 0.3);
       let p2 = Math.round(grandTotal * 0.3);
       let p3 = Math.round(grandTotal * 0.3);
       let p4 = grandTotal - p1 - p2 - p3;
 
-      wsQuote.getCell('F22').value = p1;
-      wsQuote.getCell('F23').value = p2;
-      wsQuote.getCell('F24').value = p3;
-      wsQuote.getCell('F25').value = p4;
+      fillTotalCell('F22', p1);
+      fillTotalCell('F23', p2);
+      fillTotalCell('F24', p3);
+      fillTotalCell('F25', p4);
 
-      wsQuote.getCell('C38').value = grandTotal;
+      fillTotalCell('C38', grandTotal);
 
       // 下載檔案
       const buffer = await wb.xlsx.writeBuffer();
