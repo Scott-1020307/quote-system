@@ -1,784 +1,4 @@
-<!DOCTYPE html>
-<html lang="zh-TW">
-<head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>室內裝修報價與工程進度管理系統</title>
-  <script src="https://cdnjs.cloudflare.com/ajax/libs/exceljs/4.3.0/exceljs.min.js"></script>
-  <script src="https://cdnjs.cloudflare.com/ajax/libs/FileSaver.js/2.0.5/FileSaver.min.js"></script>
-  <style>
-    :root { --primary: #2c3e50; --secondary: #27ae60; --light-bg: #f8f9fa; --border: #dee2e6; }
-    body { font-family: "PingFang TC", "Microsoft JhengHei", sans-serif; margin: 0; padding: 20px; background-color: #f4f6f8; color: #333; }
-    .container { max-width: 1200px; margin: 0 auto; }
-    h1, h3, h4 { color: #2c3e50; margin-top: 5px; }
-    .card { background: #fff; border-radius: 8px; padding: 20px; margin-bottom: 20px; box-shadow: 0 2px 8px rgba(0,0,0,0.08); }
-    .grid-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 15px; }
-    .grid-3 { display: grid; grid-template-columns: repeat(3, 1fr); gap: 15px; }
-    .grid-4 { display: grid; grid-template-columns: repeat(4, 1fr); gap: 15px; }
-    label { font-weight: bold; display: block; margin-bottom: 5px; font-size: 14px; }
-    input, select, textarea { width: 100%; padding: 8px 12px; border: 1px solid #dee2e6; border-radius: 4px; box-sizing: border-box; font-size: 14px; }
-    button { cursor: pointer; padding: 10px 18px; border: none; border-radius: 4px; font-size: 14px; font-weight: bold; }
-    .btn-primary { background: #2c3e50; color: #fff; }
-    .btn-success { background: #27ae60; color: #fff; }
-    .btn-warning { background: #f39c12; color: #fff; }
-    .btn-info { background: #2980b9; color: #fff; }
-    .btn-purple { background: #8e44ad; color: #fff; }
-    .btn-danger { background: #e74c3c; color: #fff; padding: 6px 12px; }
-    .mode-btn { background: #e2e8f0; color: #475569; font-size: 15px; padding: 10px 20px; border-radius: 6px; border: 2px solid transparent; transition: all 0.2s; }
-    .mode-btn.active { background: #2c3e50; color: #fff; border-color: #1e293b; }
-    table { width: 100%; border-collapse: collapse; margin-top: 15px; }
-    th, td { border: 1px solid #dee2e6; padding: 10px; text-align: left; font-size: 14px; }
-    th { background: #f8f9fa; color: #2c3e50; }
-    .cost-col { background: #fff8e7; display: none; }
-    .show-cost .cost-col { display: table-cell; }
-    .summary-box { background: #eef2f5; padding: 15px; border-radius: 6px; margin-top: 15px; }
-    .summary-row { display: flex; justify-content: space-between; padding: 6px 0; font-size: 15px; }
-    .summary-row.total { font-size: 18px; font-weight: bold; color: #c0392b; border-top: 2px solid #ccc; padding-top: 10px; }
-    .admin-panel { background: #eef7ee; border: 1px dashed #27ae60; padding: 15px; border-radius: 6px; margin-top: 15px; display: none; }
-    .payment-box { background: #f8fafc; border: 1px solid #cbd5e1; padding: 12px; border-radius: 6px; margin-top: 10px; font-size: 13px; }
-    .schedule-preview { background: #fffbe6; border: 1px solid #ffe58f; padding: 15px; border-radius: 6px; margin-top: 15px; }
-    
-    .test-page-panel { background: #f3e8ff; border: 2px solid #a855f7; border-radius: 8px; padding: 20px; margin-bottom: 20px; display: none; }
-
-    #pdfPrintArea { display: none; }
-    @media print {
-      body * { visibility: hidden; }
-      #pdfPrintArea, #pdfPrintArea * { visibility: visible; }
-      #pdfPrintArea {
-        display: block !important;
-        position: absolute;
-        left: 0; top: 0; width: 100%;
-        background: #fff; padding: 15px; color: #000;
-      }
-      .page-break { page-break-after: always; }
-      @page { size: A4 portrait; margin: 10mm; }
-    }
-  </style>
-</head>
-<body>
-
-<div class="container">
-  <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px;">
-    <h1>🏢 室內裝修報價與工程進度管理系統</h1>
-    <div style="display: flex; gap: 6px;">
-      <button class="btn-purple" onclick="toggleTestPage()">🧪 測試頁</button>
-      <button class="btn-warning" onclick="toggleAdminPanel()">⚙ 新增常用選單</button>
-      <button class="btn-primary" onclick="toggleCostDisplay()">🔒 切換成本/毛利</button>
-    </div>
-  </div>
-
-  <div class="test-page-panel" id="testPagePanel">
-    <div style="display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid #c084fc; padding-bottom: 10px; margin-bottom: 15px;">
-      <h3 style="margin: 0; color: #6b21a8;">🧪 系統開發測試頁 (Test Mode)</h3>
-      <button class="btn-danger" onclick="toggleTestPage()" style="padding: 4px 10px; font-size: 12px;">✕ 關閉測試頁</button>
-    </div>
-    
-    <div class="grid-2">
-      <div>
-        <h4 style="margin-top:0; color:#581c87;">⚡ 一鍵自動帶入測試模擬資料</h4>
-        <div style="display: flex; gap: 10px;">
-          <button class="btn-purple" onclick="loadTestData()">🚀 自動帶入完整測試資料</button>
-          <button class="btn-warning" onclick="clearAllItemsData()">🗑 清空目前所有項目</button>
-        </div>
-      </div>
-
-      <div style="background: #ffffff; padding: 12px; border-radius: 6px; border: 1px solid #d8b4fe;">
-        <h4 style="margin-top:0; color:#581c87;">📊 系統目前運作狀態監視器</h4>
-        <ul style="font-size: 13px; line-height: 1.8; margin: 0; padding-left: 20px;">
-          <li><b>已儲存草稿數量：</b> <span id="testDraftCount">0</span> 份</li>
-          <li><b>當前報價項目總數：</b> <span id="testItemCount">0</span> 項</li>
-          <li><b>目前未含稅報價小計：</b> <span id="testSubtotalVal">$0</span></li>
-          <li><b>目前計算完工日：</b> <span id="testEndDateVal">-</span></li>
-        </ul>
-      </div>
-    </div>
-  </div>
-
-  <div class="card" style="background: #f1f5f9; border: 1px solid #cbd5e1;">
-    <h3 style="margin-top:0;">🏠 請選擇案場類型：</h3>
-    <div style="display: flex; gap: 12px; flex-wrap: wrap;">
-      <button class="mode-btn" id="btnModeSimple" onclick="switchMode('simple')">🔨 簡易局部裝修</button>
-      <button class="mode-btn active" id="btnModeNew" onclick="switchMode('new')">🏢 新成屋標準裝修</button>
-      <button class="mode-btn" id="btnModeOld" onclick="switchMode('old')">🏚 老屋翻新 & 毛胚屋</button>
-    </div>
-  </div>
-
-  <div class="card" style="background: #f0fdf4; border: 1px solid #bbf7d0;">
-    <div style="display: flex; justify-content: space-between; align-items: center;">
-      <h3 style="margin:0; color:#166534;">💾 專案草稿箱</h3>
-      <div style="display: flex; gap: 8px;">
-        <select id="savedDraftsSelect" style="width: auto; min-width: 200px;">
-          <option value="">-- 選擇已儲存的報價草稿 --</option>
-        </select>
-        <button class="btn-info" onclick="loadSelectedDraft()">📖 載入草稿</button>
-        <button class="btn-success" onclick="saveCurrentDraft()">💾 儲存目前報價</button>
-        <button class="btn-danger" onclick="deleteSelectedDraft()" style="padding: 8px 12px;">🗑 刪除</button>
-      </div>
-    </div>
-  </div>
-
-  <div class="admin-panel card" id="adminPanel">
-    <h3 style="margin-top:0; color:#27ae60;">⚙️ 新增常用項目至下拉選單</h3>
-    <div class="grid-4" style="grid-template-columns: 2fr 2fr 1fr 1fr;">
-      <div><label>目標類別</label><select id="newCatSelect"></select></div>
-      <div><label>新項目名稱</label><input type="text" id="newName" placeholder="例如：9.5cm LED 崁燈"></div>
-      <div><label>單位</label><input type="text" id="newUnit" placeholder="米/顆/組/坪"></div>
-      <div><label>廠商底價</label><input type="number" id="newCost" value="0"></div>
-    </div>
-    <div class="grid-4" style="margin-top:10px; grid-template-columns: 2fr 4fr 2fr;">
-      <div><label>客戶報價</label><input type="number" id="newPrice" value="0"></div>
-      <div><label>預設備註</label><input type="text" id="newNote" placeholder="例如：含基本安裝"></div>
-      <div style="display:flex; align-items:flex-end;">
-        <button class="btn-success" onclick="addNewPresetItem()" style="width:100%;">➕ 儲存至常用選單</button>
-      </div>
-    </div>
-  </div>
-
-  <div class="card">
-    <h3>📋 客戶、案場與工程開工資訊</h3>
-    <div class="grid-4">
-      <div><label>客戶姓名</label><input type="text" id="clientName" placeholder="例如：劉先生"></div>
-      <div><label>工程地點</label><input type="text" id="projectLocation" placeholder="例如：亞昕喜來登"></div>
-      <div><label>合約書編號</label><input type="text" id="contractNo" placeholder="例如：007006"></div>
-      <div><label>報價日期</label><input type="date" id="quoteDate"></div>
-    </div>
-    <div class="grid-4" style="margin-top: 12px;">
-      <div>
-        <label style="color:#d97706;">📅 預計開工日期</label>
-        <input type="date" id="startDate" onchange="calculateSchedulePreview()">
-      </div>
-      <div><label>設計師 / 負責人</label><input type="text" id="designerName" placeholder="例如：陳昭宇 設計師"></div>
-      <div style="grid-column: span 2;">
-        <label>預計完工與總工期推算</label>
-        <div id="scheduleSummaryText" style="padding: 8px; font-weight: bold; color: #2563eb;">選擇開工日後自動推算工期...</div>
-      </div>
-    </div>
-  </div>
-
-  <div class="card">
-    <h3>➕ 新增工程項目</h3>
-    <div class="grid-4" style="grid-template-columns: 2fr 2fr 1fr 2fr;">
-      <div>
-        <label>工程類別 (第一層)</label>
-        <select id="categorySelect" onchange="updateSubCategoryOptions()">
-          <option value="">-- 請選擇工程類別 --</option>
-        </select>
-      </div>
-      <div>
-        <label>工程細項 (第二層)</label>
-        <select id="subCategorySelect" onchange="autoFillItemDefaults()">
-          <option value="">-- 請先選擇工程類別 --</option>
-        </select>
-      </div>
-      <div><label>數量</label><input type="number" id="itemQty" value="1" min="-999" step="0.1"></div>
-      <div><label>單位</label><input type="text" id="itemUnit" placeholder="坪/尺/組/式/顆"></div>
-    </div>
-
-    <div class="grid-4" style="margin-top: 12px;">
-      <div class="cost-col" style="padding: 8px; border-radius: 4px;">
-        <label>廠商底價 (內部成本)</label>
-        <input type="number" id="costPrice" value="0">
-      </div>
-      <div><label>對外報價 (客戶單價)</label><input type="number" id="quotePrice" value="0"></div>
-      <div style="grid-column: span 2;"><label>施工備註 / 規格</label><input type="text" id="itemNote" placeholder="例如：TV牆下、追加項目說明"></div>
-    </div>
-    <div style="margin-top: 12px; text-align: right;">
-      <button class="btn-success" onclick="addItemToQuote()">加入報價單</button>
-    </div>
-  </div>
-
-  <div class="card" id="quoteContainer">
-    <h3>📝 報價項目清單與利潤分析</h3>
-    <table id="quoteTable">
-      <thead>
-        <tr>
-          <th>大類</th>
-          <th>工程項目 / 備註</th>
-          <th>數量</th>
-          <th>單位</th>
-          <th class="cost-col">廠商單價</th>
-          <th class="cost-col">廠商成本小計</th>
-          <th>客戶單價</th>
-          <th>客戶報價小計</th>
-          <th class="cost-col">內部預估毛利</th>
-          <th>操作</th>
-        </tr>
-      </thead>
-      <tbody id="quoteTbody"></tbody>
-    </table>
-
-    <div class="grid-2" style="margin-top: 20px;">
-      <div>
-        <h4>⚙ 費用與付款方式設定</h4>
-        <div><input type="checkbox" id="chkManagementFee" checked onchange="renderSummary()" style="width:auto;"> <label style="display:inline;">計入 10% 工程監工管理費</label></div>
-        <div><input type="checkbox" id="chkTax" checked onchange="renderSummary()" style="width:auto;"> <label style="display:inline;">計入 5% 營業稅</label></div>
-        
-        <div style="margin-top: 15px;">
-          <input type="checkbox" id="chkShowPayment" checked onchange="renderSummary()" style="width:auto;"> 
-          <label style="display:inline; font-weight:bold; color:#2b6cb0;">📑 自動計算標準四期付款 (30%/30%/30%/10%)</label>
-          <div class="payment-box" id="paymentDetailsDisplay"></div>
-        </div>
-
-        <div style="margin-top: 15px;">
-          <label>🏷️ 常用合約條款與注意事項：</label>
-          <div style="font-size:13px; line-height:1.8;">
-            <div><input type="checkbox" class="note-preset" value="1. 本估價單項目不包含燈具、家電設備與軟裝佈置。" checked onchange="updateCustomNotes()"> 1. 不包含燈具、家電與軟裝。</div>
-            <div><input type="checkbox" class="note-preset" value="2. 施工期間工程保固一年，消耗性材料與人為因素除外。" checked onchange="updateCustomNotes()"> 2. 提供施工保固一年。</div>
-            <div><input type="checkbox" class="note-preset" value="3. 施工過程中如有任何工程變更或追加項目，需另行簽認計價。" checked onchange="updateCustomNotes()"> 3. 額外追加項目需另行估價簽認。</div>
-            <div><input type="checkbox" class="note-preset" value="4. 工程報價有效期限為 30 天。" checked onchange="updateCustomNotes()"> 4. 報價有效期 30 天。</div>
-          </div>
-          <textarea id="customNotesText" rows="3" style="margin-top:8px;" placeholder="可在這裡自訂補充注意事項..."></textarea>
-        </div>
-      </div>
-
-      <div class="summary-box">
-        <div class="summary-row"><span>工程小計：</span><span id="sumSubtotal">$0</span></div>
-        <div class="summary-row"><span>管理費 (10%)：</span><span id="sumMgmt">$0</span></div>
-        <div class="summary-row"><span>營業稅 (5%)：</span><span id="sumTax">$0</span></div>
-        <div class="summary-row total"><span>報價總計：</span><span id="sumTotal">$0</span></div>
-      </div>
-    </div>
-
-    <div class="schedule-preview">
-      <h4 style="margin-top:0; color:#b45309;">📅 裝修工程進度預覽</h4>
-      <div id="scheduleTablePreview">請先加入報價項目並選擇預計開工日期...</div>
-    </div>
-
-    <div style="margin-top: 25px; text-align: right; display: flex; justify-content: flex-end; gap: 12px;">
-      <button class="btn-info" onclick="exportQuoteToPDF()" style="font-size: 15px; padding: 12px 20px;">
-        📄 匯出 PDF 報價單
-      </button>
-      <button class="btn-success" onclick="exportQuoteToExcel()" style="font-size: 15px; padding: 12px 24px;">
-        📊 完美連動套印 Excel 報價單 (.xlsx)
-      </button>
-    </div>
-  </div>
-</div>
-
-<div id="pdfPrintArea">
-  <div class="page-break" style="min-height: 850px; display: flex; flex-direction: column; justify-content: space-between;">
-    <div>
-      <div style="text-align: center; border-bottom: 2px solid #000; padding-bottom: 10px; margin-bottom: 20px;">
-        <h2 style="margin: 0; font-size: 24px; letter-spacing: 2px;">室 內 裝 修 報 價 總 表</h2>
-      </div>
-      
-      <table style="width: 100%; border: none; margin-bottom: 25px; font-size: 14px; line-height: 2;">
-        <tr style="border: none;">
-          <td style="border: none; width: 50%;"><b>客戶姓名：</b> <span id="pdfClientName"></span></td>
-          <td style="border: none; width: 50%;"><b>合約編號：</b> <span id="pdfContractNo"></span></td>
-        </tr>
-        <tr style="border: none;">
-          <td style="border: none;"><b>工程地點：</b> <span id="pdfProjectLocation"></span></td>
-          <td style="border: none;"><b>報價日期：</b> <span id="pdfQuoteDate"></span></td>
-        </tr>
-        <tr style="border: none;">
-          <td style="border: none;"><b>預計開工：</b> <span id="pdfStartDate"></span></td>
-          <td style="border: none;"><b>設計師：</b> <span id="pdfDesignerName"></span></td>
-        </tr>
-      </table>
-
-      <div style="border: 2px solid #000; padding: 20px; margin-bottom: 25px; background: #fafafa;">
-        <h3 style="margin-top:0; border-bottom: 1px solid #000; padding-bottom: 8px;">💰 報價總金額摘要</h3>
-        <table style="width: 100%; border: none; font-size: 15px; line-height: 2.2;">
-          <tr style="border:none;"><td style="border:none;">工程小計：</td><td style="border:none; text-align:right;" id="pdfSubtotal">$0</td></tr>
-          <tr style="border:none;"><td style="border:none;">監工管理費 (10%)：</td><td style="border:none; text-align:right;" id="pdfMgmt">$0</td></tr>
-          <tr style="border:none;"><td style="border:none;">營業稅 (5%)：</td><td style="border:none; text-align:right;" id="pdfTax">$0</td></tr>
-          <tr style="border-top: 2px solid #000;"><td style="border:none; font-size:18px; font-weight:bold;">報價總計：</td><td style="border:none; text-align:right; font-size:20px; color:#c0392b; font-weight:bold;" id="pdfTotal">$0</td></tr>
-        </table>
-      </div>
-
-      <div style="border: 1px solid #000; padding: 20px; margin-bottom: 25px;">
-        <h3 style="margin-top:0; border-bottom: 1px solid #ccc; padding-bottom: 8px;">📑 工程付款期別與條件</h3>
-        <div id="pdfPaymentBox" style="line-height: 2; font-size: 14px;"></div>
-      </div>
-    </div>
-
-    <div style="margin-top: 40px; padding-top: 20px; border-top: 1px dashed #000; display: flex; justify-content: space-between; font-size: 15px; font-weight: bold;">
-      <div style="width: 45%;">客戶簽認：___________________________</div>
-      <div style="width: 45%;">設計公司蓋章：___________________________</div>
-    </div>
-  </div>
-
-  <div>
-    <div style="text-align: center; border-bottom: 2px solid #000; padding-bottom: 8px; margin-bottom: 15px;">
-      <h3 style="margin: 0; font-size: 20px;">工 種 施 工 項 目 明 細 表</h3>
-    </div>
-    <table style="width: 100%; border-collapse: collapse;">
-      <thead>
-        <tr style="background: #e5e7eb;">
-          <th style="width: 15%; text-align: center; border: 1px solid #000; padding: 8px;">工種類別</th>
-          <th style="width: 35%; text-align: left; border: 1px solid #000; padding: 8px;">工程項目 / 施工規格細項</th>
-          <th style="width: 10%; text-align: center; border: 1px solid #000; padding: 8px;">數量</th>
-          <th style="width: 8%; text-align: center; border: 1px solid #000; padding: 8px;">單位</th>
-          <th style="width: 14%; text-align: right; border: 1px solid #000; padding: 8px;">單價</th>
-          <th style="width: 18%; text-align: right; border: 1px solid #000; padding: 8px;">複價小計</th>
-        </tr>
-      </thead>
-      <tbody id="pdfTableBody"></tbody>
-    </table>
-
-    <div style="margin-top: 30px; border-top: 2px solid #000; padding-top: 15px;">
-      <h4 style="margin: 0 0 10px 0; font-size: 15px;">🏷️ 工程注意事項與合約條款：</h4>
-      <div id="pdfNotesBox" style="white-space: pre-wrap; color: #333; line-height: 1.8; font-size: 13px;"></div>
-    </div>
-  </div>
-</div>
-
-<script>
-  const categoryOrder = ["水電工程", "燈具工程", "木作工程", "油漆工程", "雜項工程", "保護工程", "拆除工程", "泥作工程", "玻璃工程", "木地板工程"];
-
-  const scheduleRules = {
-    "水電工程": { days: 2, note: "新增專用迴路、水電改管配線" },
-    "燈具工程": { days: 1, note: "燈具與開關開孔及燈飾安裝" },
-    "木作工程": { days: 4, note: "平釘天花板、窗簾盒與木作門" },
-    "油漆工程": { days: 5, note: "牆面/天花板批土過色與噴塗" },
-    "雜項工程": { days: 2, note: "粗清、細清與完工驗收點交" }
-  };
-
-  const fullItemMaster = {
-    "水電工程": [
-      { name: "新增插座", unit: "組", cost: 2500, price: 4000, note: "TV牆下、主臥改櫃" },
-      { name: "新增專用迴路110V", unit: "組", cost: 4500, price: 7000, note: "餐櫃" },
-      { name: "新增專用迴路220V", unit: "組", cost: 4500, price: 7000, note: "餐櫃平台、主臥" },
-      { name: "弱電及網路線拉設", unit: "式", cost: 3500, price: 5500, note: "CAT6 網路線加強" }
-    ],
-    "木作工程": [
-      { name: "平釘天花板(局部高低差)", unit: "坪", cost: 4200, price: 6200, note: "日本麗仕矽酸鈣板" },
-      { name: "窗簾盒+冷氣盒", unit: "尺", cost: 550, price: 900, note: "雙層防潮木作" },
-      { name: "客廳電視造型牆結構", unit: "式", cost: 25000, price: 42000, note: "含隱藏美化線槽" }
-    ],
-    "油漆工程": [
-      { name: "平釘天花板過色", unit: "坪", cost: 1500, price: 2400, note: "得利乳膠漆刷塗" },
-      { name: "全室牆面局部批土修補過色", unit: "式", cost: 8000, price: 15000, note: "含交屋前二次修補" }
-    ],
-    "燈具工程": [
-      { name: "客廳、主臥崁入式燈條含變壓器", unit: "米", cost: 700, price: 1200, note: "軟燈條" },
-      { name: "15cm Led崁燈及挖孔配線", unit: "顆", cost: 650, price: 1200, note: "客廳 4000K 自然光" }
-    ],
-    "雜項工程": [
-      { name: "全室保護", unit: "坪", cost: 500, price: 800, note: "防潮布+軟墊" },
-      { name: "細清工程", unit: "式", cost: 18000, price: 30000, note: "入住級細清" }
-    ]
-  };
-
-  let itemDatabase = fullItemMaster;
-  let currentItems = [];
-
-  window.onload = function() {
-    document.getElementById('quoteDate').valueAsDate = new Date();
-    document.getElementById('startDate').valueAsDate = new Date();
-    updateCustomNotes();
-    refreshDraftsDropdown();
-    initCategoryDropdowns();
-    updateTestMonitor();
-  };
-
-  function toggleTestPage() {
-    const panel = document.getElementById('testPagePanel');
-    panel.style.display = (panel.style.display === 'block') ? 'none' : 'block';
-    updateTestMonitor();
-  }
-
-  function loadTestData() {
-    document.getElementById('clientName').value = '陳大明 (測試客戶)';
-    document.getElementById('projectLocation').value = '台北市信義區測試路 88 號 10 樓';
-    document.getElementById('contractNo').value = 'TEST-2026-001';
-    document.getElementById('designerName').value = '陳昭宇 設計師';
-    document.getElementById('startDate').valueAsDate = new Date();
-
-    currentItems = [
-      { id: 1, category: "水電工程", name: "新增插座", qty: 3, unit: "組", cost: 2500, costSubtotal: 7500, price: 4000, priceSubtotal: 12000, profit: 4500, note: "TV牆下、主臥改櫃" },
-      { id: 2, category: "水電工程", name: "新增專用迴路110V", qty: 1, unit: "組", cost: 4500, costSubtotal: 4500, price: 7000, priceSubtotal: 7000, profit: 2500, note: "餐櫃平台" },
-      { id: 3, category: "水電工程", name: "新增專用迴路220V", qty: 1, unit: "組", cost: 4500, costSubtotal: 4500, price: 7000, priceSubtotal: 7000, profit: 2500, note: "主臥專用迴路" },
-      { id: 4, category: "水電工程", name: "弱電及網路線拉設", qty: 1, unit: "式", cost: 3500, costSubtotal: 3500, price: 5500, priceSubtotal: 5500, profit: 2000, note: "CAT6 網路線加強" },
-      { id: 5, category: "木作工程", name: "平釘天花板(局部高低差)", qty: 12, unit: "坪", cost: 4200, costSubtotal: 50400, price: 6200, priceSubtotal: 74400, profit: 24000, note: "日本麗仕矽酸鈣板" },
-      { id: 6, category: "木作工程", name: "窗簾盒+冷氣盒", qty: 25, unit: "尺", cost: 550, costSubtotal: 13750, price: 900, priceSubtotal: 22500, profit: 8750, note: "雙層防潮木作" },
-      { id: 7, category: "木作工程", name: "客廳電視造型牆結構", qty: 1, unit: "式", cost: 25000, costSubtotal: 25000, price: 42000, priceSubtotal: 42000, profit: 17000, note: "含隱藏美化線槽" },
-      { id: 8, category: "油漆工程", name: "平釘天花板過色", qty: 12, unit: "坪", cost: 1500, costSubtotal: 18000, price: 2400, priceSubtotal: 28800, profit: 10800, note: "得利乳膠漆刷塗" },
-      { id: 9, category: "油漆工程", name: "全室牆面局部批土修補過色", qty: 1, unit: "式", cost: 8000, costSubtotal: 8000, price: 15000, priceSubtotal: 15000, profit: 7000, note: "含交屋前二次修補" },
-      { id: 10, category: "燈具工程", name: "客廳、主臥崁入式燈條含變壓器", qty: 15, unit: "米", cost: 700, costSubtotal: 10500, price: 1200, priceSubtotal: 18000, profit: 7500, note: "軟燈條" },
-      { id: 11, category: "燈具工程", name: "15cm Led崁燈及挖孔配線", qty: 12, unit: "顆", cost: 650, costSubtotal: 7800, price: 1200, priceSubtotal: 14400, profit: 6600, note: "客廳 4000K 自然光" }
-    ];
-
-    renderQuoteTable();
-    alert("已成功載入測試資料（共 11 項）！");
-  }
-
-  function clearAllItemsData() {
-    if (confirm("確定要清空目前報價單上的所有項目嗎？")) {
-      currentItems = [];
-      renderQuoteTable();
-    }
-  }
-
-  function updateTestMonitor() {
-    document.getElementById('testDraftCount').textContent = localStorage.length;
-    document.getElementById('testItemCount').textContent = currentItems.length;
-    let subtotal = currentItems.reduce((sum, i) => sum + i.priceSubtotal, 0);
-    document.getElementById('testSubtotalVal').textContent = `$${subtotal.toLocaleString()}`;
-    
-    let summaryText = document.getElementById('scheduleSummaryText').textContent;
-    document.getElementById('testEndDateVal').textContent = summaryText.includes('預計完工日') ? summaryText.split('(')[0].replace('預計完工日：', '') : '-';
-  }
-
-  function switchMode(mode) {
-    document.querySelectorAll('.mode-btn').forEach(btn => btn.classList.remove('active'));
-    if(mode === 'simple') document.getElementById('btnModeSimple').classList.add('active');
-    if(mode === 'new') document.getElementById('btnModeNew').classList.add('active');
-    if(mode === 'old') document.getElementById('btnModeOld').classList.add('active');
-    initCategoryDropdowns();
-  }
-
-  function initCategoryDropdowns() {
-    const catSelect = document.getElementById('categorySelect');
-    const newCatSelect = document.getElementById('newCatSelect');
-    catSelect.innerHTML = '<option value="">-- 請選擇工程類別 --</option>';
-    newCatSelect.innerHTML = '';
-
-    categoryOrder.forEach(cat => {
-      let opt1 = document.createElement('option');
-      opt1.value = cat; opt1.textContent = cat;
-      catSelect.appendChild(opt1);
-
-      let opt2 = document.createElement('option');
-      opt2.value = cat; opt2.textContent = cat;
-      newCatSelect.appendChild(opt2);
-    });
-    updateSubCategoryOptions();
-  }
-
-  function toggleAdminPanel() {
-    const panel = document.getElementById('adminPanel');
-    panel.style.display = (panel.style.display === 'block') ? 'none' : 'block';
-  }
-
-  function toggleCostDisplay() { document.getElementById('quoteContainer').classList.toggle('show-cost'); }
-
-  function updateCustomNotes() {
-    let selected = [];
-    document.querySelectorAll('.note-preset:checked').forEach(cb => selected.push(cb.value));
-    document.getElementById('customNotesText').value = selected.join('\n');
-  }
-
-  function addWorkDays(startDate, days) {
-    let curDate = new Date(startDate);
-    let added = 0;
-    while (added < days) {
-      curDate.setDate(curDate.getDate() + 1);
-      let dayOfWeek = curDate.getDay();
-      if (dayOfWeek !== 0 && dayOfWeek !== 6) added++;
-    }
-    return curDate;
-  }
-
-  function formatDateStr(d) {
-    let month = (d.getMonth() + 1).toString().padStart(2, '0');
-    let date = d.getDate().toString().padStart(2, '0');
-    const dayNames = ['日', '一', '二', '三', '四', '五', '六'];
-    return `${d.getFullYear()}/${month}/${date} (${dayNames[d.getDay()]})`;
-  }
-
-  function calculateSchedulePreview() {
-    const startInput = document.getElementById('startDate').value;
-    if (!startInput || currentItems.length === 0) {
-      document.getElementById('scheduleTablePreview').innerHTML = '請先加入項目並選擇預計開工日期...';
-      document.getElementById('scheduleSummaryText').textContent = '請先選擇預計開工日期...';
-      return [];
-    }
-
-    const activeCategories = [...new Set(currentItems.map(i => i.category))];
-    activeCategories.sort((a, b) => categoryOrder.indexOf(a) - categoryOrder.indexOf(b));
-
-    let currDate = new Date(startInput);
-    let scheduleList = [];
-    let idx = 1;
-
-    activeCategories.forEach(cat => {
-      let rule = scheduleRules[cat] || { days: 2, note: "依現場施工為準" };
-      let sDate = new Date(currDate);
-      let eDate = addWorkDays(sDate, rule.days - 1);
-
-      scheduleList.push({
-        idx: idx++, catName: cat, days: rule.days, startDate: sDate, endDate: eDate,
-        startDateStr: formatDateStr(sDate), endDateStr: formatDateStr(eDate), note: rule.note
-      });
-      currDate = addWorkDays(eDate, 1);
-    });
-
-    if (scheduleList.length === 0) return [];
-
-    const finalEndDate = scheduleList[scheduleList.length - 1].endDate;
-    const totalDiffDays = Math.ceil((finalEndDate - new Date(startInput)) / (1000 * 60 * 60 * 24)) + 1;
-
-    document.getElementById('scheduleSummaryText').textContent = 
-      `預計完工日：${formatDateStr(finalEndDate)} (全案共需約 ${totalDiffDays} 日曆天 / 扣假日工作天)`;
-
-    let html = `<table style="width:100%; font-size:13px; background:#fff;">
-      <thead><tr style="background:#fef3c7;"><th>項次</th><th>工種階段</th><th>估算工時</th><th>預計開工日</th><th>預計完工日</th><th>施工說明/備註</th></tr></thead><tbody>`;
-    
-    scheduleList.forEach(s => {
-      html += `<tr>
-        <td style="text-align:center;"><b>${s.idx}</b></td>
-        <td><b>${s.catName}</b></td>
-        <td style="text-align:center;">${s.days} 天</td>
-        <td>${s.startDateStr}</td>
-        <td>${s.endDateStr}</td>
-        <td><small style="color:#666;">${s.note}</small></td>
-      </tr>`;
-    });
-    html += `</tbody></table>`;
-    document.getElementById('scheduleTablePreview').innerHTML = html;
-
-    return scheduleList;
-  }
-
-  function saveCurrentDraft() {
-    const name = document.getElementById('clientName').value || '未命名客戶';
-    const location = document.getElementById('projectLocation').value || '';
-    const key = `draft_${name}_${location}`.replace(/\s+/g, '');
-
-    const draftData = {
-      clientName: name, projectLocation: location,
-      contractNo: document.getElementById('contractNo').value,
-      quoteDate: document.getElementById('quoteDate').value,
-      startDate: document.getElementById('startDate').value,
-      designerName: document.getElementById('designerName').value,
-      items: currentItems,
-      hasMgmt: document.getElementById('chkManagementFee').checked,
-      hasTax: document.getElementById('chkTax').checked
-    };
-
-    localStorage.setItem(key, JSON.stringify(draftData));
-    alert(`成功儲存客戶【${name}】的報價草稿！`);
-    refreshDraftsDropdown();
-  }
-
-  function refreshDraftsDropdown() {
-    const select = document.getElementById('savedDraftsSelect');
-    select.innerHTML = '<option value="">-- 選擇已儲存的報價草稿 --</option>';
-
-    for (let i = 0; i < localStorage.length; i++) {
-      const key = localStorage.key(i);
-      if (key.startsWith('draft_')) {
-        const item = JSON.parse(localStorage.getItem(key));
-        let opt = document.createElement('option');
-        opt.value = key;
-        opt.textContent = `${item.clientName} - ${item.projectLocation} (${item.quoteDate})`;
-        select.appendChild(opt);
-      }
-    }
-    updateTestMonitor();
-  }
-
-  function loadSelectedDraft() {
-    const key = document.getElementById('savedDraftsSelect').value;
-    if (!key) { alert("請先選擇要讀取的草稿！"); return; }
-
-    const draft = JSON.parse(localStorage.getItem(key));
-    document.getElementById('clientName').value = draft.clientName;
-    document.getElementById('projectLocation').value = draft.projectLocation;
-    document.getElementById('contractNo').value = draft.contractNo;
-    document.getElementById('quoteDate').value = draft.quoteDate;
-    if(draft.startDate) document.getElementById('startDate').value = draft.startDate;
-    if(draft.designerName) document.getElementById('designerName').value = draft.designerName;
-
-    document.getElementById('chkManagementFee').checked = draft.hasMgmt;
-    document.getElementById('chkTax').checked = draft.hasTax;
-
-    currentItems = draft.items || [];
-    renderQuoteTable();
-    alert(`已順利載入【${draft.clientName}】的報價草稿！`);
-  }
-
-  function deleteSelectedDraft() {
-    const key = document.getElementById('savedDraftsSelect').value;
-    if (!key) { alert("請先選擇要刪除的草稿！"); return; }
-    if (confirm("確定要刪除這份報價草稿嗎？")) {
-      localStorage.removeItem(key);
-      refreshDraftsDropdown();
-      alert("草稿已刪除！");
-    }
-  }
-
-  function addNewPresetItem() {
-    const cat = document.getElementById('newCatSelect').value;
-    const name = document.getElementById('newName').value.trim();
-    const unit = document.getElementById('newUnit').value.trim() || '式';
-    const cost = parseFloat(document.getElementById('newCost').value) || 0;
-    const price = parseFloat(document.getElementById('newPrice').value) || 0;
-    const note = document.getElementById('newNote').value.trim();
-
-    if (!name) { alert("請輸入新項目名稱！"); return; }
-    if (!itemDatabase[cat]) itemDatabase[cat] = [];
-    itemDatabase[cat].push({ name, unit, cost, price, note });
-
-    alert(`成功新增「${name}」至【${cat}】常用選單！`);
-    document.getElementById('newName').value = '';
-    document.getElementById('newCost').value = '0';
-    document.getElementById('newPrice').value = '0';
-    document.getElementById('newNote').value = '';
-
-    initCategoryDropdowns();
-    document.getElementById('categorySelect').value = cat;
-    updateSubCategoryOptions();
-  }
-
-  function updateSubCategoryOptions() {
-    const cat = document.getElementById('categorySelect').value;
-    const subSelect = document.getElementById('subCategorySelect');
-    subSelect.innerHTML = '<option value="">-- 請選擇細項 --</option>';
-    if (cat && itemDatabase[cat]) {
-      itemDatabase[cat].forEach((item, index) => {
-        let opt = document.createElement('option');
-        opt.value = index;
-        opt.textContent = item.name;
-        subSelect.appendChild(opt);
-      });
-    }
-  }
-
-  function autoFillItemDefaults() {
-    const cat = document.getElementById('categorySelect').value;
-    const subIdx = document.getElementById('subCategorySelect').value;
-    if (cat && subIdx !== "") {
-      const itemData = itemDatabase[cat][subIdx];
-      document.getElementById('itemUnit').value = itemData.unit;
-      document.getElementById('costPrice').value = itemData.cost;
-      document.getElementById('quotePrice').value = itemData.price;
-      document.getElementById('itemNote').value = itemData.note;
-    }
-  }
-
-  function addItemToQuote() {
-    const cat = document.getElementById('categorySelect').value;
-    const subSelect = document.getElementById('subCategorySelect');
-    if (!cat || subSelect.value === "") { alert("請選擇工程類別與細項！"); return; }
-
-    const itemName = subSelect.options[subSelect.selectedIndex].text;
-    const qty = parseFloat(document.getElementById('itemQty').value) || 0;
-    const unit = document.getElementById('itemUnit').value || '式';
-    const cost = parseFloat(document.getElementById('costPrice').value) || 0;
-    const price = parseFloat(document.getElementById('quotePrice').value) || 0;
-    const note = document.getElementById('itemNote').value;
-
-    let existingItem = currentItems.find(i => i.category === cat && i.name === itemName && i.note === note);
-    if (existingItem) {
-      existingItem.qty += qty;
-      existingItem.costSubtotal = existingItem.qty * existingItem.cost;
-      existingItem.priceSubtotal = existingItem.qty * existingItem.price;
-      existingItem.profit = existingItem.priceSubtotal - existingItem.costSubtotal;
-    } else {
-      currentItems.push({
-        id: Date.now(), category: cat, name: itemName, qty: qty, unit: unit,
-        cost: cost, costSubtotal: qty * cost, price: price, priceSubtotal: qty * price,
-        profit: (qty * price) - (qty * cost), note: note
-      });
-    }
-    currentItems.sort((a, b) => categoryOrder.indexOf(a.category) - categoryOrder.indexOf(b.category));
-    renderQuoteTable();
-  }
-
-  function removeItem(id) { currentItems = currentItems.filter(item => item.id !== id); renderQuoteTable(); }
-
-  function renderQuoteTable() {
-    const tbody = document.getElementById('quoteTbody');
-    tbody.innerHTML = '';
-    currentItems.forEach(item => {
-      let tr = document.createElement('tr');
-      tr.innerHTML = `
-        <td><b>${item.category}</b></td>
-        <td>${item.name} <br><small style="color:#666">${item.note}</small></td>
-        <td><b>${item.qty}</b></td>
-        <td>${item.unit}</td>
-        <td class="cost-col">$${item.cost.toLocaleString()}</td>
-        <td class="cost-col">$${item.costSubtotal.toLocaleString()}</td>
-        <td>$${item.price.toLocaleString()}</td>
-        <td><b>$${item.priceSubtotal.toLocaleString()}</b></td>
-        <td class="cost-col" style="color:#27ae60; font-weight:bold;">$${item.profit.toLocaleString()}</td>
-        <td><button class="btn-danger" onclick="removeItem(${item.id})">刪除</button></td>
-      `;
-      tbody.appendChild(tr);
-    });
-    renderSummary();
-    calculateSchedulePreview();
-    updateTestMonitor();
-  }
-
-  function renderSummary() {
-    let totalPriceSum = currentItems.reduce((acc, i) => acc + i.priceSubtotal, 0);
-    const hasMgmt = document.getElementById('chkManagementFee').checked;
-    const hasTax = document.getElementById('chkTax').checked;
-    const mgmtFee = hasMgmt ? Math.round(totalPriceSum * 0.1) : 0;
-    const taxFee = hasTax ? Math.round((totalPriceSum + mgmtFee) * 0.05) : 0;
-    const finalTotal = totalPriceSum + mgmtFee + taxFee;
-
-    document.getElementById('sumSubtotal').textContent = `$${totalPriceSum.toLocaleString()}`;
-    document.getElementById('sumMgmt').textContent = `$${mgmtFee.toLocaleString()}`;
-    document.getElementById('sumTax').textContent = `$${taxFee.toLocaleString()}`;
-    document.getElementById('sumTotal').textContent = `$${finalTotal.toLocaleString()}`;
-
-    const p1 = Math.round(finalTotal * 0.3);
-    const p2 = Math.round(finalTotal * 0.3);
-    const p3 = Math.round(finalTotal * 0.3);
-    const p4 = finalTotal - p1 - p2 - p3;
-
-    const showPay = document.getElementById('chkShowPayment').checked;
-    const payDisplay = document.getElementById('paymentDetailsDisplay');
-    if (showPay) {
-      payDisplay.style.display = 'block';
-      payDisplay.innerHTML = `
-        <strong>第一期 (簽約訂金 30%)：</strong> $${p1.toLocaleString()}元<br>
-        <strong>第二期 (拆除/泥作工程進場 30%)：</strong> $${p2.toLocaleString()}元<br>
-        <strong>第三期 (油漆/木作工程完工 30%)：</strong> $${p3.toLocaleString()}元<br>
-        <strong>第四期 (完工驗收交屋 10%)：</strong> $${p4.toLocaleString()}元
-      `;
-    } else {
-      payDisplay.style.display = 'none';
-    }
-  }
-
-  function exportQuoteToPDF() {
-    if (currentItems.length === 0) { alert("請先加入報價項目！"); return; }
-
-    const clientName = document.getElementById('clientName').value || '未具名';
-    document.getElementById('pdfClientName').textContent = clientName;
-    document.getElementById('pdfContractNo').textContent = document.getElementById('contractNo').value || '-';
-    document.getElementById('pdfProjectLocation').textContent = document.getElementById('projectLocation').value || '-';
-    document.getElementById('pdfQuoteDate').textContent = document.getElementById('quoteDate').value || '-';
-    document.getElementById('pdfStartDate').textContent = document.getElementById('startDate').value || '-';
-    document.getElementById('pdfDesignerName').textContent = document.getElementById('designerName').value || '-';
-
-    const pdfTbody = document.getElementById('pdfTableBody');
-    pdfTbody.innerHTML = '';
-    currentItems.forEach(item => {
-      let tr = document.createElement('tr');
-      tr.innerHTML = `
-        <td style="text-align:center; border: 1px solid #000; padding: 6px;"><b>${item.category}</b></td>
-        <td style="border: 1px solid #000; padding: 6px;">${item.name} ${item.note ? '<br><small style="color:#555;">('+item.note+')</small>' : ''}</td>
-        <td style="text-align:center; border: 1px solid #000; padding: 6px;">${item.qty}</td>
-        <td style="text-align:center; border: 1px solid #000; padding: 6px;">${item.unit}</td>
-        <td style="text-align:right; border: 1px solid #000; padding: 6px;">$${item.price.toLocaleString()}</td>
-        <td style="text-align:right; border: 1px solid #000; padding: 6px;"><b>$${item.priceSubtotal.toLocaleString()}</b></td>
-      `;
-      pdfTbody.appendChild(tr);
-    });
-
-    document.getElementById('pdfSubtotal').textContent = document.getElementById('sumSubtotal').textContent;
-    document.getElementById('pdfMgmt').textContent = document.getElementById('sumMgmt').textContent;
-    document.getElementById('pdfTax').textContent = document.getElementById('sumTax').textContent;
-    document.getElementById('pdfTotal').textContent = document.getElementById('sumTotal').textContent;
-
-    if (document.getElementById('chkShowPayment').checked) {
-      document.getElementById('pdfPaymentBox').innerHTML = document.getElementById('paymentDetailsDisplay').innerHTML;
-    } else {
-      document.getElementById('pdfPaymentBox').innerHTML = '無指定期數';
-    }
-    document.getElementById('pdfNotesBox').textContent = document.getElementById('customNotesText').value;
-
-    window.print();
-  }
-
-  // ⭐ 套印防錯與詳細提示增強版
+// ⭐ 完美繼承原檔美工與排版（保留完整報價單質感）
   async function exportQuoteToExcel() {
     if (currentItems.length === 0) { alert("請先加入報價項目！"); return; }
 
@@ -788,10 +8,9 @@
     const quoteDate = document.getElementById('quoteDate').value || '';
 
     try {
-      // 嘗試載入範本
       const response = await fetch('./template.xlsx');
       if(!response.ok) {
-        alert("🚨 找不到原檔範本 template.xlsx！\n請確認您的 GitHub 專案目錄下是否有上傳 template.xlsx 檔案（注意大小寫）。");
+        alert("🚨 找不到原檔範本 template.xlsx，請確認檔案已上傳至 GitHub！");
         return;
       }
       const arrayBuffer = await response.arrayBuffer();
@@ -801,15 +20,10 @@
       
       let wsQuote = wb.getWorksheet('估價單0906') || wb.worksheets[0];
 
-      // 🛑 核心頁面防護：強制作業 cover 原檔的百分比設定，鎖定為 1 頁寬，避免右側爆頁切斷
-      wsQuote.pageSetup = {
-        ...wsQuote.pageSetup,
-        paperSize: 9,           // A4 紙張
-        orientation: 'portrait',// 直向
-        fitToPage: true,        // 啟用縮放頁面 (取消原檔的 92% 固定比例)
-        fitToWidth: 1,          // 強制 1 頁寬
-        fitToHeight: 0          // 高度自動向後延伸分頁
-      };
+      // 🛡️ 確保原檔的 FitToWidth (1頁寬) 與手動分頁被完整保留
+      wsQuote.pageSetup.fitToPage = true;
+      wsQuote.pageSetup.fitToWidth = 1;
+      wsQuote.pageSetup.fitToHeight = 0; // 高度順延
 
       // 1. 抬頭資訊寫入
       wsQuote.getCell('A6').value = `客戶名稱 : ${clientName}`;
@@ -817,7 +31,7 @@
       wsQuote.getCell('A7').value = `工程地點 : ${projectLocation}`;
       if (quoteDate) wsQuote.getCell('G7').value = quoteDate;
 
-      // 2. 清空 48~95 列細項舊內容 (維持欄位格式)
+      // 2. 清空 48~95 列細項舊內容 (維持原本漂亮格式)
       for (let r = 48; r <= 95; r++) {
         let row = wsQuote.getRow(r);
         row.hidden = false;
@@ -833,7 +47,7 @@
         grouped[item.category].push(item);
       });
 
-      // 5 大工種定義對照
+      // 5 大工種對照
       const catConfig = [
         { cat: "水電工程", mainRow: 11, headerRow: 48, start: 49, maxCount: 8, subtotalRow: 57 },
         { cat: "燈具工程", mainRow: 12, headerRow: 59, start: 60, maxCount: 2, subtotalRow: 62 },
@@ -846,11 +60,10 @@
       const categoryTotals = { "水電工程": 0, "燈具工程": 0, "木作工程": 0, "油漆工程": 0, "雜項工程": 0 };
       let activeOrderIndex = 0;
 
-      // 清除工程管理費(17列)與營業稅(19列)最左邊的項次
       wsQuote.getCell('A17').value = null;
       wsQuote.getCell('A19').value = null;
 
-      // 3. 填入細項內容與數據
+      // 3. 填入細項數據
       catConfig.forEach(cfg => {
         let items = grouped[cfg.cat] || [];
         let catSum = 0;
@@ -859,15 +72,12 @@
           let numStr = numMap[activeOrderIndex] || (activeOrderIndex + 1);
           activeOrderIndex++;
 
-          // 第一頁總表：填寫工種名稱與重新排序的項次
           wsQuote.getCell(`A${cfg.mainRow}`).value = numStr;
           wsQuote.getCell(`B${cfg.mainRow}`).value = cfg.cat;
 
-          // 第二頁明細：填寫標題項次
           wsQuote.getCell(`A${cfg.headerRow}`).value = numStr;
           wsQuote.getCell(`B${cfg.headerRow}`).value = cfg.cat;
 
-          // 填寫細項文字與金額
           items.forEach((item, idx) => {
             if (idx < cfg.maxCount) {
               let rNum = cfg.start + idx;
@@ -887,7 +97,6 @@
           categoryTotals[cfg.cat] = catSum;
           wsQuote.getCell(`F${cfg.subtotalRow}`).value = catSum;
         } else {
-          // 沒選到的工種，總表填寫 (無施作)
           wsQuote.getCell(`A${cfg.mainRow}`).value = null;
           wsQuote.getCell(`B${cfg.mainRow}`).value = `${cfg.cat} (無施作)`;
           
@@ -897,7 +106,7 @@
         }
       });
 
-      // 4. 填寫第一頁總表金額
+      // 4. 第一頁總金額
       wsQuote.getCell('E11').value = categoryTotals["水電工程"];
       wsQuote.getCell('F11').value = categoryTotals["水電工程"];
 
@@ -913,7 +122,7 @@
       wsQuote.getCell('E15').value = categoryTotals["雜項工程"];
       wsQuote.getCell('F15').value = categoryTotals["雜項工程"];
 
-      // 5. 計算總計、管理費、營業稅與付款期別
+      // 5. 總計與付款期別
       let subtotal = currentItems.reduce((acc, i) => acc + Number(i.priceSubtotal), 0);
       let hasMgmt = document.getElementById('chkManagementFee').checked;
       let hasTax = document.getElementById('chkTax').checked;
@@ -940,19 +149,15 @@
 
       wsQuote.getCell('C38').value = grandTotal;
 
-      // 清除第一頁 G 欄雜訊
       for (let r = 11; r <= 15; r++) {
         wsQuote.getRow(r).getCell(7).value = null;
       }
 
-      // 匯出下載產出的 Excel 檔案
+      // 下載產出的報價單
       const buffer = await wb.xlsx.writeBuffer();
-      const fileName = clientName ? `裝修報價單-${clientName}-${quoteDate}.xlsx` : `裝修報價單-${quoteDate}.xlsx`;
+      const fileName = clientName ? `裝修報價單-${clientName}-${quoteDate}.xlsx` : `裝修报價單-${quoteDate}.xlsx`;
       saveAs(new Blob([buffer]), fileName);
     } catch(err) {
-      alert("⚠️ 套印過程發生錯誤：\n" + err.message);
+      alert("⚠️ 套印匯出發生錯誤：" + err.message);
     }
   }
-</script>
-</body>
-</html>
