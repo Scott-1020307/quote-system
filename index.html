@@ -756,7 +756,7 @@
     window.print();
   }
 
-  // ⭐ 套印 Excel 報價單 (強寫指定欄寬 1cm, 5cm, 1.5cm, 1.5cm, 2cm, 2cm, 5cm 且無縫緊接細項)
+  // ⭐ 套印 Excel 報價單 (終極優化：解鎖格式 + 強制單頁寬 + 金額點化)
   async function exportQuoteToExcel() {
     if (currentItems.length === 0) { alert("請先加入報價項目！"); return; }
 
@@ -778,14 +778,25 @@
       
       let wsQuote = wb.getWorksheet('估價單0906') || wb.worksheets[0];
 
-      // 🎯 【指定欄寬設定】：1cm=4.5, 5cm=22.5, 1.5cm=6.8, 2cm=9.0
-      wsQuote.getColumn(1).width = 4.5;  // A: 項次 (1cm)
-      wsQuote.getColumn(2).width = 22.5; // B: 項目說明 (5cm)
-      wsQuote.getColumn(3).width = 6.8;  // C: 數量 (1.5cm)
-      wsQuote.getColumn(4).width = 6.8;  // D: 單位 (1.5cm)
-      wsQuote.getColumn(5).width = 9.0;  // E: 單價 (2cm)
-      wsQuote.getColumn(6).width = 9.0;  // F: 複價小計 (2cm)
-      wsQuote.getColumn(7).width = 22.5; // G: 備註 (5cm)
+      // 🔒 1. 重置與強制列印版面 (符合 1 頁寬)
+      wsQuote.pageSetup = {
+        orientation: 'portrait',
+        fitToPage: true,
+        fitToWidth: 1,
+        fitToHeight: 0,
+        paperSize: 9 // A4 紙張
+      };
+
+      // 🔒 2. 動態拉寬欄位，徹底防止 ###### 溢出
+      wsQuote.getColumn(1).width = 6.0;   // A: 項次 (1cm)
+      wsQuote.getColumn(2).width = 25.0;  // B: 項目 (5cm)
+      wsQuote.getColumn(3).width = 8.0;   // C: 數量 (1.5cm)
+      wsQuote.getColumn(4).width = 8.0;   // D: 單位 (1.5cm)
+      wsQuote.getColumn(5).width = 16.0;  // E: 單價 (加大放得下金額)
+      wsQuote.getColumn(6).width = 16.0;  // F: 複價小計 (加大放得下金額)
+      wsQuote.getColumn(7).width = 22.0;  // G: 備註 (5cm)
+
+      const numFmt = '#,##0'; // 千分點整數格式
 
       // 抬頭資訊寫入 (頁面 1)
       wsQuote.getCell('A6').value = `客戶名稱 : ${clientName}`;
@@ -796,7 +807,7 @@
       // 清空舊樣板內容 48~95 列
       for (let r = 48; r <= 95; r++) {
         let row = wsQuote.getRow(r);
-        row.hidden = true; // 預設全部隱藏
+        row.hidden = true;
         for (let c = 1; c <= 7; c++) { row.getCell(c).value = null; }
       }
 
@@ -811,7 +822,7 @@
       const numMap = ["一", "二", "三", "四", "五", "六", "七", "八"];
       const categoryTotals = { "水電工程": 0, "燈具工程": 0, "木作工程": 0, "油漆工程": 0, "雜項工程": 0 };
       
-      let curRow = 48; // 細項起始列 (頁面 2)
+      let curRow = 48; // 明細起始列 (頁面 2)
       let activeIdx = 0;
 
       // 🎯 【無縫緊接動態生成】：細項寫完緊接小計、空一列再接下一工種
@@ -826,7 +837,7 @@
           wsQuote.getCell(`A${mainRowMap[cat]}`).value = numStr;
           wsQuote.getCell(`B${mainRowMap[cat]}`).value = cat;
 
-          // 明細標題列
+          // 明細工種標題列
           let hRow = wsQuote.getRow(curRow);
           hRow.hidden = false;
           hRow.getCell(1).value = numStr;
@@ -841,8 +852,15 @@
             row.getCell(2).value = item.name;
             row.getCell(3).value = Number(item.qty);
             row.getCell(4).value = item.unit;
-            row.getCell(5).value = Number(item.price);
-            row.getCell(6).value = Number(item.priceSubtotal);
+
+            let c5 = row.getCell(5);
+            c5.value = Number(item.price);
+            c5.numFmt = numFmt;
+
+            let c6 = row.getCell(6);
+            c6.value = Number(item.priceSubtotal);
+            c6.numFmt = numFmt;
+
             row.getCell(7).value = item.note || null;
 
             catSum += Number(item.priceSubtotal);
@@ -853,7 +871,10 @@
           let subRow = wsQuote.getRow(curRow);
           subRow.hidden = false;
           subRow.getCell(2).value = `${cat}小計`;
-          subRow.getCell(6).value = catSum;
+          let subC6 = subRow.getCell(6);
+          subC6.value = catSum;
+          subC6.numFmt = numFmt;
+
           categoryTotals[cat] = catSum;
           curRow++;
 
@@ -868,12 +889,18 @@
         }
       });
 
-      // 第一頁總表金額填寫
-      wsQuote.getCell('E11').value = categoryTotals["水電工程"]; wsQuote.getCell('F11').value = categoryTotals["水電工程"];
-      wsQuote.getCell('E12').value = categoryTotals["燈具工程"]; wsQuote.getCell('F12').value = categoryTotals["燈具工程"];
-      wsQuote.getCell('E13').value = categoryTotals["木作工程"]; wsQuote.getCell('F13').value = categoryTotals["木作工程"];
-      wsQuote.getCell('E14').value = categoryTotals["油漆工程"]; wsQuote.getCell('F14').value = categoryTotals["油漆工程"];
-      wsQuote.getCell('E15').value = categoryTotals["雜項工程"]; wsQuote.getCell('F15').value = categoryTotals["雜項工程"];
+      // 填寫第一頁總表金額與千分位格式
+      const fillTotalCell = (cellRef, val) => {
+        let cell = wsQuote.getCell(cellRef);
+        cell.value = Number(val);
+        cell.numFmt = numFmt;
+      };
+
+      fillTotalCell('E11', categoryTotals["水電工程"]); fillTotalCell('F11', categoryTotals["水電工程"]);
+      fillTotalCell('E12', categoryTotals["燈具工程"]); fillTotalCell('F12', categoryTotals["燈具工程"]);
+      fillTotalCell('E13', categoryTotals["木作工程"]); fillTotalCell('F13', categoryTotals["木作工程"]);
+      fillTotalCell('E14', categoryTotals["油漆工程"]); fillTotalCell('F14', categoryTotals["油漆工程"]);
+      fillTotalCell('E15', categoryTotals["雜項工程"]); fillTotalCell('F15', categoryTotals["雜項工程"]);
 
       // 計算總計與付款期別
       let subtotal = currentItems.reduce((acc, i) => acc + Number(i.priceSubtotal), 0);
@@ -885,22 +912,22 @@
       let taxFee = hasTax ? Math.round(subWithMgmt * 0.05) : 0;
       let grandTotal = subWithMgmt + taxFee;
 
-      wsQuote.getCell('E17').value = mgmtFee;
-      wsQuote.getCell('F18').value = subWithMgmt;
-      wsQuote.getCell('E19').value = taxFee;
-      wsQuote.getCell('F20').value = grandTotal;
+      fillTotalCell('E17', mgmtFee);
+      fillTotalCell('F18', subWithMgmt);
+      fillTotalCell('E19', taxFee);
+      fillTotalCell('F20', grandTotal);
 
       let p1 = Math.round(grandTotal * 0.3);
       let p2 = Math.round(grandTotal * 0.3);
       let p3 = Math.round(grandTotal * 0.3);
       let p4 = grandTotal - p1 - p2 - p3;
 
-      wsQuote.getCell('F22').value = p1;
-      wsQuote.getCell('F23').value = p2;
-      wsQuote.getCell('F24').value = p3;
-      wsQuote.getCell('F25').value = p4;
+      fillTotalCell('F22', p1);
+      fillTotalCell('F23', p2);
+      fillTotalCell('F24', p3);
+      fillTotalCell('F25', p4);
 
-      wsQuote.getCell('C38').value = grandTotal;
+      fillTotalCell('C38', grandTotal);
 
       const buffer = await wb.xlsx.writeBuffer();
       const fileName = clientName ? `裝修報價單-${clientName}-${quoteDate}.xlsx` : `裝修報價單-${quoteDate}.xlsx`;
