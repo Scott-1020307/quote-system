@@ -38,14 +38,6 @@
     .payment-box { background: #f8fafc; border: 1px solid #cbd5e1; padding: 12px; border-radius: 6px; margin-top: 10px; font-size: 13px; }
     .schedule-preview { background: #fffbe6; border: 1px solid #ffe58f; padding: 15px; border-radius: 6px; margin-top: 15px; }
     .test-page-panel { background: #f3e8ff; border: 2px solid #a855f7; border-radius: 8px; padding: 20px; margin-bottom: 20px; display: none; }
-    #pdfPrintArea { display: none; }
-    @media print {
-      body * { visibility: hidden; }
-      #pdfPrintArea, #pdfPrintArea * { visibility: visible; }
-      #pdfPrintArea { display: block !important; position: absolute; left: 0; top: 0; width: 100%; background: #fff; padding: 15px; color: #000; }
-      .page-break { page-break-after: always; }
-      @page { size: A4 portrait; margin: 10mm; }
-    }
   </style>
 </head>
 <body>
@@ -128,8 +120,8 @@
   <div class="card">
     <h3>📋 客戶、案場與工程開工資訊</h3>
     <div class="grid-4">
-      <div><label>客戶姓名</label><input type="text" id="clientName" placeholder="例如：劉先生"></div>
-      <div><label>工程地點</label><input type="text" id="projectLocation" placeholder="例如：亞昕喜來登"></div>
+      <div><label>客戶姓名</label><input type="text" id="clientName" placeholder="例如：劉隆穎"></div>
+      <div><label>工程地點</label><input type="text" id="projectLocation" placeholder="例如：桃園市中壢區高鐵站前路426號5樓"></div>
       <div><label>合約書編號</label><input type="text" id="contractNo" placeholder="例如：007006"></div>
       <div><label>報價日期</label><input type="date" id="quoteDate"></div>
     </div>
@@ -208,7 +200,7 @@
           <div class="payment-box" id="paymentDetailsDisplay"></div>
         </div>
         <div style="margin-top: 15px;">
-          <label>🏷️ 常用合約條款與注意事項：</label>
+          <label>🏷️️ 常用合約條款與注意事項：</label>
           <div style="font-size:13px; line-height:1.8;">
             <div><input type="checkbox" class="note-preset" value="1. 本估價單項目不包含燈具、家電設備與軟裝佈置。" checked onchange="updateCustomNotes()"> 1. 不包含燈具、家電與軟裝。</div>
             <div><input type="checkbox" class="note-preset" value="2. 施工期間工程保固一年，消耗性材料與人為因素除外。" checked onchange="updateCustomNotes()"> 2. 提供施工保固一年。</div>
@@ -233,72 +225,7 @@
     </div>
 
     <div style="margin-top: 25px; text-align: right; display: flex; justify-content: flex-end; gap: 12px;">
-      <button class="btn-info" onclick="exportQuoteToPDF()" style="font-size: 15px; padding: 12px 20px;">📄 匯出 PDF 報價單</button>
-      <button class="btn-success" onclick="exportQuoteToExcel()" style="font-size: 15px; padding: 12px 24px;">📊 完美連動套印 Excel 報價單 (.xlsx)</button>
-    </div>
-  </div>
-</div>
-
-<div id="pdfPrintArea">
-  <div class="page-break" style="min-height: 850px; display: flex; flex-direction: column; justify-content: space-between;">
-    <div>
-      <div style="text-align: center; border-bottom: 2px solid #000; padding-bottom: 10px; margin-bottom: 20px;">
-        <h2 style="margin: 0; font-size: 24px; letter-spacing: 2px;">室 內 裝 修 報 價 總 表</h2>
-      </div>
-      <table style="width: 100%; border: none; margin-bottom: 25px; font-size: 14px; line-height: 2;">
-        <tr style="border: none;">
-          <td style="border: none; width: 50%;"><b>客戶姓名：</b> <span id="pdfClientName"></span></td>
-          <td style="border: none; width: 50%;"><b>合約編號：</b> <span id="pdfContractNo"></span></td>
-        </tr>
-        <tr style="border: none;">
-          <td style="border: none;"><b>工程地點：</b> <span id="pdfProjectLocation"></span></td>
-          <td style="border: none;"><b>報價日期：</b> <span id="pdfQuoteDate"></span></td>
-        </tr>
-        <tr style="border: none;">
-          <td style="border: none;"><b>預計開工：</b> <span id="pdfStartDate"></span></td>
-          <td style="border: none;"><b>設計師：</b> <span id="pdfDesignerName"></span></td>
-        </tr>
-      </table>
-      <div style="border: 2px solid #000; padding: 20px; margin-bottom: 25px; background: #fafafa;">
-        <h3 style="margin-top:0; border-bottom: 1px solid #000; padding-bottom: 8px;">💰 報價總金額摘要</h3>
-        <table style="width: 100%; border: none; font-size: 15px; line-height: 2.2;">
-          <tr style="border:none;"><td style="border:none;">工程小計：</td><td style="border:none; text-align:right;" id="pdfSubtotal">$0</td></tr>
-          <tr style="border:none;"><td style="border:none;">監工管理費 (10%)：</td><td style="border:none; text-align:right;" id="pdfMgmt">$0</td></tr>
-          <tr style="border:none;"><td style="border:none;">營業稅 (5%)：</td><td style="border:none; text-align:right;" id="pdfTax">$0</td></tr>
-          <tr style="border-top: 2px solid #000;"><td style="border:none; font-size:18px; font-weight:bold;">報價總計：</td><td style="border:none; text-align:right; font-size:20px; color:#c0392b; font-weight:bold;" id="pdfTotal">$0</td></tr>
-        </table>
-      </div>
-      <div style="border: 1px solid #000; padding: 20px; margin-bottom: 25px;">
-        <h3 style="margin-top:0; border-bottom: 1px solid #ccc; padding-bottom: 8px;">📑 工程付款期別與條件</h3>
-        <div id="pdfPaymentBox" style="line-height: 2; font-size: 14px;"></div>
-      </div>
-    </div>
-    <div style="margin-top: 40px; padding-top: 20px; border-top: 1px dashed #000; display: flex; justify-content: space-between; font-size: 15px; font-weight: bold;">
-      <div style="width: 45%;">客戶簽認：___________________________</div>
-      <div style="width: 45%;">設計公司蓋章：___________________________</div>
-    </div>
-  </div>
-
-  <div>
-    <div style="text-align: center; border-bottom: 2px solid #000; padding-bottom: 8px; margin-bottom: 15px;">
-      <h3 style="margin: 0; font-size: 20px;">工 種 施 工 項 目 明 細 表</h3>
-    </div>
-    <table style="width: 100%; border-collapse: collapse;">
-      <thead>
-        <tr style="background: #e5e7eb;">
-          <th style="width: 15%; text-align: center; border: 1px solid #000; padding: 8px;">工種類別</th>
-          <th style="width: 35%; text-align: left; border: 1px solid #000; padding: 8px;">工程項目 / 施工規格細項</th>
-          <th style="width: 10%; text-align: center; border: 1px solid #000; padding: 8px;">數量</th>
-          <th style="width: 8%; text-align: center; border: 1px solid #000; padding: 8px;">單位</th>
-          <th style="width: 14%; text-align: right; border: 1px solid #000; padding: 8px;">單價</th>
-          <th style="width: 18%; text-align: right; border: 1px solid #000; padding: 8px;">複價小計</th>
-        </tr>
-      </thead>
-      <tbody id="pdfTableBody"></tbody>
-    </table>
-    <div style="margin-top: 30px; border-top: 2px solid #000; padding-top: 15px;">
-      <h4 style="margin: 0 0 10px 0; font-size: 15px;">🏷️ 工程注意事項與合約條款：</h4>
-      <div id="pdfNotesBox" style="white-space: pre-wrap; color: #333; line-height: 1.8; font-size: 13px;"></div>
+      <button class="btn-success" onclick="exportQuoteToExcel()" style="font-size: 16px; padding: 14px 28px;">📊 匯出完美 Excel 報價單 (.xlsx)</button>
     </div>
   </div>
 </div>
@@ -359,28 +286,27 @@
   }
 
   function loadTestData() {
-    document.getElementById('clientName').value = '陳大明 (測試客戶)';
-    document.getElementById('projectLocation').value = '台北市信義區測試路 88 號 10 樓';
-    document.getElementById('contractNo').value = 'TEST-2026-001';
+    document.getElementById('clientName').value = '劉隆穎';
+    document.getElementById('projectLocation').value = '桃園市中壢區高鐵站前路426號5樓';
+    document.getElementById('contractNo').value = '007006';
     document.getElementById('designerName').value = '陳昭宇 設計師';
     document.getElementById('startDate').valueAsDate = new Date();
 
     currentItems = [
-      { id: 1, category: "水電工程", name: "新增插座", qty: 3, unit: "組", cost: 2500, costSubtotal: 7500, price: 4000, priceSubtotal: 12000, profit: 4500, note: "TV牆下、主臥改櫃" },
-      { id: 2, category: "水電工程", name: "新增專用迴路110V", qty: 1, unit: "組", cost: 4500, costSubtotal: 4500, price: 7000, priceSubtotal: 7000, profit: 2500, note: "餐櫃平台" },
-      { id: 3, category: "水電工程", name: "新增專用迴路220V", qty: 1, unit: "組", cost: 4500, costSubtotal: 4500, price: 7000, priceSubtotal: 7000, profit: 2500, note: "主臥專用迴路" },
+      { id: 1, category: "水電工程", name: "新增插座", qty: 3, unit: "組", cost: 2500, costSubtotal: 7500, price: 4000, priceSubtotal: 12000, profit: 4500, note: "TV牆下、主臥衣櫃、孝親衣櫃" },
+      { id: 2, category: "水電工程", name: "新增專用迴路110V", qty: 1, unit: "組", cost: 4500, costSubtotal: 4500, price: 7000, priceSubtotal: 7000, profit: 2500, note: "餐櫃" },
+      { id: 3, category: "水電工程", name: "新增專用迴路220V", qty: 2, unit: "組", cost: 4500, costSubtotal: 9000, price: 7000, priceSubtotal: 14000, profit: 5000, note: "餐櫃平台、主臥吹風機" },
       { id: 4, category: "水電工程", name: "弱電及網路線拉設", qty: 1, unit: "式", cost: 3500, costSubtotal: 3500, price: 5500, priceSubtotal: 5500, profit: 2000, note: "CAT6 網路線加強" },
       { id: 5, category: "木作工程", name: "平釘天花板(局部高低差)", qty: 12, unit: "坪", cost: 4200, costSubtotal: 50400, price: 6200, priceSubtotal: 74400, profit: 24000, note: "日本麗仕矽酸鈣板" },
       { id: 6, category: "木作工程", name: "窗簾盒+冷氣盒", qty: 25, unit: "尺", cost: 550, costSubtotal: 13750, price: 900, priceSubtotal: 22500, profit: 8750, note: "雙層防潮木作" },
-      { id: 7, category: "木作工程", name: "客廳電視造型牆結構", qty: 1, unit: "式", cost: 25000, costSubtotal: 25000, price: 42000, priceSubtotal: 42000, profit: 17000, note: "含隱藏美化線槽" },
-      { id: 8, category: "油漆工程", name: "平釘天花板過色", qty: 12, unit: "坪", cost: 1500, costSubtotal: 18000, price: 2400, priceSubtotal: 28800, profit: 10800, note: "得利乳膠漆刷塗" },
-      { id: 9, category: "油漆工程", name: "全室牆面局部批土修補過色", qty: 1, unit: "式", cost: 8000, costSubtotal: 8000, price: 15000, priceSubtotal: 15000, profit: 7000, note: "含交屋前二次修補" },
-      { id: 10, category: "燈具工程", name: "客廳、主臥崁入式燈條含變壓器", qty: 15, unit: "米", cost: 700, costSubtotal: 10500, price: 1200, priceSubtotal: 18000, profit: 7500, note: "軟燈條" },
-      { id: 11, category: "燈具工程", name: "15cm Led崁燈及挖孔配線", qty: 12, unit: "顆", cost: 650, costSubtotal: 7800, price: 1200, priceSubtotal: 14400, profit: 6600, note: "客廳 4000K 自然光" }
+      { id: 7, category: "油漆工程", name: "平釘天花板過色", qty: 12, unit: "坪", cost: 1500, costSubtotal: 18000, price: 2400, priceSubtotal: 28800, profit: 10800, note: "得利乳膠漆刷塗" },
+      { id: 8, category: "油漆工程", name: "全室牆面局部批土修補過色", qty: 1, unit: "式", cost: 8000, costSubtotal: 8000, price: 15000, priceSubtotal: 15000, profit: 7000, note: "含交屋前二次修補" },
+      { id: 9, category: "燈具工程", name: "客廳、主臥崁入式燈條含變壓器", qty: 15, unit: "米", cost: 700, costSubtotal: 10500, price: 1200, priceSubtotal: 18000, profit: 7500, note: "軟燈條" },
+      { id: 10, category: "燈具工程", name: "15cm Led崁燈及挖孔配線", qty: 12, unit: "顆", cost: 650, costSubtotal: 7800, price: 1200, priceSubtotal: 14400, profit: 6600, note: "客廳 4000K 自然光" }
     ];
 
     renderQuoteTable();
-    alert("已成功載入測試資料（共 11 項）！");
+    alert("已成功載入測試資料！");
   }
 
   function clearAllItemsData() {
@@ -715,48 +641,7 @@
     }
   }
 
-  function exportQuoteToPDF() {
-    if (currentItems.length === 0) { alert("請先加入報價項目！"); return; }
-
-    const clientName = document.getElementById('clientName').value || '未具名';
-    document.getElementById('pdfClientName').textContent = clientName;
-    document.getElementById('pdfContractNo').textContent = document.getElementById('contractNo').value || '-';
-    document.getElementById('pdfProjectLocation').textContent = document.getElementById('projectLocation').value || '-';
-    document.getElementById('pdfQuoteDate').textContent = document.getElementById('quoteDate').value || '-';
-    document.getElementById('pdfStartDate').textContent = document.getElementById('startDate').value || '-';
-    document.getElementById('pdfDesignerName').textContent = document.getElementById('designerName').value || '-';
-
-    const pdfTbody = document.getElementById('pdfTableBody');
-    pdfTbody.innerHTML = '';
-    currentItems.forEach(item => {
-      let tr = document.createElement('tr');
-      tr.innerHTML = `
-        <td style="text-align:center; border: 1px solid #000; padding: 6px;"><b>${item.category}</b></td>
-        <td style="border: 1px solid #000; padding: 6px;">${item.name} ${item.note ? '<br><small style="color:#555;">('+item.note+')</small>' : ''}</td>
-        <td style="text-align:center; border: 1px solid #000; padding: 6px;">${item.qty}</td>
-        <td style="text-align:center; border: 1px solid #000; padding: 6px;">${item.unit}</td>
-        <td style="text-align:right; border: 1px solid #000; padding: 6px;">$${item.price.toLocaleString()}</td>
-        <td style="text-align:right; border: 1px solid #000; padding: 6px;"><b>$${item.priceSubtotal.toLocaleString()}</b></td>
-      `;
-      pdfTbody.appendChild(tr);
-    });
-
-    document.getElementById('pdfSubtotal').textContent = document.getElementById('sumSubtotal').textContent;
-    document.getElementById('pdfMgmt').textContent = document.getElementById('sumMgmt').textContent;
-    document.getElementById('pdfTax').textContent = document.getElementById('sumTax').textContent;
-    document.getElementById('pdfTotal').textContent = document.getElementById('sumTotal').textContent;
-
-    if (document.getElementById('chkShowPayment').checked) {
-      document.getElementById('pdfPaymentBox').innerHTML = document.getElementById('paymentDetailsDisplay').innerHTML;
-    } else {
-      document.getElementById('pdfPaymentBox').innerHTML = '無指定期數';
-    }
-    document.getElementById('pdfNotesBox').textContent = document.getElementById('customNotesText').value;
-
-    window.print();
-  }
-
-  // ⭐ 完美分頁套印 Excel 報價單 (第一頁獨立總表 + 明細強制從第二頁開頭 + 字體大小100%統一)
+  // ⭐【100% 精準對齊欄位 匯出邏輯】
   async function exportQuoteToExcel() {
     if (currentItems.length === 0) { alert("請先加入報價項目！"); return; }
 
@@ -776,47 +661,24 @@
       const wb = new ExcelJS.Workbook();
       await wb.xlsx.load(arrayBuffer);
       
-      let wsQuote = wb.getWorksheet('估價單0906') || wb.worksheets[0];
+      let wsMain = wb.getWorksheet('估價單0906') || wb.worksheets[0];
 
-      // 🔒 1. 關閉自動縮放比例 (關閉 fitToPage)，保證字體大小 100% 一致！
-      wsQuote.pageSetup.fitToPage = false;
-      wsQuote.pageSetup.scale = 100; // 保持 100% 原始字體大小
-      wsQuote.pageSetup.orientation = 'portrait';
-      wsQuote.pageSetup.paperSize = 9; // A4 紙張
-      
-      // 🔒 2. 邊界設定
-      wsQuote.pageSetup.margins = {
-        left: 0.4, right: 0.4, top: 0.5, bottom: 0.5, header: 0.3, footer: 0.3
-      };
+      const numFmt = '#,##0';
 
-      // 🔒 3. 精確欄寬 (確保不出現 ######，也不爆寬)
-      wsQuote.getColumn(1).width = 6.0;   // A: 項次
-      wsQuote.getColumn(2).width = 24.0;  // B: 工程項目/細項名稱
-      wsQuote.getColumn(3).width = 7.0;   // C: 數量
-      wsQuote.getColumn(4).width = 7.0;   // D: 單位
-      wsQuote.getColumn(5).width = 14.0;  // E: 單價
-      wsQuote.getColumn(6).width = 15.0;  // F: 複價小計
-      wsQuote.getColumn(7).width = 20.0;  // G: 備註/規格說明
+      // 1. 填寫【估價單0906】抬頭資訊
+      wsMain.getCell('A6').value = `客戶名稱 : ${clientName}`;
+      wsMain.getCell('G6').value = contractNo;
+      wsMain.getCell('A7').value = `工程地點 : ${projectLocation}`;
+      if (quoteDate) wsMain.getCell('G7').value = quoteDate;
 
-      const numFmt = '#,##0'; // 千分位整數格式
-
-      // 抬頭資訊寫入 (第一頁)
-      wsQuote.getCell('A6').value = `客戶名稱 : ${clientName}`;
-      wsQuote.getCell('G6').value = contractNo;
-      wsQuote.getCell('A7').value = `工程地點 : ${projectLocation}`;
-      if (quoteDate) wsQuote.getCell('G7').value = quoteDate;
-
-      // 清空舊樣板預留列 (48~95 列)
-      for (let r = 48; r <= 95; r++) {
-        let row = wsQuote.getRow(r);
-        row.hidden = true; // 預設隱藏
+      // 2. 擦除第一頁 48 列以下殘留的預留文字，鎖定第一頁獨佔總表
+      for (let r = 48; r <= 100; r++) {
+        let row = wsMain.getRow(r);
+        row.hidden = true;
         for (let c = 1; c <= 7; c++) { row.getCell(c).value = null; }
       }
 
-      // 💥【最關鍵】：在第 47 列直接插入硬分頁線，強迫所有明細 100% 從「第二頁第 48 列」開始寫入！
-      wsQuote.getRow(47).addPageBreak();
-
-      // 依選取項目進行工種分組
+      // 按工種分組
       const grouped = {};
       currentItems.forEach(item => {
         if (!grouped[item.category]) grouped[item.category] = [];
@@ -827,44 +689,75 @@
       const numMap = ["一", "二", "三", "四", "五", "六", "七", "八"];
       const categoryTotals = { "水電工程": 0, "燈具工程": 0, "木作工程": 0, "油漆工程": 0, "雜項工程": 0 };
       
-      let curRow = 48; // 明細表起始列 (確定是第二頁開頭)
       let activeIdx = 0;
 
-      // 動態填寫明細 (細項寫完緊接小計、空一列接下個工種)
+      // 3. 建立【第二頁：工程細項明細】Tab
+      let wsDetail = wb.addWorksheet('工程細項明細');
+      
+      wsDetail.getColumn(1).width = 8.0;   // A: 項次
+      wsDetail.getColumn(2).width = 30.0;  // B: 工程項目 / 細項名稱
+      wsDetail.getColumn(3).width = 10.0;  // C: 數量
+      wsDetail.getColumn(4).width = 8.0;   // D: 單位
+      wsDetail.getColumn(5).width = 15.0;  // E: 單價
+      wsDetail.getColumn(6).width = 16.0;  // F: 複價小計
+      wsDetail.getColumn(7).width = 25.0;  // G: 備註/規格說明
+
+      wsDetail.mergeCells('A1:G1');
+      let titleCell = wsDetail.getCell('A1');
+      titleCell.value = "工 種 施 工 項 目 明 細 表";
+      titleCell.font = { name: '標楷體', size: 16, bold: true };
+      titleCell.alignment = { horizontal: 'center', vertical: 'middle' };
+      wsDetail.getRow(1).height = 30;
+
+      wsDetail.getCell('A2').value = `客戶名稱：${clientName}`;
+      wsDetail.getCell('E2').value = `合約編號：${contractNo}`;
+      wsDetail.getCell('A3').value = `工程地點：${projectLocation}`;
+      wsDetail.getCell('E3').value = `報價日期：${quoteDate}`;
+
+      let headers = ["項次", "工程項目 / 施工規格細項", "數量", "單位", "單價", "複價小計", "備註說明"];
+      let headerRow = wsDetail.getRow(5);
+      headers.forEach((h, i) => {
+        let cell = headerRow.getCell(i + 1);
+        cell.value = h;
+        cell.font = { name: '標楷體', size: 11, bold: true };
+        cell.alignment = { horizontal: 'center', vertical: 'middle' };
+        cell.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: 'FFE5E7EB' } };
+      });
+
+      let curRow = 6;
+
+      // 4. 精確寫入：第一頁總表正確欄位為 B:項次, C:項目, D:數量, E:單位, F:單價, G:總價
       catOrderList.forEach(cat => {
         let items = grouped[cat] || [];
         if (items.length > 0) {
           let numStr = numMap[activeIdx] || (activeIdx + 1);
           activeIdx++;
 
-          // 填寫第一頁總表項目標題
           let mainRowMap = { "水電工程": 11, "燈具工程": 12, "木作工程": 13, "油漆工程": 14, "雜項工程": 15 };
-          wsQuote.getCell(`A${mainRowMap[cat]}`).value = numStr;
-          wsQuote.getCell(`B${mainRowMap[cat]}`).value = cat;
+          let rNum = mainRowMap[cat];
 
-          // 明細表工種標題
-          let hRow = wsQuote.getRow(curRow);
-          hRow.hidden = false;
+          // ⭐ 精準填寫第一頁總表 (對齊範本 B~G 欄)
+          wsMain.getCell(`B${rNum}`).value = numStr;
+          wsMain.getCell(`C${rNum}`).value = cat;
+          wsMain.getCell(`D${rNum}`).value = 1;
+          wsMain.getCell(`E${rNum}`).value = "式";
+
+          // 第二頁工種標題
+          let hRow = wsDetail.getRow(curRow);
           hRow.getCell(1).value = numStr;
           hRow.getCell(2).value = cat;
+          hRow.font = { name: '標楷體', size: 12, bold: true };
           curRow++;
 
-          // 明細表細項
           let catSum = 0;
           items.forEach(item => {
-            let row = wsQuote.getRow(curRow);
-            row.hidden = false;
+            let row = wsDetail.getRow(curRow);
             row.getCell(2).value = item.name;
             row.getCell(3).value = Number(item.qty);
             row.getCell(4).value = item.unit;
 
-            let c5 = row.getCell(5);
-            c5.value = Number(item.price);
-            c5.numFmt = numFmt;
-
-            let c6 = row.getCell(6);
-            c6.value = Number(item.priceSubtotal);
-            c6.numFmt = numFmt;
+            let c5 = row.getCell(5); c5.value = Number(item.price); c5.numFmt = numFmt;
+            let c6 = row.getCell(6); c6.value = Number(item.priceSubtotal); c6.numFmt = numFmt;
 
             row.getCell(7).value = item.note || null;
 
@@ -873,39 +766,38 @@
           });
 
           // 工種小計列
-          let subRow = wsQuote.getRow(curRow);
-          subRow.hidden = false;
+          let subRow = wsDetail.getRow(curRow);
           subRow.getCell(2).value = `${cat}小計`;
+          subRow.font = { name: '標楷體', size: 11, bold: true };
           let subC6 = subRow.getCell(6);
           subC6.value = catSum;
           subC6.numFmt = numFmt;
 
           categoryTotals[cat] = catSum;
           curRow++;
-
-          // 空一列接下一個工種
-          let emptyRow = wsQuote.getRow(curRow);
-          emptyRow.hidden = false;
-          curRow++;
+          curRow++; // 空列
         } else {
           let mainRowMap = { "水電工程": 11, "燈具工程": 12, "木作工程": 13, "油漆工程": 14, "雜項工程": 15 };
-          wsQuote.getCell(`A${mainRowMap[cat]}`).value = null;
-          wsQuote.getCell(`B${mainRowMap[cat]}`).value = `${cat} (無施作)`;
+          let rNum = mainRowMap[cat];
+          wsMain.getCell(`B${rNum}`).value = null;
+          wsMain.getCell(`C${rNum}`).value = `${cat} (無施作)`;
+          wsMain.getCell(`D${rNum}`).value = null;
+          wsMain.getCell(`E${rNum}`).value = null;
         }
       });
 
-      // 填寫第一頁總表金額與千分位格式
+      // 5. 填寫第一頁總表金額 (F 欄與 G 欄)
       const fillTotalCell = (cellRef, val) => {
-        let cell = wsQuote.getCell(cellRef);
+        let cell = wsMain.getCell(cellRef);
         cell.value = Number(val);
         cell.numFmt = numFmt;
       };
 
-      fillTotalCell('E11', categoryTotals["水電工程"]); fillTotalCell('F11', categoryTotals["水電工程"]);
-      fillTotalCell('E12', categoryTotals["燈具工程"]); fillTotalCell('F12', categoryTotals["燈具工程"]);
-      fillTotalCell('E13', categoryTotals["木作工程"]); fillTotalCell('F13', categoryTotals["木作工程"]);
-      fillTotalCell('E14', categoryTotals["油漆工程"]); fillTotalCell('F14', categoryTotals["油漆工程"]);
-      fillTotalCell('E15', categoryTotals["雜項工程"]); fillTotalCell('F15', categoryTotals["雜項工程"]);
+      fillTotalCell('F11', categoryTotals["水電工程"]); fillTotalCell('G11', categoryTotals["水電工程"]);
+      fillTotalCell('F12', categoryTotals["燈具工程"]); fillTotalCell('G12', categoryTotals["燈具工程"]);
+      fillTotalCell('F13', categoryTotals["木作工程"]); fillTotalCell('G13', categoryTotals["木作工程"]);
+      fillTotalCell('F14', categoryTotals["油漆工程"]); fillTotalCell('G14', categoryTotals["油漆工程"]);
+      fillTotalCell('F15', categoryTotals["雜項工程"]); fillTotalCell('G15', categoryTotals["雜項工程"]);
 
       // 計算總計與付款期別
       let subtotal = currentItems.reduce((acc, i) => acc + Number(i.priceSubtotal), 0);
@@ -917,22 +809,20 @@
       let taxFee = hasTax ? Math.round(subWithMgmt * 0.05) : 0;
       let grandTotal = subWithMgmt + taxFee;
 
-      fillTotalCell('E17', mgmtFee);
-      fillTotalCell('F18', subWithMgmt);
-      fillTotalCell('E19', taxFee);
-      fillTotalCell('F20', grandTotal);
+      fillTotalCell('F17', mgmtFee);
+      fillTotalCell('G18', subWithMgmt);
+      fillTotalCell('F19', taxFee);
+      fillTotalCell('G20', grandTotal);
 
       let p1 = Math.round(grandTotal * 0.3);
       let p2 = Math.round(grandTotal * 0.3);
       let p3 = Math.round(grandTotal * 0.3);
       let p4 = grandTotal - p1 - p2 - p3;
 
-      fillTotalCell('F22', p1);
-      fillTotalCell('F23', p2);
-      fillTotalCell('F24', p3);
-      fillTotalCell('F25', p4);
-
-      fillTotalCell('C38', grandTotal);
+      fillTotalCell('G22', p1);
+      fillTotalCell('G23', p2);
+      fillTotalCell('G24', p3);
+      fillTotalCell('G25', p4);
 
       // 下載檔案
       const buffer = await wb.xlsx.writeBuffer();
