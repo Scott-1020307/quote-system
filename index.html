@@ -225,7 +225,7 @@
     </div>
 
     <div style="margin-top: 25px; text-align: right; display: flex; justify-content: flex-end; gap: 12px;">
-      <button class="btn-success" onclick="exportQuoteToExcel()" style="font-size: 16px; padding: 14px 28px;">📊 匯出完美單頁連貫 Excel 報價單 (.xlsx)</button>
+      <button class="btn-success" onclick="exportQuoteToExcel()" style="font-size: 16px; padding: 14px 28px;">📊 匯出完美 Excel 報價單 (.xlsx)</button>
     </div>
   </div>
 </div>
@@ -641,7 +641,7 @@
     }
   }
 
-  // ⭐【強制 47 列硬換頁】徹底鎖死第一頁與第二頁開頭！
+  // ⭐【精準對齊 100% 死鎖定欄位寫入】
   async function exportQuoteToExcel() {
     if (currentItems.length === 0) { alert("請先加入報價項目！"); return; }
 
@@ -675,8 +675,7 @@
 
       const numFmt = '#,##0';
 
-      // 💥 💥 💥【最核心修正】：在第 47 列強制插入硬換頁符號 (Page Break)！
-      // 這會強迫 Excel 把第 48 列開頭的水電工程完全推到第二頁頂端開頭！
+      // 在第 47 列強制插入硬換頁符號 (Page Break)，確保第一頁獨立
       ws.getRow(47).addPageBreak();
 
       // 1. 套入客戶資料
@@ -686,7 +685,7 @@
       if (dateStr) ws.getCell('G7').value = dateStr;
 
       // 2. 清空舊樣板從 48 列開始的所有預留文字與公式
-      for (let r = 48; r <= 120; r++) {
+      for (let r = 48; r <= 150; r++) {
         let row = ws.getRow(r);
         row.hidden = false;
         for (let c = 1; c <= 7; c++) { row.getCell(c).value = null; }
@@ -721,32 +720,32 @@
           ws.getCell(`C${rNum}`).value = 1;
           ws.getCell(`D${rNum}`).value = "式";
 
-          // 第二頁明細：填寫工種大類抬頭
-          let hRow = ws.getRow(curRow);
-          hRow.getCell(1).value = numStr;
-          hRow.getCell(2).value = cat;
+          // 第二頁明細：填寫工種大類抬頭 (A欄位=項次, B欄位=大類名稱)
+          ws.getCell(`A${curRow}`).value = numStr;
+          ws.getCell(`B${curRow}`).value = cat;
           curRow++;
 
           let catSum = 0;
           items.forEach(item => {
-            let row = ws.getRow(curRow);
-            row.getCell(2).value = item.name;
-            row.getCell(3).value = Number(item.qty);
-            row.getCell(4).value = item.unit;
+            // ⭐ 精確死鎖定欄位寫入：絕不寫入 A 欄！
+            ws.getCell(`A${curRow}`).value = null;            // A欄保持空白
+            ws.getCell(`B${curRow}`).value = item.name;       // B欄：細項名稱
+            ws.getCell(`C${curRow}`).value = Number(item.qty);// C欄：數量
+            ws.getCell(`D${curRow}`).value = item.unit;       // D欄：單位
 
-            let c5 = row.getCell(5); c5.value = Number(item.price); c5.numFmt = numFmt;
-            let c6 = row.getCell(6); c6.value = Number(item.priceSubtotal); c6.numFmt = numFmt;
+            let c5 = ws.getCell(`E${curRow}`); c5.value = Number(item.price); c5.numFmt = numFmt; // E欄：單價
+            let c6 = ws.getCell(`F${curRow}`); c6.value = Number(item.priceSubtotal); c6.numFmt = numFmt; // F欄：總價
 
-            row.getCell(7).value = item.note || null;
+            ws.getCell(`G${curRow}`).value = item.note || null; // G欄：備註
 
             catSum += Number(item.priceSubtotal);
             curRow++;
           });
 
-          // 明細工種小計列
-          let subRow = ws.getRow(curRow);
-          subRow.getCell(2).value = `${cat}小計`;
-          let subC6 = subRow.getCell(6);
+          // 明細工種小計列 (B欄=小計名稱, F欄=小計金額)
+          ws.getCell(`A${curRow}`).value = null;
+          ws.getCell(`B${curRow}`).value = `${cat}小計`;
+          let subC6 = ws.getCell(`F${curRow}`);
           subC6.value = catSum;
           subC6.numFmt = numFmt;
 
