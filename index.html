@@ -101,7 +101,7 @@
   </div>
 
   <div class="admin-panel card" id="adminPanel">
-    <h3 style="margin-top:0; color:#27ae60;">⚙️️ 新增常用項目至下拉選單</h3>
+    <h3 style="margin-top:0; color:#27ae60;">⚙ 新增常用項目至下拉選單</h3>
     <div class="grid-4" style="grid-template-columns: 2fr 2fr 1fr 1fr;">
       <div><label>目標類別</label><select id="newCatSelect"></select></div>
       <div><label>新項目名稱</label><input type="text" id="newName" placeholder="例如：9.5cm LED 崁燈"></div>
@@ -641,7 +641,7 @@
     }
   }
 
-  // ⭐【100% 精準連貫套印單一工作表】
+  // ⭐【強制 47 列硬換頁】徹底鎖死第一頁與第二頁開頭！
   async function exportQuoteToExcel() {
     if (currentItems.length === 0) { alert("請先加入報價項目！"); return; }
 
@@ -675,7 +675,11 @@
 
       const numFmt = '#,##0';
 
-      // 1. 正確套入客戶資料 (解決「客戶客戶名稱」多餘字問題)
+      // 💥 💥 💥【最核心修正】：在第 47 列強制插入硬換頁符號 (Page Break)！
+      // 這會強迫 Excel 把第 48 列開頭的水電工程完全推到第二頁頂端開頭！
+      ws.getRow(47).addPageBreak();
+
+      // 1. 套入客戶資料
       ws.getCell('A6').value = `客戶名稱 :${clientName}`;
       ws.getCell('G6').value = contractNo;
       ws.getCell('A7').value = `工程地點 :${projectLocation}`;
@@ -701,7 +705,7 @@
       
       let mainRowMap = { "水電工程": 11, "燈具工程": 12, "木作工程": 13, "油漆工程": 14, "雜項工程": 15 };
       let activeIdx = 0;
-      let curRow = 48; // 明細從 48 列順著往下寫
+      let curRow = 48; // 明細確保從「第二頁第 48 列」開頭順著往下寫
 
       catOrderList.forEach(cat => {
         let items = grouped[cat] || [];
@@ -717,7 +721,7 @@
           ws.getCell(`C${rNum}`).value = 1;
           ws.getCell(`D${rNum}`).value = "式";
 
-          // 下方明細：填寫工種大類抬頭
+          // 第二頁明細：填寫工種大類抬頭
           let hRow = ws.getRow(curRow);
           hRow.getCell(1).value = numStr;
           hRow.getCell(2).value = cat;
@@ -749,7 +753,7 @@
           categoryTotals[cat] = catSum;
           curRow++; // 移至下一列
         } else {
-          // ⭐ 沒有的工程完全不特別寫上去，整列清空！
+          // 沒有施作的工程完全不特別寫上去，整列清空！
           ws.getCell(`A${rNum}`).value = null;
           ws.getCell(`B${rNum}`).value = null;
           ws.getCell(`C${rNum}`).value = null;
@@ -759,7 +763,7 @@
         }
       });
 
-      // 3. 填寫第一頁總表金額與計算
+      // 3. 填寫第一頁總表金額
       const fillTotalCell = (cellRef, val) => {
         let cell = ws.getCell(cellRef);
         if (val !== undefined && val !== null && val > 0) {
