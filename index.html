@@ -35,4 +35,360 @@
     .summary-row { display: flex; justify-content: space-between; padding: 6px 0; font-size: 15px; }
     .summary-row.total { font-size: 18px; font-weight: bold; color: #c0392b; border-top: 2px solid #ccc; padding-top: 10px; }
     .admin-panel { background: #eef7ee; border: 1px dashed #27ae60; padding: 15px; border-radius: 6px; margin-top: 15px; display: none; }
-    .payment-box { background: #f
+    .payment-box { background: #f8fafc; border: 1px solid #cbd5e1; padding: 12px; border-radius: 6px; margin-top: 10px; font-size: 13px; }
+    .schedule-preview { background: #fffbe6; border: 1px solid #ffe58f; padding: 15px; border-radius: 6px; margin-top: 15px; }
+    
+    .test-page-panel { background: #f3e8ff; border: 2px solid #a855f7; border-radius: 8px; padding: 20px; margin-bottom: 20px; display: none; }
+
+    #pdfPrintArea { display: none; }
+    @media print {
+      body * { visibility: hidden; }
+      #pdfPrintArea, #pdfPrintArea * { visibility: visible; }
+      #pdfPrintArea {
+        display: block !important;
+        position: absolute;
+        left: 0; top: 0; width: 100%;
+        background: #fff; padding: 15px; color: #000;
+      }
+      .page-break { page-break-after: always; }
+      @page { size: A4 portrait; margin: 10mm; }
+    }
+  </style>
+</head>
+<body>
+
+<div class="container">
+  <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px;">
+    <h1>🏢 室內裝修報價與工程進度管理系統</h1>
+    <div style="display: flex; gap: 6px;">
+      <button class="btn-purple" onclick="toggleTestPage()">🧪 測試頁</button>
+      <button class="btn-warning" onclick="toggleAdminPanel()">⚙ 新增常用選單</button>
+      <button class="btn-primary" onclick="toggleCostDisplay()">🔒 切換成本/毛利</button>
+    </div>
+  </div>
+
+  <div class="test-page-panel" id="testPagePanel">
+    <div style="display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid #c084fc; padding-bottom: 10px; margin-bottom: 15px;">
+      <h3 style="margin: 0; color: #6b21a8;">🧪 系統開發測試頁 (Test Mode)</h3>
+      <button class="btn-danger" onclick="toggleTestPage()" style="padding: 4px 10px; font-size: 12px;">✕ 關閉測試頁</button>
+    </div>
+    
+    <div class="grid-2">
+      <div>
+        <h4 style="margin-top:0; color:#581c87;">⚡ 一鍵自動帶入測試模擬資料</h4>
+        <div style="display: flex; gap: 10px;">
+          <button class="btn-purple" onclick="loadTestData()">🚀 自動帶入完整測試資料</button>
+          <button class="btn-warning" onclick="clearAllItemsData()">🗑 清空目前所有項目</button>
+        </div>
+      </div>
+
+      <div style="background: #ffffff; padding: 12px; border-radius: 6px; border: 1px solid #d8b4fe;">
+        <h4 style="margin-top:0; color:#581c87;">📊 系統目前運作狀態監視器</h4>
+        <ul style="font-size: 13px; line-height: 1.8; margin: 0; padding-left: 20px;">
+          <li><b>已儲存草稿數量：</b> <span id="testDraftCount">0</span> 份</li>
+          <li><b>當前報價項目總數：</b> <span id="testItemCount">0</span> 項</li>
+          <li><b>目前未含稅報價小計：</b> <span id="testSubtotalVal">$0</span></li>
+          <li><b>目前計算完工日：</b> <span id="testEndDateVal">-</span></li>
+        </ul>
+      </div>
+    </div>
+  </div>
+
+  <div class="card" style="background: #f1f5f9; border: 1px solid #cbd5e1;">
+    <h3 style="margin-top:0;">🏠 請選擇案場類型：</h3>
+    <div style="display: flex; gap: 12px; flex-wrap: wrap;">
+      <button class="mode-btn" id="btnModeSimple" onclick="switchMode('simple')">🔨 簡易局部裝修</button>
+      <button class="mode-btn active" id="btnModeNew" onclick="switchMode('new')">🏢 新成屋標準裝修</button>
+      <button class="mode-btn" id="btnModeOld" onclick="switchMode('old')">🏚 老屋翻新 & 毛胚屋</button>
+    </div>
+  </div>
+
+  <div class="card" style="background: #f0fdf4; border: 1px solid #bbf7d0;">
+    <div style="display: flex; justify-content: space-between; align-items: center;">
+      <h3 style="margin:0; color:#166534;">💾 專案草稿箱</h3>
+      <div style="display: flex; gap: 8px;">
+        <select id="savedDraftsSelect" style="width: auto; min-width: 200px;">
+          <option value="">-- 選擇已儲存的報價草稿 --</option>
+        </select>
+        <button class="btn-info" onclick="loadSelectedDraft()">📖 載入草稿</button>
+        <button class="btn-success" onclick="saveCurrentDraft()">💾 儲存目前報價</button>
+        <button class="btn-danger" onclick="deleteSelectedDraft()" style="padding: 8px 12px;">🗑 刪除</button>
+      </div>
+    </div>
+  </div>
+
+  <div class="admin-panel card" id="adminPanel">
+    <h3 style="margin-top:0; color:#27ae60;">⚙️ 新增常用項目至下拉選單</h3>
+    <div class="grid-4" style="grid-template-columns: 2fr 2fr 1fr 1fr;">
+      <div><label>目標類別</label><select id="newCatSelect"></select></div>
+      <div><label>新項目名稱</label><input type="text" id="newName" placeholder="例如：9.5cm LED 崁燈"></div>
+      <div><label>單位</label><input type="text" id="newUnit" placeholder="米/顆/組/坪"></div>
+      <div><label>廠商底價</label><input type="number" id="newCost" value="0"></div>
+    </div>
+    <div class="grid-4" style="margin-top:10px; grid-template-columns: 2fr 4fr 2fr;">
+      <div><label>客戶報價</label><input type="number" id="newPrice" value="0"></div>
+      <div><label>預設備註</label><input type="text" id="newNote" placeholder="例如：含基本安裝"></div>
+      <div style="display:flex; align-items:flex-end;">
+        <button class="btn-success" onclick="addNewPresetItem()" style="width:100%;">➕ 儲存至常用選單</button>
+      </div>
+    </div>
+  </div>
+
+  <div class="card">
+    <h3>📋 客戶、案場與工程開工資訊</h3>
+    <div class="grid-4">
+      <div><label>客戶姓名</label><input type="text" id="clientName" placeholder="例如：劉先生"></div>
+      <div><label>工程地點</label><input type="text" id="projectLocation" placeholder="例如：亞昕喜來登"></div>
+      <div><label>合約書編號</label><input type="text" id="contractNo" placeholder="例如：007006"></div>
+      <div><label>報價日期</label><input type="date" id="quoteDate"></div>
+    </div>
+    <div class="grid-4" style="margin-top: 12px;">
+      <div>
+        <label style="color:#d97706;">📅 預計開工日期</label>
+        <input type="date" id="startDate" onchange="calculateSchedulePreview()">
+      </div>
+      <div><label>設計師 / 負責人</label><input type="text" id="designerName" placeholder="例如：陳昭宇 設計師"></div>
+      <div style="grid-column: span 2;">
+        <label>預計完工與總工期推算</label>
+        <div id="scheduleSummaryText" style="padding: 8px; font-weight: bold; color: #2563eb;">選擇開工日後自動推算工期...</div>
+      </div>
+    </div>
+  </div>
+
+  <div class="card">
+    <h3>➕ 新增工程項目</h3>
+    <div class="grid-4" style="grid-template-columns: 2fr 2fr 1fr 2fr;">
+      <div>
+        <label>工程類別 (第一層)</label>
+        <select id="categorySelect" onchange="updateSubCategoryOptions()">
+          <option value="">-- 請選擇工程類別 --</option>
+        </select>
+      </div>
+      <div>
+        <label>工程細項 (第二層)</label>
+        <select id="subCategorySelect" onchange="autoFillItemDefaults()">
+          <option value="">-- 請先選擇工程類別 --</option>
+        </select>
+      </div>
+      <div><label>數量</label><input type="number" id="itemQty" value="1" min="-999" step="0.1"></div>
+      <div><label>單位</label><input type="text" id="itemUnit" placeholder="坪/尺/組/式/顆"></div>
+    </div>
+
+    <div class="grid-4" style="margin-top: 12px;">
+      <div class="cost-col" style="padding: 8px; border-radius: 4px;">
+        <label>廠商底價 (內部成本)</label>
+        <input type="number" id="costPrice" value="0">
+      </div>
+      <div><label>對外報價 (客戶單價)</label><input type="number" id="quotePrice" value="0"></div>
+      <div style="grid-column: span 2;"><label>施工備註 / 規格</label><input type="text" id="itemNote" placeholder="例如：TV牆下、追加項目說明"></div>
+    </div>
+    <div style="margin-top: 12px; text-align: right;">
+      <button class="btn-success" onclick="addItemToQuote()">加入報價單</button>
+    </div>
+  </div>
+
+  <div class="card" id="quoteContainer">
+    <h3>📝 報價項目清單與利潤分析</h3>
+    <table id="quoteTable">
+      <thead>
+        <tr>
+          <th>大類</th>
+          <th>工程項目 / 備註</th>
+          <th>數量</th>
+          <th>單位</th>
+          <th class="cost-col">廠商單價</th>
+          <th class="cost-col">廠商成本小計</th>
+          <th>客戶單價</th>
+          <th>客戶報價小計</th>
+          <th class="cost-col">內部預估毛利</th>
+          <th>操作</th>
+        </tr>
+      </thead>
+      <tbody id="quoteTbody"></tbody>
+    </table>
+
+    <div class="grid-2" style="margin-top: 20px;">
+      <div>
+        <h4>⚙ 費用與付款方式設定</h4>
+        <div><input type="checkbox" id="chkManagementFee" checked onchange="renderSummary()" style="width:auto;"> <label style="display:inline;">計入 10% 工程監工管理費</label></div>
+        <div><input type="checkbox" id="chkTax" checked onchange="renderSummary()" style="width:auto;"> <label style="display:inline;">計入 5% 營業稅</label></div>
+        
+        <div style="margin-top: 15px;">
+          <input type="checkbox" id="chkShowPayment" checked onchange="renderSummary()" style="width:auto;"> 
+          <label style="display:inline; font-weight:bold; color:#2b6cb0;">📑 自動計算標準四期付款 (30%/30%/30%/10%)</label>
+          <div class="payment-box" id="paymentDetailsDisplay"></div>
+        </div>
+
+        <div style="margin-top: 15px;">
+          <label>🏷️ 常用合約條款與注意事項：</label>
+          <div style="font-size:13px; line-height:1.8;">
+            <div><input type="checkbox" class="note-preset" value="1. 本估價單項目不包含燈具、家電設備與軟裝佈置。" checked onchange="updateCustomNotes()"> 1. 不包含燈具、家電與軟裝。</div>
+            <div><input type="checkbox" class="note-preset" value="2. 施工期間工程保固一年，消耗性材料與人為因素除外。" checked onchange="updateCustomNotes()"> 2. 提供施工保固一年。</div>
+            <div><input type="checkbox" class="note-preset" value="3. 施工過程中如有任何工程變更或追加項目，需另行簽認計價。" checked onchange="updateCustomNotes()"> 3. 額外追加項目需另行估價簽認。</div>
+            <div><input type="checkbox" class="note-preset" value="4. 工程報價有效期限為 30 天。" checked onchange="updateCustomNotes()"> 4. 報價有效期 30 天。</div>
+          </div>
+          <textarea id="customNotesText" rows="3" style="margin-top:8px;" placeholder="可在這裡自訂補充注意事項..."></textarea>
+        </div>
+      </div>
+
+      <div class="summary-box">
+        <div class="summary-row"><span>工程小計：</span><span id="sumSubtotal">$0</span></div>
+        <div class="summary-row"><span>管理費 (10%)：</span><span id="sumMgmt">$0</span></div>
+        <div class="summary-row"><span>營業稅 (5%)：</span><span id="sumTax">$0</span></div>
+        <div class="summary-row total"><span>報價總計：</span><span id="sumTotal">$0</span></div>
+      </div>
+    </div>
+
+    <div class="schedule-preview">
+      <h4 style="margin-top:0; color:#b45309;">📅 裝修工程進度預覽</h4>
+      <div id="scheduleTablePreview">請先加入報價項目並選擇預計開工日期...</div>
+    </div>
+
+    <div style="margin-top: 25px; text-align: right; display: flex; justify-content: flex-end; gap: 12px;">
+      <button class="btn-info" onclick="exportQuoteToPDF()" style="font-size: 15px; padding: 12px 20px;">
+        📄 匯出 PDF 報價單
+      </button>
+      <button class="btn-success" onclick="exportQuoteToExcel()" style="font-size: 15px; padding: 12px 24px;">
+        📊 完美連動套印 Excel 報價單 (.xlsx)
+      </button>
+    </div>
+  </div>
+</div>
+
+<div id="pdfPrintArea">
+  <div class="page-break" style="min-height: 850px; display: flex; flex-direction: column; justify-content: space-between;">
+    <div>
+      <div style="text-align: center; border-bottom: 2px solid #000; padding-bottom: 10px; margin-bottom: 20px;">
+        <h2 style="margin: 0; font-size: 24px; letter-spacing: 2px;">室 內 裝 修 報 價 總 表</h2>
+      </div>
+      
+      <table style="width: 100%; border: none; margin-bottom: 25px; font-size: 14px; line-height: 2;">
+        <tr style="border: none;">
+          <td style="border: none; width: 50%;"><b>客戶姓名：</b> <span id="pdfClientName"></span></td>
+          <td style="border: none; width: 50%;"><b>合約編號：</b> <span id="pdfContractNo"></span></td>
+        </tr>
+        <tr style="border: none;">
+          <td style="border: none;"><b>工程地點：</b> <span id="pdfProjectLocation"></span></td>
+          <td style="border: none;"><b>報價日期：</b> <span id="pdfQuoteDate"></span></td>
+        </tr>
+        <tr style="border: none;">
+          <td style="border: none;"><b>預計開工：</b> <span id="pdfStartDate"></span></td>
+          <td style="border: none;"><b>設計師：</b> <span id="pdfDesignerName"></span></td>
+        </tr>
+      </table>
+
+      <div style="border: 2px solid #000; padding: 20px; margin-bottom: 25px; background: #fafafa;">
+        <h3 style="margin-top:0; border-bottom: 1px solid #000; padding-bottom: 8px;">💰 報價總金額摘要</h3>
+        <table style="width: 100%; border: none; font-size: 15px; line-height: 2.2;">
+          <tr style="border:none;"><td style="border:none;">工程小計：</td><td style="border:none; text-align:right;" id="pdfSubtotal">$0</td></tr>
+          <tr style="border:none;"><td style="border:none;">監工管理費 (10%)：</td><td style="border:none; text-align:right;" id="pdfMgmt">$0</td></tr>
+          <tr style="border:none;"><td style="border:none;">營業稅 (5%)：</td><td style="border:none; text-align:right;" id="pdfTax">$0</td></tr>
+          <tr style="border-top: 2px solid #000;"><td style="border:none; font-size:18px; font-weight:bold;">報價總計：</td><td style="border:none; text-align:right; font-size:20px; color:#c0392b; font-weight:bold;" id="pdfTotal">$0</td></tr>
+        </table>
+      </div>
+
+      <div style="border: 1px solid #000; padding: 20px; margin-bottom: 25px;">
+        <h3 style="margin-top:0; border-bottom: 1px solid #ccc; padding-bottom: 8px;">📑 工程付款期別與條件</h3>
+        <div id="pdfPaymentBox" style="line-height: 2; font-size: 14px;"></div>
+      </div>
+    </div>
+
+    <div style="margin-top: 40px; padding-top: 20px; border-top: 1px dashed #000; display: flex; justify-content: space-between; font-size: 15px; font-weight: bold;">
+      <div style="width: 45%;">客戶簽認：___________________________</div>
+      <div style="width: 45%;">設計公司蓋章：___________________________</div>
+    </div>
+  </div>
+
+  <div>
+    <div style="text-align: center; border-bottom: 2px solid #000; padding-bottom: 8px; margin-bottom: 15px;">
+      <h3 style="margin: 0; font-size: 20px;">工 種 施 工 項 目 明 細 表</h3>
+    </div>
+    <table style="width: 100%; border-collapse: collapse;">
+      <thead>
+        <tr style="background: #e5e7eb;">
+          <th style="width: 15%; text-align: center; border: 1px solid #000; padding: 8px;">工種類別</th>
+          <th style="width: 35%; text-align: left; border: 1px solid #000; padding: 8px;">工程項目 / 施工規格細項</th>
+          <th style="width: 10%; text-align: center; border: 1px solid #000; padding: 8px;">數量</th>
+          <th style="width: 8%; text-align: center; border: 1px solid #000; padding: 8px;">單位</th>
+          <th style="width: 14%; text-align: right; border: 1px solid #000; padding: 8px;">單價</th>
+          <th style="width: 18%; text-align: right; border: 1px solid #000; padding: 8px;">複價小計</th>
+        </tr>
+      </thead>
+      <tbody id="pdfTableBody"></tbody>
+    </table>
+
+    <div style="margin-top: 30px; border-top: 2px solid #000; padding-top: 15px;">
+      <h4 style="margin: 0 0 10px 0; font-size: 15px;">🏷️ 工程注意事項與合約條款：</h4>
+      <div id="pdfNotesBox" style="white-space: pre-wrap; color: #333; line-height: 1.8; font-size: 13px;"></div>
+    </div>
+  </div>
+</div>
+
+<script>
+  const categoryOrder = ["水電工程", "燈具工程", "木作工程", "油漆工程", "雜項工程", "保護工程", "拆除工程", "泥作工程", "玻璃工程", "木地板工程"];
+
+  const scheduleRules = {
+    "水電工程": { days: 2, note: "新增專用迴路、水電改管配線" },
+    "燈具工程": { days: 1, note: "燈具與開關開孔及燈飾安裝" },
+    "木作工程": { days: 4, note: "平釘天花板、窗簾盒與木作門" },
+    "油漆工程": { days: 5, note: "牆面/天花板批土過色與噴塗" },
+    "雜項工程": { days: 2, note: "粗清、細清與完工驗收點交" }
+  };
+
+  const fullItemMaster = {
+    "水電工程": [
+      { name: "新增插座", unit: "組", cost: 2500, price: 4000, note: "TV牆下、主臥改櫃" },
+      { name: "新增專用迴路110V", unit: "組", cost: 4500, price: 7000, note: "餐櫃" },
+      { name: "新增專用迴路220V", unit: "組", cost: 4500, price: 7000, note: "餐櫃平台、主臥" },
+      { name: "弱電及網路線拉設", unit: "式", cost: 3500, price: 5500, note: "CAT6 網路線加強" }
+    ],
+    "木作工程": [
+      { name: "平釘天花板(局部高低差)", unit: "坪", cost: 4200, price: 6200, note: "日本麗仕矽酸鈣板" },
+      { name: "窗簾盒+冷氣盒", unit: "尺", cost: 550, price: 900, note: "雙層防潮木作" },
+      { name: "客廳電視造型牆結構", unit: "式", cost: 25000, price: 42000, note: "含隱藏美化線槽" }
+    ],
+    "油漆工程": [
+      { name: "平釘天花板過色", unit: "坪", cost: 1500, price: 2400, note: "得利乳膠漆刷塗" },
+      { name: "全室牆面局部批土修補過色", unit: "式", cost: 8000, price: 15000, note: "含交屋前二次修補" }
+    ],
+    "燈具工程": [
+      { name: "客廳、主臥崁入式燈條含變壓器", unit: "米", cost: 700, price: 1200, note: "軟燈條" },
+      { name: "15cm Led崁燈及挖孔配線", unit: "顆", cost: 650, price: 1200, note: "客廳 4000K 自然光" }
+    ],
+    "雜項工程": [
+      { name: "全室保護", unit: "坪", cost: 500, price: 800, note: "防潮布+軟墊" },
+      { name: "細清工程", unit: "式", cost: 18000, price: 30000, note: "入住級細清" }
+    ]
+  };
+
+  let itemDatabase = fullItemMaster;
+  let currentItems = [];
+
+  window.onload = function() {
+    document.getElementById('quoteDate').valueAsDate = new Date();
+    document.getElementById('startDate').valueAsDate = new Date();
+    updateCustomNotes();
+    refreshDraftsDropdown();
+    initCategoryDropdowns();
+    updateTestMonitor();
+  };
+
+  function toggleTestPage() {
+    const panel = document.getElementById('testPagePanel');
+    panel.style.display = (panel.style.display === 'block') ? 'none' : 'block';
+    updateTestMonitor();
+  }
+
+  function loadTestData() {
+    document.getElementById('clientName').value = '陳大明 (測試客戶)';
+    document.getElementById('projectLocation').value = '台北市信義區測試路 88 號 10 樓';
+    document.getElementById('contractNo').value = 'TEST-2026-001';
+    document.getElementById('designerName').value = '陳昭宇 設計師';
+    document.getElementById('startDate').valueAsDate = new Date();
+
+    currentItems = [
+      { id: 1, category: "水電工程", name: "新增插座", qty: 3, unit: "組", cost: 2500, costSubtotal: 7500, price: 4000, priceSubtotal: 12000, profit: 4500, note: "TV牆下、主臥改櫃" },
+      { id: 2, category: "水電工程", name: "新增專用迴路110V", qty: 1, unit: "組", cost: 4500, costSubtotal: 4500, price: 7000, priceSubtotal: 7000, profit: 2500, note: "餐櫃平台" },
+      { id: 3, category: "水電工程", name: "新增專用迴路220V", qty: 1, unit: "組", cost: 4500, costSubtotal: 4500, price: 7000, priceSubtotal: 7000, profit: 2500, note: "主臥專用迴路" },
+      { id: 4, category: "水電工程", name: "弱電及網路線拉設", qty: 1, unit: "式", cost: 3500, costSubtotal: 3500, price: 5500, priceSubtotal: 5500, profit: 2000, note: "CAT6 網路線加強" },
+      { id: 5, category: "木作工程", name: "平釘天花板(局部高低差)", qty: 12, unit: "坪", cost: 4200, costSubtotal: 50400, price: 6200, priceSubtotal: 74400, profit
