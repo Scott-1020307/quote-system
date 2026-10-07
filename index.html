@@ -236,7 +236,6 @@ button:hover {
     color: #854d0e;
 }
 
-/* Modal 彈出視窗樣式 */
 .modal-overlay {
     display: none;
     position: fixed;
@@ -520,12 +519,17 @@ button:hover {
 <div class="card">
     <h2>Excel 匯出</h2>
     <div class="notice">
-        Excel 範本檔案名稱必須為 <strong>template.xlsx</strong>，並且與本 HTML 放在同一個資料夾。
+        Excel 範本檔案名稱必須為 <strong>template.xlsx</strong>，並且與本 HTML 放在同一個資料夾。<br>
+        <span style="color: #2563eb;">若因本機測試安全性限制導致無法直接讀取，可點擊下方選擇檔案按鈕載入 template.xlsx。</span>
+    </div>
+
+    <div style="margin-top: 10px; display: flex; align-items: center; gap: 10px;">
+        <label style="font-weight: bold; font-size: 14px;">手動載入範本 (選擇備用)：</label>
+        <input type="file" id="templateFileInput" accept=".xlsx" style="width: auto;">
     </div>
 
     <div class="button-row">
-        <button class="btn-green" onclick="exportQuoteToExcel()">套印匯出 Excel</button>
-        <button class="btn-blue" onclick="exportDirectExcel()">轉成報價單 Excel</button>
+        <button class="btn-blue" onclick="exportQuoteToExcel()">轉成報價單 Excel</button>
     </div>
 </div>
 
@@ -586,9 +590,7 @@ button:hover {
 
 let currentItems = [];
 
-// 預設的計價單價庫資料
 const INITIAL_PRICE_DB = [
-    // 水電工程
     { category: '水電工程', name: '新增110V專迴', unit: '迴', price: 7000 },
     { category: '水電工程', name: '新增220V專迴', unit: '迴', price: 7000 },
     { category: '水電工程', name: '新增插座', unit: '組', price: 5000 },
@@ -602,7 +604,6 @@ const INITIAL_PRICE_DB = [
     { category: '水電工程', name: '衛浴設備代安裝', unit: '組', price: 1000 },
     { category: '水電工程', name: '原燈線延長工資', unit: '組', price: 2000 },
 
-    // 燈具工程
     { category: '燈具工程', name: '15cmLED崁燈', unit: '組', price: 1200 },
     { category: '燈具工程', name: '9.5cmLED崁燈', unit: '組', price: 1200 },
     { category: '燈具工程', name: '軌道燈軌道', unit: '米', price: 2000 },
@@ -611,7 +612,6 @@ const INITIAL_PRICE_DB = [
     { category: '燈具工程', name: '磁吸軌道燈', unit: '組', price: 800 },
     { category: '燈具工程', name: '崁入式燈條', unit: '米', price: 1500 },
 
-    // 木作工程
     { category: '木作工程', name: '平釘天花板', unit: '坪', price: 5500 },
     { category: '木作工程', name: '造型天花板', unit: '坪', price: 6500 },
     { category: '木作工程', name: '間接燈', unit: '尺', price: 1000 },
@@ -629,7 +629,6 @@ const INITIAL_PRICE_DB = [
     { category: '木作工程', name: '維修孔', unit: '組', price: 800 },
     { category: '木作工程', name: '維修孔(緩降)', unit: '組', price: 2000 },
 
-    // 油漆工程
     { category: '油漆工程', name: '平釘天花板', unit: '坪', price: 2500 },
     { category: '油漆工程', name: '間接燈', unit: '尺', price: 1000 },
     { category: '油漆工程', name: '窗簾盒', unit: '尺', price: 1000 },
@@ -642,7 +641,6 @@ const INITIAL_PRICE_DB = [
     { category: '油漆工程', name: '全室批土打磨', unit: '坪', price: 1200 },
     { category: '油漆工程', name: '全室過色不批土', unit: '式', price: 15000 },
 
-    // 雜項工程
     { category: '雜項工程', name: '金屬飾條', unit: '米', price: 1200 },
     { category: '雜項工程', name: '烤漆玻璃', unit: '才', price: 400 },
     { category: '雜項工程', name: '鋁框拉門', unit: '才', price: 1000 },
@@ -650,7 +648,6 @@ const INITIAL_PRICE_DB = [
     { category: '雜項工程', name: '細清20坪以下', unit: '式', price: 25000 },
     { category: '雜項工程', name: '細清20坪以上', unit: '式', price: 35000 },
 
-    // 保護工程
     { category: '保護工程', name: '隔間-電梯保護', unit: '式', price: 9000 },
     { category: '保護工程', name: '隔間-保護牆面', unit: '坪', price: 3000 },
     { category: '保護工程', name: '簡易-電梯保護', unit: '式', price: 5000 },
@@ -659,11 +656,9 @@ const INITIAL_PRICE_DB = [
     { category: '保護工程', name: '室內保護', unit: '坪', price: 1000 },
     { category: '保護工程', name: '傢俱保護', unit: '式', price: 5000 },
 
-    // 拆除工程
     { category: '拆除工程', name: '拆除車趟', unit: '車', price: 15000 },
     { category: '拆除工程', name: '拆除人工', unit: '工', price: 3000 },
 
-    // 木地板工程
     { category: '木地板工程', name: 'SPC木地板', unit: '坪', price: 4200 },
     { category: '木地板工程', name: '超耐磨地板', unit: '坪', price: 4300 }
 ];
@@ -1060,7 +1055,6 @@ function updateTestMonitor() {
 }
 
 
-// --- 單價庫管理邏輯 ---
 function openPriceDbModal() {
     renderPriceDbTable();
     document.getElementById('priceDbModal').classList.add('show');
@@ -1146,13 +1140,20 @@ async function exportQuoteToExcel() {
     }
 
     try {
-        const response = await fetch('./template.xlsx', { cache: 'no-store' });
-        if (!response.ok) {
-            alert('找不到 template.xlsx，請確認它與 HTML 放在同一個資料夾。');
-            return;
+        let arrayBuffer = null;
+        const fileInput = document.getElementById('templateFileInput');
+
+        if (fileInput && fileInput.files && fileInput.files.length > 0) {
+            arrayBuffer = await fileInput.files[0].arrayBuffer();
+        } else {
+            const response = await fetch('./template.xlsx', { cache: 'no-store' });
+            if (!response.ok) {
+                alert('找不到 template.xlsx！請確認檔案與 HTML 放在同個資料夾，或使用下方「手動載入範本」按鈕選擇範本。');
+                return;
+            }
+            arrayBuffer = await response.arrayBuffer();
         }
 
-        const arrayBuffer = await response.arrayBuffer();
         const wb = new ExcelJS.Workbook();
         await wb.xlsx.load(arrayBuffer);
 
@@ -1193,9 +1194,25 @@ async function exportQuoteToExcel() {
             grouped[item.category].push(item);
         });
 
-        const catOrderList = ['水電工程', '燈具工程', '木作工程', '油漆工程', '雜項工程'];
+        // 包含所有支援工種的完整順序清單
+        const catOrderList = [
+            '水電工程',
+            '燈具工程',
+            '木作工程',
+            '油漆工程',
+            '雜項工程',
+            '保護工程',
+            '拆除工程',
+            '木地板工程'
+        ];
         const numMap = ['一', '二', '三', '四', '五', '六', '七', '八'];
-        const mainRowMap = { '水電工程': 11, '燈具工程': 12, '木作工程': 13, '油漆工程': 14, '雜項工程': 15 };
+        const mainRowMap = {
+            '水電工程': 11,
+            '燈具工程': 12,
+            '木作工程': 13,
+            '油漆工程': 14,
+            '雜項工程': 15
+        };
 
         let curRow = 49;
         let activeIdx = 0;
@@ -1213,12 +1230,14 @@ async function exportQuoteToExcel() {
             const mainRow = mainRowMap[cat];
 
             if (items.length === 0) {
-                ws.getCell(`A${mainRow}`).value = null;
-                ws.getCell(`B${mainRow}`).value = null;
-                ws.getCell(`C${mainRow}`).value = null;
-                ws.getCell(`D${mainRow}`).value = null;
-                ws.getCell(`E${mainRow}`).value = null;
-                ws.getCell(`F${mainRow}`).value = null;
+                if (mainRow) {
+                    ws.getCell(`A${mainRow}`).value = null;
+                    ws.getCell(`B${mainRow}`).value = null;
+                    ws.getCell(`C${mainRow}`).value = null;
+                    ws.getCell(`D${mainRow}`).value = null;
+                    ws.getCell(`E${mainRow}`).value = null;
+                    ws.getCell(`F${mainRow}`).value = null;
+                }
                 return;
             }
 
@@ -1226,10 +1245,12 @@ async function exportQuoteToExcel() {
             const numStr = numMap[activeIdx] || String(activeIdx + 1);
             activeIdx++;
 
-            ws.getCell(`A${mainRow}`).value = numStr;
-            ws.getCell(`B${mainRow}`).value = cat;
-            ws.getCell(`C${mainRow}`).value = 1;
-            ws.getCell(`D${mainRow}`).value = '式';
+            if (mainRow) {
+                ws.getCell(`A${mainRow}`).value = numStr;
+                ws.getCell(`B${mainRow}`).value = cat;
+                ws.getCell(`C${mainRow}`).value = 1;
+                ws.getCell(`D${mainRow}`).value = '式';
+            }
 
             const headerA = ws.getCell(`A${curRow}`);
             const headerB = ws.getCell(`B${curRow}`);
@@ -1354,13 +1375,8 @@ async function exportQuoteToExcel() {
 
     } catch (err) {
         console.error('Excel 匯出錯誤：', err);
-        alert('套印匯出發生錯誤：' + err.message);
+        alert('套印匯出發生錯誤：' + err.message + '\n\n提示：若於本機環境測試，請使用「手動載入範本」選取 template.xlsx 即可成功匯出！');
     }
-}
-
-
-function exportDirectExcel() {
-    exportQuoteToExcel();
 }
 
 </script>
