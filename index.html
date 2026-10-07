@@ -305,7 +305,7 @@ button:hover {
 <div class="container">
 
 <h1>
-    室內裝修報價與工程進度管理系統 <span style="font-size: 18px; color: #2563eb;">(單價庫/動態套用版)</span>
+    室內裝修報價與工程進度管理系統 <span style="font-size: 18px; color: #2563eb;">(單價庫/動態套用修復版)</span>
 </h1>
 
 
@@ -1169,7 +1169,7 @@ async function exportQuoteToExcel() {
         ws.getCell('A7').value = `工程地點 :${projectLocation}`;
         if (dateStr) ws.getCell('G7').value = dateStr;
 
-        // 清空第一頁預設表格列 (11~15 列)
+        // 清空第一頁預設表格 5 行工種列 (11~15 列)
         for (let r = 11; r <= 15; r++) {
             ws.getCell(`A${r}`).value = null;
             ws.getCell(`B${r}`).value = null;
@@ -1219,7 +1219,9 @@ async function exportQuoteToExcel() {
         const alignCenter = { horizontal: 'center', vertical: 'center' };
         const alignRight = { horizontal: 'right', vertical: 'center' };
 
-        // 智慧型動態套用：有什麼工種，就依序寫入什麼！
+        // 智慧型動態套用與保護列17不被擦掉
+        let otherCatSum = 0; // 當工種超過 5 個時，第 6 個以後累加至第 15 列
+
         usedCategories.forEach((cat, idx) => {
             const items = currentItems.filter(item => item.category === cat);
             if (items.length === 0) return;
@@ -1227,12 +1229,19 @@ async function exportQuoteToExcel() {
             let catSum = 0;
             const numStr = numMap[idx] || String(idx + 1);
 
-            // 第一頁總表：智慧依序填入 (第 11 列開始往下填)
-            const mainRow = 11 + idx;
-            ws.getCell(`A${mainRow}`).value = numStr;
-            ws.getCell(`B${mainRow}`).value = cat;
-            ws.getCell(`C${mainRow}`).value = 1;
-            ws.getCell(`D${mainRow}`).value = '式';
+            // 【重點修復】：第一頁總表只佔用 11~15 列，避免向下擦掉 17 列的管理費！
+            if (idx < 4) { // 前 4 個工種 (11, 12, 13, 14 列)
+                const mainRow = 11 + idx;
+                ws.getCell(`A${mainRow}`).value = numStr;
+                ws.getCell(`B${mainRow}`).value = cat;
+                ws.getCell(`C${mainRow}`).value = 1;
+                ws.getCell(`D${mainRow}`).value = '式';
+            } else if (idx === 4) { // 第 5 個工種 (15 列)
+                ws.getCell('A15').value = numStr;
+                ws.getCell('B15').value = usedCategories.length > 5 ? `${cat}等其餘工程` : cat;
+                ws.getCell('C15').value = 1;
+                ws.getCell('D15').value = '式';
+            }
 
             // 第二頁：工程標題
             const cellTitleA = ws.getCell(`A${curRow}`);
@@ -1299,9 +1308,15 @@ async function exportQuoteToExcel() {
 
             ws.getCell(`G${curRow}`).value = null;
 
-            // 回填第一頁總表的金額
-            fillTotalCell(`E${mainRow}`, catSum);
-            fillTotalCell(`F${mainRow}`, catSum);
+            // 回填第一頁總表金額
+            if (idx < 4) {
+                fillTotalCell(`E${11 + idx}`, catSum);
+                fillTotalCell(`F${11 + idx}`, catSum);
+            } else {
+                otherCatSum += catSum;
+                fillTotalCell('E15', otherCatSum);
+                fillTotalCell('F15', otherCatSum);
+            }
 
             curRow += 2;
         });
@@ -1316,27 +1331,26 @@ async function exportQuoteToExcel() {
             }
         }
 
-        // 精準填寫第一頁小計與管理費等金額
+        // 計算並精準填寫金額，確保 10% 管理費於第 17 列發揮作用
         const totals = calculateTotals();
 
-        // 【精準修復管理費列】：工程管理費(10%) 位在第 16 列！
-        ws.getCell('C17').value = null;
-        ws.getCell('D17').value = null;
-
+        // 【列 17 工程管理費】
         if (document.getElementById('chkManagementFee').checked && totals.managementFee > 0) {
             ws.getCell('C17').value = 1;
             ws.getCell('D17').value = '式';
             fillTotalCell('E17', totals.managementFee);
             fillTotalCell('F17', totals.managementFee);
         } else {
+            ws.getCell('C17').value = null;
+            ws.getCell('D17').value = null;
             ws.getCell('E17').value = null;
             ws.getCell('F17').value = null;
         }
 
-        // 合計 (小計 + 管理費) 位於第 18 列
+        // 列 18 合計 (小計 + 管理費)
         fillTotalCell('F18', totals.subtotal + totals.managementFee);
 
-        // 營業稅 5% 位於第 19 列
+        // 列 19 營業稅 5%
         if (document.getElementById('chkTax').checked && totals.tax > 0) {
             ws.getCell('C19').value = 1;
             ws.getCell('D19').value = '式';
@@ -1349,7 +1363,7 @@ async function exportQuoteToExcel() {
             ws.getCell('F19').value = null;
         }
 
-        // 總計 位於第 20 列
+        // 列 20 總計
         fillTotalCell('F20', totals.grandTotal);
 
         // 付款方式 30%, 30%, 30%, 10% 位於列 24~27
