@@ -1163,15 +1163,18 @@ async function exportQuoteToExcel() {
             return;
         }
 
-        // 第一頁基本資料填寫
+        // 1. 第一頁基本資料填寫
         ws.getCell('A6').value = `客戶名稱 :${clientName}`;
         ws.getCell('G6').value = contractNo;
         ws.getCell('A7').value = `工程地點 :${projectLocation}`;
         if (dateStr) ws.getCell('G7').value = dateStr;
 
-        // 清空第二頁舊內容
+        // 【關鍵關鍵修正】強制取消第二頁 (48~150列) 舊有所有的跨欄合併，確保欄位不再對錯位！
         for (let r = 48; r <= 150; r++) {
             for (let c = 1; c <= 7; c++) {
+                try {
+                    ws.unmergeCells(r, c);
+                } catch(e) {}
                 ws.getCell(r, c).value = null;
             }
         }
@@ -1219,7 +1222,6 @@ async function exportQuoteToExcel() {
         let activeIdx = 0;
         const categoryTotals = {};
 
-        // 獨立定義三種明確的對齊與字體設定檔
         const fontNormal = { name: 'Microsoft JhengHei', size: 12, bold: false };
         const fontBold = { name: 'Microsoft JhengHei', size: 12, bold: true };
 
@@ -1247,6 +1249,7 @@ async function exportQuoteToExcel() {
             const numStr = numMap[activeIdx] || String(activeIdx + 1);
             activeIdx++;
 
+            // 第一頁對應工種列填寫
             if (mainRow) {
                 ws.getCell(`A${mainRow}`).value = numStr;
                 ws.getCell(`B${mainRow}`).value = cat;
@@ -1254,16 +1257,16 @@ async function exportQuoteToExcel() {
                 ws.getCell(`D${mainRow}`).value = '式';
             }
 
-            // 1. 工種標題列設定 (例如: 一、水電工程)
+            // 1. 第二頁：工種標題列 (例如: 一、水電工程)
             const cellTitleA = ws.getCell(`A${curRow}`);
             cellTitleA.value = numStr;
             cellTitleA.font = fontBold;
-            cellTitleA.alignment = alignCenter; // A欄序號置中
+            cellTitleA.alignment = alignCenter;
 
             const cellTitleB = ws.getCell(`B${curRow}`);
             cellTitleB.value = cat;
             cellTitleB.font = fontBold;
-            cellTitleB.alignment = alignLeft; // B欄標題靠左
+            cellTitleB.alignment = alignLeft;
 
             for (let c = 3; c <= 7; c++) {
                 const cell = ws.getCell(curRow, c);
@@ -1272,7 +1275,7 @@ async function exportQuoteToExcel() {
             }
             curRow++;
 
-            // 2. 細項明細列設定
+            // 2. 第二頁：細項明細列
             items.forEach(item => {
                 ws.getCell(`A${curRow}`).value = null;
 
@@ -1311,7 +1314,7 @@ async function exportQuoteToExcel() {
                 catSum += Number(item.priceSubtotal || 0);
             });
 
-            // 3. 工種小計列設定
+            // 3. 第二頁：工種小計列
             ws.getCell(`A${curRow}`).value = null;
 
             const subtotalB = ws.getCell(`B${curRow}`);
@@ -1335,6 +1338,7 @@ async function exportQuoteToExcel() {
             curRow += 2;
         });
 
+        // 填寫第一頁金額
         function fillTotalCell(cellRef, value) {
             const cell = ws.getCell(cellRef);
             if (value !== undefined && value !== null && Number(value) > 0) {
@@ -1362,6 +1366,7 @@ async function exportQuoteToExcel() {
         fillTotalCell('E19', totals.tax);
         fillTotalCell('F20', totals.grandTotal);
 
+        // 【修正訂金 30% 四期付款邏輯，精準填入第一頁】
         const p1 = Math.round(totals.grandTotal * 0.3);
         const p2 = Math.round(totals.grandTotal * 0.3);
         const p3 = Math.round(totals.grandTotal * 0.3);
