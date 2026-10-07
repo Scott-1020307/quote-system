@@ -305,7 +305,7 @@ button:hover {
 <div class="container">
 
 <h1>
-    室內裝修報價與工程進度管理系統 <span style="font-size: 18px; color: #2563eb;">(單價庫/對齊修正版)</span>
+    室內裝修報價與工程進度管理系統 <span style="font-size: 18px; color: #2563eb;">(單價庫/第10列精準對齊版)</span>
 </h1>
 
 
@@ -1169,8 +1169,8 @@ async function exportQuoteToExcel() {
         ws.getCell('A7').value = `工程地點 :${projectLocation}`;
         if (dateStr) ws.getCell('G7').value = dateStr;
 
-        // 清空第一頁預設 7 行工種資料 (11~17 列)，第 18 列留空備用
-        for (let r = 11; r <= 18; r++) {
+        // 清空第一頁預設工種資料 (10~17 列)
+        for (let r = 10; r <= 17; r++) {
             ws.getCell(`A${r}`).value = null;
             ws.getCell(`B${r}`).value = null;
             ws.getCell(`C${r}`).value = null;
@@ -1228,18 +1228,18 @@ async function exportQuoteToExcel() {
             let catSum = 0;
             const numStr = numMap[idx] || String(idx + 1);
 
-            // 第一頁總表：安全填寫於 11~17 列 (絕對不碰第 19、20 列)
+            // 第一頁總表：填寫於 10~16 列 (第一個工種精準寫入第 10 列！)
             if (idx < 6) { 
-                const mainRow = 11 + idx;
+                const mainRow = 10 + idx;
                 ws.getCell(`A${mainRow}`).value = numStr;
                 ws.getCell(`B${mainRow}`).value = cat;
                 ws.getCell(`C${mainRow}`).value = 1;
                 ws.getCell(`D${mainRow}`).value = '式';
             } else if (idx === 6) { 
-                ws.getCell('A17').value = numStr;
-                ws.getCell('B17').value = usedCategories.length > 7 ? `${cat}等其餘工程` : cat;
-                ws.getCell('C17').value = 1;
-                ws.getCell('D17').value = '式';
+                ws.getCell('A16').value = numStr;
+                ws.getCell('B16').value = usedCategories.length > 7 ? `${cat}等其餘工程` : cat;
+                ws.getCell('C16').value = 1;
+                ws.getCell('D16').value = '式';
             }
 
             // 第二頁：工程標題
@@ -1309,12 +1309,12 @@ async function exportQuoteToExcel() {
 
             // 回填第一頁總表金額
             if (idx < 6) {
-                fillTotalCell(`E${11 + idx}`, catSum);
-                fillTotalCell(`F${11 + idx}`, catSum);
+                fillTotalCell(`E${10 + idx}`, catSum);
+                fillTotalCell(`F${10 + idx}`, catSum);
             } else {
                 otherCatSum += catSum;
-                fillTotalCell('E17', otherCatSum);
-                fillTotalCell('F17', otherCatSum);
+                fillTotalCell('E16', otherCatSum);
+                fillTotalCell('F16', otherCatSum);
             }
 
             curRow += 2;
@@ -1330,14 +1330,14 @@ async function exportQuoteToExcel() {
             }
         }
 
-        // 精準一對一校正列號與金額
+        // 計算金額並 100% 精準對齊截圖中的固定文字列！
         const totals = calculateTotals();
 
-        // 【列 19】：小計 (Subtotal) ➔ 精準寫在 E19 / F19
+        // 【列 19】：小計 (Subtotal) ➔ 對齊文字「小計」
         fillTotalCell('E19', totals.subtotal);
         fillTotalCell('F19', totals.subtotal);
 
-        // 【列 20】：工程管理費 (10%) ➔ 精準寫在 E20 / F20
+        // 【列 20】：工程管理費 (10%) ➔ 對齊文字「工程管理費 (10%)」
         if (document.getElementById('chkManagementFee').checked && totals.managementFee > 0) {
             ws.getCell('C20').value = 1;
             ws.getCell('D20').value = '式';
@@ -1350,10 +1350,10 @@ async function exportQuoteToExcel() {
             ws.getCell('F20').value = null;
         }
 
-        // 【列 21】：合計 (小計 + 管理費) ➔ 精準寫在 F21
+        // 【列 21】：合計 (小計 + 管理費) ➔ 對齊文字「合計」
         fillTotalCell('F21', totals.subtotal + totals.managementFee);
 
-        // 【列 22】：營業稅 (5%) ➔ 精準寫在 E22 / F22
+        // 【列 22】：營業稅 (5%) ➔ 對齊文字「營業稅 (5%)」
         if (document.getElementById('chkTax').checked && totals.tax > 0) {
             ws.getCell('C22').value = 1;
             ws.getCell('D22').value = '式';
@@ -1366,7 +1366,7 @@ async function exportQuoteToExcel() {
             ws.getCell('F22').value = null;
         }
 
-        // 【列 23】：總計 (Grand Total) ➔ 精準寫在 F23
+        // 【列 23】：總計 (Grand Total) ➔ 對齊文字「總計」
         fillTotalCell('F23', totals.grandTotal);
 
         // 【列 27~30】：付款方式對齊（訂金27、木工28、油漆29、尾款30）
@@ -1375,7 +1375,6 @@ async function exportQuoteToExcel() {
         const p3 = Math.round(totals.grandTotal * 0.3);
         const p4 = totals.grandTotal - p1 - p2 - p3;
 
-        // 先把列 26 舊的多餘數值清空
         ws.getCell('F26').value = null;
 
         fillTotalCell('F27', p1);
