@@ -1148,7 +1148,7 @@ async function exportQuoteToExcel() {
         } else {
             const response = await fetch('./template.xlsx', { cache: 'no-store' });
             if (!response.ok) {
-                alert('找不到 template.xlsx！請確認檔案與 HTML 放在同個資料夾，或使用下方「手動載入範本」按鈕選擇範本。');
+                alert('找不到 template.xlsx！請確認檔案與 HTML 放在同個資料夾，或使用「手動載入範本」選取 template.xlsx。');
                 return;
             }
             arrayBuffer = await response.arrayBuffer();
@@ -1163,11 +1163,13 @@ async function exportQuoteToExcel() {
             return;
         }
 
+        // 第一頁基本資料填寫
         ws.getCell('A6').value = `客戶名稱 :${clientName}`;
         ws.getCell('G6').value = contractNo;
         ws.getCell('A7').value = `工程地點 :${projectLocation}`;
         if (dateStr) ws.getCell('G7').value = dateStr;
 
+        // 清空第二頁舊內容
         for (let r = 48; r <= 150; r++) {
             for (let c = 1; c <= 7; c++) {
                 ws.getCell(r, c).value = null;
@@ -1194,7 +1196,6 @@ async function exportQuoteToExcel() {
             grouped[item.category].push(item);
         });
 
-        // 包含所有支援工種的完整順序清單
         const catOrderList = [
             '水電工程',
             '燈具工程',
@@ -1218,12 +1219,13 @@ async function exportQuoteToExcel() {
         let activeIdx = 0;
         const categoryTotals = {};
 
-        function setSecondPageFont(cell, bold) {
-            cell.font = { name: 'Microsoft JhengHei', size: 12, bold: bold, italic: false, underline: false };
-        }
-        function alignLeft(cell) { cell.alignment = { horizontal: 'left', vertical: 'center', wrapText: false }; }
-        function alignCenter(cell) { cell.alignment = { horizontal: 'center', vertical: 'center', wrapText: false }; }
-        function alignRight(cell) { cell.alignment = { horizontal: 'right', vertical: 'center', wrapText: false }; }
+        // 獨立定義三種明確的對齊與字體設定檔
+        const fontNormal = { name: 'Microsoft JhengHei', size: 12, bold: false };
+        const fontBold = { name: 'Microsoft JhengHei', size: 12, bold: true };
+
+        const alignLeft = { horizontal: 'left', vertical: 'center', wrapText: false };
+        const alignCenter = { horizontal: 'center', vertical: 'center', wrapText: false };
+        const alignRight = { horizontal: 'right', vertical: 'center', wrapText: false };
 
         catOrderList.forEach(cat => {
             const items = grouped[cat] || [];
@@ -1252,76 +1254,82 @@ async function exportQuoteToExcel() {
                 ws.getCell(`D${mainRow}`).value = '式';
             }
 
-            const headerA = ws.getCell(`A${curRow}`);
-            const headerB = ws.getCell(`B${curRow}`);
-            headerA.value = numStr;
-            headerB.value = cat;
+            // 1. 工種標題列設定 (例如: 一、水電工程)
+            const cellTitleA = ws.getCell(`A${curRow}`);
+            cellTitleA.value = numStr;
+            cellTitleA.font = fontBold;
+            cellTitleA.alignment = alignCenter; // A欄序號置中
 
-            for (let c = 1; c <= 7; c++) {
+            const cellTitleB = ws.getCell(`B${curRow}`);
+            cellTitleB.value = cat;
+            cellTitleB.font = fontBold;
+            cellTitleB.alignment = alignLeft; // B欄標題靠左
+
+            for (let c = 3; c <= 7; c++) {
                 const cell = ws.getCell(curRow, c);
-                setSecondPageFont(cell, true);
-                alignLeft(cell);
+                cell.font = fontBold;
+                cell.alignment = alignLeft;
             }
             curRow++;
 
+            // 2. 細項明細列設定
             items.forEach(item => {
-                const cellA = ws.getCell(`A${curRow}`);
-                const cellB = ws.getCell(`B${curRow}`);
-                const cellC = ws.getCell(`C${curRow}`);
-                const cellD = ws.getCell(`D${curRow}`);
-                const cellE = ws.getCell(`E${curRow}`);
-                const cellF = ws.getCell(`F${curRow}`);
-                const cellG = ws.getCell(`G${curRow}`);
+                ws.getCell(`A${curRow}`).value = null;
 
-                cellA.value = null;
+                const cellB = ws.getCell(`B${curRow}`);
                 cellB.value = item.name;
+                cellB.font = fontNormal;
+                cellB.alignment = alignLeft; // 項目名稱靠左
+
+                const cellC = ws.getCell(`C${curRow}`);
                 cellC.value = Number(item.qty);
+                cellC.font = fontNormal;
+                cellC.alignment = alignCenter; // 數量置中
+
+                const cellD = ws.getCell(`D${curRow}`);
                 cellD.value = item.unit;
+                cellD.font = fontNormal;
+                cellD.alignment = alignCenter; // 單位置中
+
+                const cellE = ws.getCell(`E${curRow}`);
                 cellE.value = Number(item.price);
                 cellE.numFmt = '#,##0';
+                cellE.font = fontNormal;
+                cellE.alignment = alignRight; // 單價靠右
+
+                const cellF = ws.getCell(`F${curRow}`);
                 cellF.value = Number(item.priceSubtotal);
                 cellF.numFmt = '#,##0';
-                cellG.value = null;
+                cellF.font = fontNormal;
+                cellF.alignment = alignRight; // 複價靠右
 
-                for (let c = 1; c <= 7; c++) {
-                    const cell = ws.getCell(curRow, c);
-                    setSecondPageFont(cell, false);
-                    alignLeft(cell);
-                }
-                alignRight(cellF);
+                const cellG = ws.getCell(`G${curRow}`);
+                cellG.value = null;
+                cellG.font = fontNormal;
+
                 curRow++;
                 catSum += Number(item.priceSubtotal || 0);
             });
 
-            const subtotalA = ws.getCell(`A${curRow}`);
-            const subtotalB = ws.getCell(`B${curRow}`);
-            const subtotalC = ws.getCell(`C${curRow}`);
-            const subtotalD = ws.getCell(`D${curRow}`);
-            const subtotalE = ws.getCell(`E${curRow}`);
-            const subtotalF = ws.getCell(`F${curRow}`);
-            const subtotalG = ws.getCell(`G${curRow}`);
+            // 3. 工種小計列設定
+            ws.getCell(`A${curRow}`).value = null;
 
-            subtotalA.value = null;
+            const subtotalB = ws.getCell(`B${curRow}`);
             subtotalB.value = `${cat}小計`;
-            subtotalC.value = null;
-            subtotalD.value = null;
-            subtotalE.value = null;
+            subtotalB.font = fontNormal;
+            subtotalB.alignment = alignCenter; // 小計字樣置中
+
+            ws.getCell(`C${curRow}`).value = null;
+            ws.getCell(`D${curRow}`).value = null;
+            ws.getCell(`E${curRow}`).value = null;
+
+            const subtotalF = ws.getCell(`F${curRow}`);
             subtotalF.value = catSum;
             subtotalF.numFmt = '#,##0';
-            subtotalG.value = null;
+            subtotalF.font = fontNormal;
+            subtotalF.alignment = alignRight; // 小計金額靠右
 
-            for (let c = 1; c <= 7; c++) {
-                const cell = ws.getCell(curRow, c);
-                setSecondPageFont(cell, false);
-            }
-
-            alignCenter(subtotalB);
-            alignRight(subtotalF);
-            alignLeft(subtotalA);
-            alignLeft(subtotalC);
-            alignLeft(subtotalD);
-            alignLeft(subtotalE);
-            alignLeft(subtotalG);
+            ws.getCell(`G${curRow}`).value = null;
 
             categoryTotals[cat] = catSum;
             curRow += 2;
