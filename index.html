@@ -1169,13 +1169,14 @@ async function exportQuoteToExcel() {
         ws.getCell('A7').value = `工程地點 :${projectLocation}`;
         if (dateStr) ws.getCell('G7').value = dateStr;
 
-        // 2. 清除第二頁 (48~150列) 舊內容與解鎖跨欄合併
+        // 2. 解除第二頁 (48~150列) 舊有合併與內容，準備統一重新設定
         for (let r = 48; r <= 150; r++) {
             for (let c = 1; c <= 7; c++) {
                 try {
                     ws.unmergeCells(r, c);
                 } catch(e) {}
-                ws.getCell(r, c).value = null;
+                const cell = ws.getCell(r, c);
+                cell.value = null;
             }
         }
 
@@ -1222,9 +1223,8 @@ async function exportQuoteToExcel() {
         let activeIdx = 0;
         const categoryTotals = {};
 
+        // 設定：統一使用正常字體（不粗體）與靠左對齊
         const fontNormal = { name: 'Microsoft JhengHei', size: 12, bold: false };
-        const fontBold = { name: 'Microsoft JhengHei', size: 12, bold: true };
-
         const alignLeft = { horizontal: 'left', vertical: 'center' };
         const alignCenter = { horizontal: 'center', vertical: 'center' };
         const alignRight = { horizontal: 'right', vertical: 'center' };
@@ -1257,22 +1257,28 @@ async function exportQuoteToExcel() {
                 ws.getCell(`D${mainRow}`).value = '式';
             }
 
-            // 【完全精準還原原始範本樣式】
-            // 1. 工程標題（A+B 合併，格式：一 水電工程，粗體、靠左）
-            ws.mergeCells(curRow, 1, curRow, 2); // 合併 A 欄與 B 欄
-            const titleCell = ws.getCell(`A${curRow}`);
-            titleCell.value = `${numStr} ${cat}`; // 中間空格
-            titleCell.font = fontBold;
-            titleCell.alignment = alignLeft;
+            // 【第二頁改動】：全部統一靠左、不使用粗體
+
+            // 1. 工程標題（靠左、不粗體）
+            const cellTitleA = ws.getCell(`A${curRow}`);
+            cellTitleA.value = numStr;
+            cellTitleA.font = fontNormal;
+            cellTitleA.alignment = alignLeft;
+
+            const cellTitleB = ws.getCell(`B${curRow}`);
+            cellTitleB.value = cat;
+            cellTitleB.font = fontNormal;
+            cellTitleB.alignment = alignLeft;
             curRow++;
 
-            // 2. 細項資料（A+B 合併，格式：  新增插座，縮排、一般字體）
+            // 2. 細項資料（靠左、不粗體）
             items.forEach(item => {
-                ws.mergeCells(curRow, 1, curRow, 2); // 合併 A 欄與 B 欄
-                const itemCell = ws.getCell(`A${curRow}`);
-                itemCell.value = `  ${item.name}`; // 前方加兩個全形空格達成範本原始縮排
-                itemCell.font = fontNormal;
-                itemCell.alignment = alignLeft;
+                ws.getCell(`A${curRow}`).value = null;
+
+                const cellB = ws.getCell(`B${curRow}`);
+                cellB.value = item.name;
+                cellB.font = fontNormal;
+                cellB.alignment = alignLeft; // 強制靠左
 
                 const cellC = ws.getCell(`C${curRow}`);
                 cellC.value = Number(item.qty);
@@ -1302,12 +1308,13 @@ async function exportQuoteToExcel() {
                 catSum += Number(item.priceSubtotal || 0);
             });
 
-            // 3. 工種小計列（A+B 合併，格式：小計，粗體、置中）
-            ws.mergeCells(curRow, 1, curRow, 2); // 合併 A 欄與 B 欄
-            const subtotalLabelCell = ws.getCell(`A${curRow}`);
-            subtotalLabelCell.value = '小計';
-            subtotalLabelCell.font = fontBold;
-            subtotalLabelCell.alignment = alignCenter; // 精準置中
+            // 3. 工種小計列（靠左、不粗體）
+            ws.getCell(`A${curRow}`).value = null;
+
+            const subtotalB = ws.getCell(`B${curRow}`);
+            subtotalB.value = `${cat}小計`;
+            subtotalB.font = fontNormal;
+            subtotalB.alignment = alignLeft; // 強制靠左
 
             const subtotalF = ws.getCell(`F${curRow}`);
             subtotalF.value = catSum;
@@ -1349,16 +1356,19 @@ async function exportQuoteToExcel() {
         fillTotalCell('E19', totals.tax);
         fillTotalCell('F20', totals.grandTotal);
 
-        // 精準計算訂金 30%、二期 30%、三期 30%、尾款 10%
+        // 精準填入付款方式
+        ws.getCell('F22').value = null;
+        ws.getCell('F23').value = null;
+
         const p1 = Math.round(totals.grandTotal * 0.3);
         const p2 = Math.round(totals.grandTotal * 0.3);
         const p3 = Math.round(totals.grandTotal * 0.3);
         const p4 = totals.grandTotal - p1 - p2 - p3;
 
-        fillTotalCell('F22', p1);
-        fillTotalCell('F23', p2);
-        fillTotalCell('F24', p3);
-        fillTotalCell('F25', p4);
+        fillTotalCell('F24', p1);
+        fillTotalCell('F25', p2);
+        fillTotalCell('F26', p3);
+        fillTotalCell('F27', p4);
 
         for (let r = 48; r <= 150; r++) {
             ws.getCell(`G${r}`).value = null;
