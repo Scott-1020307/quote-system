@@ -305,7 +305,7 @@ button:hover {
 <div class="container">
 
 <h1>
-    室內裝修報價與工程進度管理系統 <span style="font-size: 18px; color: #2563eb;">(單價庫/可編輯版)</span>
+    室內裝修報價與工程進度管理系統 <span style="font-size: 18px; color: #2563eb;">(單價庫/動態套用版)</span>
 </h1>
 
 
@@ -1169,7 +1169,17 @@ async function exportQuoteToExcel() {
         ws.getCell('A7').value = `工程地點 :${projectLocation}`;
         if (dateStr) ws.getCell('G7').value = dateStr;
 
-        // 2. 解除第二頁 (48~150列) 舊有合併與內容，準備統一重新設定
+        // 清空第一頁預設表格列 (11~15 列)
+        for (let r = 11; r <= 15; r++) {
+            ws.getCell(`A${r}`).value = null;
+            ws.getCell(`B${r}`).value = null;
+            ws.getCell(`C${r}`).value = null;
+            ws.getCell(`D${r}`).value = null;
+            ws.getCell(`E${r}`).value = null;
+            ws.getCell(`F${r}`).value = null;
+        }
+
+        // 2. 解除第二頁 (48~150列) 舊有內容與格式，準備動態寫入
         for (let r = 48; r <= 150; r++) {
             for (let c = 1; c <= 7; c++) {
                 try {
@@ -1194,72 +1204,37 @@ async function exportQuoteToExcel() {
             ws.addRowBreak(47);
         }
 
-        const grouped = {};
+        // 動態收集有資料的工種列表
+        const usedCategories = [];
         currentItems.forEach(item => {
-            if (!grouped[item.category]) grouped[item.category] = [];
-            grouped[item.category].push(item);
+            if (!usedCategories.includes(item.category)) {
+                usedCategories.push(item.category);
+            }
         });
 
-        const catOrderList = [
-            '水電工程',
-            '燈具工程',
-            '木作工程',
-            '油漆工程',
-            '雜項工程',
-            '保護工程',
-            '拆除工程',
-            '木地板工程'
-        ];
-        const numMap = ['一', '二', '三', '四', '五', '六', '七', '八'];
-        const mainRowMap = {
-            '水電工程': 11,
-            '燈具工程': 12,
-            '木作工程': 13,
-            '油漆工程': 14,
-            '雜項工程': 15
-        };
-
+        const numMap = ['一', '二', '三', '四', '五', '六', '七', '八', '九', '十'];
         let curRow = 49;
-        let activeIdx = 0;
-        const categoryTotals = {};
-
-        // 設定：統一使用正常字體（不粗體）與靠左對齊
         const fontNormal = { name: 'Microsoft JhengHei', size: 12, bold: false };
         const alignLeft = { horizontal: 'left', vertical: 'center' };
         const alignCenter = { horizontal: 'center', vertical: 'center' };
         const alignRight = { horizontal: 'right', vertical: 'center' };
 
-        catOrderList.forEach(cat => {
-            const items = grouped[cat] || [];
-            const mainRow = mainRowMap[cat];
-
-            if (items.length === 0) {
-                if (mainRow) {
-                    ws.getCell(`A${mainRow}`).value = null;
-                    ws.getCell(`B${mainRow}`).value = null;
-                    ws.getCell(`C${mainRow}`).value = null;
-                    ws.getCell(`D${mainRow}`).value = null;
-                    ws.getCell(`E${mainRow}`).value = null;
-                    ws.getCell(`F${mainRow}`).value = null;
-                }
-                return;
-            }
+        // 智慧型動態套用：有什麼工種，就依序寫入什麼！
+        usedCategories.forEach((cat, idx) => {
+            const items = currentItems.filter(item => item.category === cat);
+            if (items.length === 0) return;
 
             let catSum = 0;
-            const numStr = numMap[activeIdx] || String(activeIdx + 1);
-            activeIdx++;
+            const numStr = numMap[idx] || String(idx + 1);
 
-            // 第一頁對應工種填寫
-            if (mainRow) {
-                ws.getCell(`A${mainRow}`).value = numStr;
-                ws.getCell(`B${mainRow}`).value = cat;
-                ws.getCell(`C${mainRow}`).value = 1;
-                ws.getCell(`D${mainRow}`).value = '式';
-            }
+            // 第一頁總表：智慧依序填入 (第 11 列開始往下填)
+            const mainRow = 11 + idx;
+            ws.getCell(`A${mainRow}`).value = numStr;
+            ws.getCell(`B${mainRow}`).value = cat;
+            ws.getCell(`C${mainRow}`).value = 1;
+            ws.getCell(`D${mainRow}`).value = '式';
 
-            // 【第二頁改動】：全部統一靠左、不使用粗體
-
-            // 1. 工程標題（靠左、不粗體）
+            // 第二頁：工程標題
             const cellTitleA = ws.getCell(`A${curRow}`);
             cellTitleA.value = numStr;
             cellTitleA.font = fontNormal;
@@ -1271,14 +1246,14 @@ async function exportQuoteToExcel() {
             cellTitleB.alignment = alignLeft;
             curRow++;
 
-            // 2. 細項資料（靠左、不粗體）
+            // 第二頁：細項明細
             items.forEach(item => {
                 ws.getCell(`A${curRow}`).value = null;
 
                 const cellB = ws.getCell(`B${curRow}`);
                 cellB.value = item.name;
                 cellB.font = fontNormal;
-                cellB.alignment = alignLeft; // 強制靠左
+                cellB.alignment = alignLeft;
 
                 const cellC = ws.getCell(`C${curRow}`);
                 cellC.value = Number(item.qty);
@@ -1308,13 +1283,13 @@ async function exportQuoteToExcel() {
                 catSum += Number(item.priceSubtotal || 0);
             });
 
-            // 3. 工種小計列（靠左、不粗體）
+            // 第二頁：小計列
             ws.getCell(`A${curRow}`).value = null;
 
             const subtotalB = ws.getCell(`B${curRow}`);
             subtotalB.value = `${cat}小計`;
             subtotalB.font = fontNormal;
-            subtotalB.alignment = alignLeft; // 強制靠左
+            subtotalB.alignment = alignLeft;
 
             const subtotalF = ws.getCell(`F${curRow}`);
             subtotalF.value = catSum;
@@ -1324,11 +1299,13 @@ async function exportQuoteToExcel() {
 
             ws.getCell(`G${curRow}`).value = null;
 
-            categoryTotals[cat] = catSum;
+            // 回填第一頁總表的金額
+            fillTotalCell(`E${mainRow}`, catSum);
+            fillTotalCell(`F${mainRow}`, catSum);
+
             curRow += 2;
         });
 
-        // 填寫第一頁金額小計與總價
         function fillTotalCell(cellRef, value) {
             const cell = ws.getCell(cellRef);
             if (value !== undefined && value !== null && Number(value) > 0) {
@@ -1339,24 +1316,14 @@ async function exportQuoteToExcel() {
             }
         }
 
-        fillTotalCell('E11', categoryTotals['水電工程']);
-        fillTotalCell('F11', categoryTotals['水電工程']);
-        fillTotalCell('E12', categoryTotals['燈具工程']);
-        fillTotalCell('F12', categoryTotals['燈具工程']);
-        fillTotalCell('E13', categoryTotals['木作工程']);
-        fillTotalCell('F13', categoryTotals['木作工程']);
-        fillTotalCell('E14', categoryTotals['油漆工程']);
-        fillTotalCell('F14', categoryTotals['油漆工程']);
-        fillTotalCell('E15', categoryTotals['雜項工程']);
-        fillTotalCell('F15', categoryTotals['雜項工程']);
-
+        // 計算並填寫第一頁總金額
         const totals = calculateTotals();
         fillTotalCell('E17', totals.managementFee);
         fillTotalCell('F18', totals.subtotal + totals.managementFee);
         fillTotalCell('E19', totals.tax);
         fillTotalCell('F20', totals.grandTotal);
 
-        // 精準填入付款方式
+        // 付款方式 30%, 30%, 30%, 10%
         ws.getCell('F22').value = null;
         ws.getCell('F23').value = null;
 
