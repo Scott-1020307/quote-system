@@ -305,7 +305,7 @@ button:hover {
 <div class="container">
 
 <h1>
-    室內裝修報價與工程進度管理系統 <span style="font-size: 18px; color: #2563eb;">(單價庫/第10列精準對齊版)</span>
+    室內裝修報價與工程進度管理系統 <span style="font-size: 18px; color: #2563eb;">(單價庫/小計與管理費對齊版)</span>
 </h1>
 
 
@@ -1228,7 +1228,7 @@ async function exportQuoteToExcel() {
             let catSum = 0;
             const numStr = numMap[idx] || String(idx + 1);
 
-            // 第一頁總表：填寫於 10~16 列 (第一個工種精準寫入第 10 列！)
+            // 第一頁總表：填寫於 10~16 列 (最完美對齊 7 個工種)
             if (idx < 6) { 
                 const mainRow = 10 + idx;
                 ws.getCell(`A${mainRow}`).value = numStr;
@@ -1330,44 +1330,44 @@ async function exportQuoteToExcel() {
             }
         }
 
-        // 計算金額並 100% 精準對齊截圖中的固定文字列！
+        // 精準填寫金額，與截圖完全一對一重合！
         const totals = calculateTotals();
 
-        // 【列 19】：小計 (Subtotal) ➔ 對齊文字「小計」
-        fillTotalCell('E19', totals.subtotal);
-        fillTotalCell('F19', totals.subtotal);
+        // 【列 18】：小計 (Subtotal) ➔ 精準對齊「小計」這行
+        fillTotalCell('E18', totals.subtotal);
+        fillTotalCell('F18', totals.subtotal);
 
-        // 【列 20】：工程管理費 (10%) ➔ 對齊文字「工程管理費 (10%)」
+        // 【列 19】：工程管理費 (10%) ➔ 精準對齊「工程管理費 (10%)」這行
         if (document.getElementById('chkManagementFee').checked && totals.managementFee > 0) {
-            ws.getCell('C20').value = 1;
-            ws.getCell('D20').value = '式';
-            fillTotalCell('E20', totals.managementFee);
-            fillTotalCell('F20', totals.managementFee);
+            ws.getCell('C19').value = 1;
+            ws.getCell('D19').value = '式';
+            fillTotalCell('E19', totals.managementFee);
+            fillTotalCell('F19', totals.managementFee);
         } else {
-            ws.getCell('C20').value = null;
-            ws.getCell('D20').value = null;
-            ws.getCell('E20').value = null;
-            ws.getCell('F20').value = null;
+            ws.getCell('C19').value = null;
+            ws.getCell('D19').value = null;
+            ws.getCell('E19').value = null;
+            ws.getCell('F19').value = null;
         }
 
-        // 【列 21】：合計 (小計 + 管理費) ➔ 對齊文字「合計」
-        fillTotalCell('F21', totals.subtotal + totals.managementFee);
+        // 【列 20】：合計 (小計 + 管理費) ➔ 精準對齊「合計」這行
+        fillTotalCell('F20', totals.subtotal + totals.managementFee);
 
-        // 【列 22】：營業稅 (5%) ➔ 對齊文字「營業稅 (5%)」
+        // 【列 21】：營業稅 (5%) ➔ 精準對齊「營業稅 (5%)」這行
         if (document.getElementById('chkTax').checked && totals.tax > 0) {
-            ws.getCell('C22').value = 1;
-            ws.getCell('D22').value = '式';
-            fillTotalCell('E22', totals.tax);
-            fillTotalCell('F22', totals.tax);
+            ws.getCell('C21').value = 1;
+            ws.getCell('D21').value = '式';
+            fillTotalCell('E21', totals.tax);
+            fillTotalCell('F21', totals.tax);
         } else {
-            ws.getCell('C22').value = null;
-            ws.getCell('D22').value = null;
-            ws.getCell('E22').value = null;
-            ws.getCell('F22').value = null;
+            ws.getCell('C21').value = null;
+            ws.getCell('D21').value = null;
+            ws.getCell('E21').value = null;
+            ws.getCell('F21').value = null;
         }
 
-        // 【列 23】：總計 (Grand Total) ➔ 對齊文字「總計」
-        fillTotalCell('F23', totals.grandTotal);
+        // 【列 22】：總計 (Grand Total) ➔ 精準對齊「總計」這行
+        fillTotalCell('F22', totals.grandTotal);
 
         // 【列 27~30】：付款方式對齊（訂金27、木工28、油漆29、尾款30）
         const p1 = Math.round(totals.grandTotal * 0.3);
