@@ -1169,15 +1169,13 @@ async function exportQuoteToExcel() {
         ws.getCell('A7').value = `工程地點 :${projectLocation}`;
         if (dateStr) ws.getCell('G7').value = dateStr;
 
-        // 【清空並重置第二頁】強制作廢原本範本舊有的縮排與對齊屬性
+        // 2. 清除第二頁 (48~150列) 舊內容與解鎖跨欄合併
         for (let r = 48; r <= 150; r++) {
             for (let c = 1; c <= 7; c++) {
                 try {
                     ws.unmergeCells(r, c);
                 } catch(e) {}
-                const cell = ws.getCell(r, c);
-                cell.value = null;
-                cell.alignment = { horizontal: 'left', vertical: 'center', indent: 0, wrapText: false };
+                ws.getCell(r, c).value = null;
             }
         }
 
@@ -1227,10 +1225,9 @@ async function exportQuoteToExcel() {
         const fontNormal = { name: 'Microsoft JhengHei', size: 12, bold: false };
         const fontBold = { name: 'Microsoft JhengHei', size: 12, bold: true };
 
-        // 【關鍵對齊設定檔】強制寫死 indent: 0 消除所有縮排偏移
-        const alignStrictLeft = { horizontal: 'left', vertical: 'center', indent: 0, wrapText: false };
-        const alignStrictCenter = { horizontal: 'center', vertical: 'center', indent: 0, wrapText: false };
-        const alignStrictRight = { horizontal: 'right', vertical: 'center', indent: 0, wrapText: false };
+        const alignLeft = { horizontal: 'left', vertical: 'center' };
+        const alignCenter = { horizontal: 'center', vertical: 'center' };
+        const alignRight = { horizontal: 'right', vertical: 'center' };
 
         catOrderList.forEach(cat => {
             const items = grouped[cat] || [];
@@ -1252,6 +1249,7 @@ async function exportQuoteToExcel() {
             const numStr = numMap[activeIdx] || String(activeIdx + 1);
             activeIdx++;
 
+            // 第一頁對應工種填寫
             if (mainRow) {
                 ws.getCell(`A${mainRow}`).value = numStr;
                 ws.getCell(`B${mainRow}`).value = cat;
@@ -1259,80 +1257,63 @@ async function exportQuoteToExcel() {
                 ws.getCell(`D${mainRow}`).value = '式';
             }
 
-            // 1. 工種標題列（如：一、水電工程）
-            const cellTitleA = ws.getCell(`A${curRow}`);
-            cellTitleA.value = numStr;
-            cellTitleA.font = fontBold;
-            cellTitleA.alignment = alignStrictCenter;
-
-            const cellTitleB = ws.getCell(`B${curRow}`);
-            cellTitleB.value = cat;
-            cellTitleB.font = fontBold;
-            cellTitleB.alignment = alignStrictLeft; // 強制靠最左邊
-
-            for (let c = 3; c <= 7; c++) {
-                const cell = ws.getCell(curRow, c);
-                cell.font = fontBold;
-                cell.alignment = alignStrictLeft;
-            }
+            // 【完全精準還原原始範本樣式】
+            // 1. 工程標題（A+B 合併，格式：一 水電工程，粗體、靠左）
+            ws.mergeCells(curRow, 1, curRow, 2); // 合併 A 欄與 B 欄
+            const titleCell = ws.getCell(`A${curRow}`);
+            titleCell.value = `${numStr} ${cat}`; // 中間空格
+            titleCell.font = fontBold;
+            titleCell.alignment = alignLeft;
             curRow++;
 
-            // 2. 細項明細列
+            // 2. 細項資料（A+B 合併，格式：  新增插座，縮排、一般字體）
             items.forEach(item => {
-                ws.getCell(`A${curRow}`).value = null;
-
-                const cellB = ws.getCell(`B${curRow}`);
-                cellB.value = item.name;
-                cellB.font = fontNormal;
-                cellB.alignment = alignStrictLeft; // 強制品名靠最左邊
+                ws.mergeCells(curRow, 1, curRow, 2); // 合併 A 欄與 B 欄
+                const itemCell = ws.getCell(`A${curRow}`);
+                itemCell.value = `  ${item.name}`; // 前方加兩個全形空格達成範本原始縮排
+                itemCell.font = fontNormal;
+                itemCell.alignment = alignLeft;
 
                 const cellC = ws.getCell(`C${curRow}`);
                 cellC.value = Number(item.qty);
                 cellC.font = fontNormal;
-                cellC.alignment = alignStrictCenter;
+                cellC.alignment = alignCenter;
 
                 const cellD = ws.getCell(`D${curRow}`);
                 cellD.value = item.unit;
                 cellD.font = fontNormal;
-                cellD.alignment = alignStrictCenter;
+                cellD.alignment = alignCenter;
 
                 const cellE = ws.getCell(`E${curRow}`);
                 cellE.value = Number(item.price);
                 cellE.numFmt = '#,##0';
                 cellE.font = fontNormal;
-                cellE.alignment = alignStrictRight;
+                cellE.alignment = alignRight;
 
                 const cellF = ws.getCell(`F${curRow}`);
                 cellF.value = Number(item.priceSubtotal);
                 cellF.numFmt = '#,##0';
                 cellF.font = fontNormal;
-                cellF.alignment = alignStrictRight;
+                cellF.alignment = alignRight;
 
-                const cellG = ws.getCell(`G${curRow}`);
-                cellG.value = null;
-                cellG.font = fontNormal;
+                ws.getCell(`G${curRow}`).value = null;
 
                 curRow++;
                 catSum += Number(item.priceSubtotal || 0);
             });
 
-            // 3. 工種小計列
-            ws.getCell(`A${curRow}`).value = null;
-
-            const subtotalB = ws.getCell(`B${curRow}`);
-            subtotalB.value = `${cat}小計`;
-            subtotalB.font = fontNormal;
-            subtotalB.alignment = alignStrictCenter;
-
-            ws.getCell(`C${curRow}`).value = null;
-            ws.getCell(`D${curRow}`).value = null;
-            ws.getCell(`E${curRow}`).value = null;
+            // 3. 工種小計列（A+B 合併，格式：小計，粗體、置中）
+            ws.mergeCells(curRow, 1, curRow, 2); // 合併 A 欄與 B 欄
+            const subtotalLabelCell = ws.getCell(`A${curRow}`);
+            subtotalLabelCell.value = '小計';
+            subtotalLabelCell.font = fontBold;
+            subtotalLabelCell.alignment = alignCenter; // 精準置中
 
             const subtotalF = ws.getCell(`F${curRow}`);
             subtotalF.value = catSum;
             subtotalF.numFmt = '#,##0';
             subtotalF.font = fontNormal;
-            subtotalF.alignment = alignStrictRight;
+            subtotalF.alignment = alignRight;
 
             ws.getCell(`G${curRow}`).value = null;
 
@@ -1340,6 +1321,7 @@ async function exportQuoteToExcel() {
             curRow += 2;
         });
 
+        // 填寫第一頁金額小計與總價
         function fillTotalCell(cellRef, value) {
             const cell = ws.getCell(cellRef);
             if (value !== undefined && value !== null && Number(value) > 0) {
@@ -1367,6 +1349,7 @@ async function exportQuoteToExcel() {
         fillTotalCell('E19', totals.tax);
         fillTotalCell('F20', totals.grandTotal);
 
+        // 精準計算訂金 30%、二期 30%、三期 30%、尾款 10%
         const p1 = Math.round(totals.grandTotal * 0.3);
         const p2 = Math.round(totals.grandTotal * 0.3);
         const p3 = Math.round(totals.grandTotal * 0.3);
