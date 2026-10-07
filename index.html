@@ -8,7 +8,7 @@
 <meta name="viewport"
       content="width=device-width, initial-scale=1.0">
 
-<title>室內裝修報價與工程進度管理系統</title>
+<title>室內裝修報價與工程進度管理系統 - 表格可編輯與單價庫版</title>
 
 <script src="https://cdn.jsdelivr.net/npm/exceljs@4.3.0/dist/exceljs.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/file-saver@2.0.5/dist/FileSaver.min.js"></script>
@@ -52,6 +52,9 @@ h1 {
 .card h2 {
     margin-top: 0;
     font-size: 20px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
 }
 
 .grid {
@@ -145,12 +148,19 @@ button:hover {
 .quote-table th,
 .quote-table td {
     border: 1px solid #ddd;
-    padding: 8px;
+    padding: 6px;
     vertical-align: middle;
 }
 
 .quote-table th {
     background: #f0f0f0;
+}
+
+.quote-table input[type="text"],
+.quote-table input[type="number"],
+.quote-table select {
+    padding: 6px 8px;
+    font-size: 14px;
 }
 
 .right {
@@ -216,28 +226,74 @@ button:hover {
     margin-top: 10px;
 }
 
-@media (max-width: 900px) {
+.edit-hint {
+    background: #fef3c7;
+    border: 1px solid #fde047;
+    padding: 10px 14px;
+    border-radius: 8px;
+    margin-bottom: 12px;
+    font-weight: bold;
+    color: #854d0e;
+}
 
+/* Modal 彈出視窗樣式 */
+.modal-overlay {
+    display: none;
+    position: fixed;
+    top: 0; left: 0; width: 100%; height: 100%;
+    background: rgba(0,0,0,0.5);
+    justify-content: center;
+    align-items: center;
+    z-index: 1000;
+}
+
+.modal-overlay.show {
+    display: flex;
+}
+
+.modal-content {
+    background: white;
+    padding: 24px;
+    border-radius: 12px;
+    width: 90%;
+    max-width: 800px;
+    max-height: 85vh;
+    overflow-y: auto;
+    box-shadow: 0 4px 20px rgba(0,0,0,0.2);
+}
+
+.price-db-table {
+    width: 100%;
+    border-collapse: collapse;
+    margin-top: 15px;
+}
+
+.price-db-table th, .price-db-table td {
+    border: 1px solid #ddd;
+    padding: 8px;
+    text-align: left;
+}
+
+.price-db-table th {
+    background: #f8fafc;
+}
+
+@media (max-width: 900px) {
     .grid {
         grid-template-columns: repeat(2, 1fr);
     }
-
 }
 
 @media (max-width: 600px) {
-
     body {
         padding: 10px;
     }
-
     .grid {
         grid-template-columns: 1fr;
     }
-
     .summary-box {
         width: 100%;
     }
-
 }
 
 </style>
@@ -250,838 +306,530 @@ button:hover {
 <div class="container">
 
 <h1>
-    室內裝修報價與工程進度管理系統
+    室內裝修報價與工程進度管理系統 <span style="font-size: 18px; color: #2563eb;">(單價庫/可編輯版)</span>
 </h1>
 
 
-<!-- ==========================================================
-     功能按鈕
-========================================================== -->
-
+<!-- 功能按鈕 -->
 <div class="card">
-
     <div class="button-row">
-
-        <button
-            class="btn-gray"
-            onclick="toggleTestPage()">
-            測試資料
-        </button>
-
-        <button
-            class="btn-blue"
-            onclick="saveDraft()">
-            儲存草稿
-        </button>
-
-        <button
-            class="btn-gray"
-            onclick="loadDraft()">
-            載入草稿
-        </button>
-
-        <button
-            class="btn-red"
-            onclick="clearAllItemsData()">
-            清除報價
-        </button>
-
+        <button class="btn-gray" onclick="toggleTestPage()">測試資料</button>
+        <button class="btn-blue" onclick="saveDraft()">儲存草稿</button>
+        <button class="btn-gray" onclick="loadDraft()">載入草稿</button>
+        <button class="btn-red" onclick="clearAllItemsData()">清除報價</button>
     </div>
-
 </div>
 
 
-<!-- ==========================================================
-     測試資料
-========================================================== -->
-
-<div
-    id="testPanel"
-    class="card test-panel">
-
+<!-- 測試資料面板 -->
+<div id="testPanel" class="card test-panel">
     <h2>測試資料</h2>
-
     <div class="button-row">
-
-        <button
-            class="btn-blue"
-            onclick="loadTestData()">
-            載入測試資料
-        </button>
-
-        <button
-            class="btn-red"
-            onclick="clearAllItemsData()">
-            清除全部
-        </button>
-
+        <button class="btn-blue" onclick="loadTestData()">載入測試資料</button>
+        <button class="btn-red" onclick="clearAllItemsData()">清除全部</button>
     </div>
-
-    <div
-        id="testMonitor"
-        class="notice">
-        目前尚無資料
-    </div>
-
+    <div id="testMonitor" class="notice">目前尚無資料</div>
 </div>
 
 
-<!-- ==========================================================
-     基本資料
-========================================================== -->
-
+<!-- 基本資料 -->
 <div class="card">
-
     <h2>基本資料</h2>
-
     <div class="grid">
-
         <div class="field">
             <label>客戶名稱</label>
-            <input
-                id="clientName"
-                type="text">
+            <input id="clientName" type="text">
         </div>
-
         <div class="field">
             <label>工程地點</label>
-            <input
-                id="projectLocation"
-                type="text">
+            <input id="projectLocation" type="text">
         </div>
-
         <div class="field">
             <label>合約編號</label>
-            <input
-                id="contractNo"
-                type="text">
+            <input id="contractNo" type="text">
         </div>
-
         <div class="field">
             <label>報價日期</label>
-            <input
-                id="quoteDate"
-                type="date">
+            <input id="quoteDate" type="date">
         </div>
-
-        <div class="field">
-            <label>開工日期</label>
-            <input
-                id="startDate"
-                type="date">
-        </div>
-
         <div class="field">
             <label>預估工期 (工作天)</label>
-            <input
-                id="estimatedDays"
-                type="number"
-                value="45"
-                onchange="renderSchedule()">
+            <input id="estimatedDays" type="number" min="1" placeholder="例如：45" onchange="renderSchedule()">
         </div>
-
         <div class="field">
             <label>設計師</label>
-            <input
-                id="designerName"
-                type="text">
+            <input id="designerName" type="text">
         </div>
-
     </div>
-
 </div>
 
 
-<!-- ==========================================================
-     新增報價
-========================================================== -->
-
+<!-- 新增報價 -->
 <div class="card">
-
-    <h2>新增報價項目</h2>
-
+    <h2>
+        <span>新增報價項目</span>
+        <button class="btn-gray" style="font-size: 13px; font-weight: normal;" onclick="openPriceDbModal()">⚙️ 管理單價庫項目</button>
+    </h2>
     <div class="grid">
-
         <div class="field">
-
             <label>工程分類</label>
-
-            <select id="categorySelect">
-
-                <option value="">
-                    請選擇
-                </option>
-
-                <option value="水電工程">
-                    水電工程
-                </option>
-
-                <option value="燈具工程">
-                    燈具工程
-                </option>
-
-                <option value="木作工程">
-                    木作工程
-                </option>
-
-                <option value="油漆工程">
-                    油漆工程
-                </option>
-
-                <option value="雜項工程">
-                    雜項工程
-                </option>
-
-                <option value="保護工程">
-                    保護工程
-                </option>
-
-                <option value="拆除工程">
-                    拆除工程
-                </option>
-
-                <option value="泥作工程">
-                    泥作工程
-                </option>
-
-                <option value="玻璃工程">
-                    玻璃工程
-                </option>
-
-                <option value="木地板工程">
-                    木地板工程
-                </option>
-
+            <select id="categorySelect" onchange="onCategoryChange()">
+                <option value="">請選擇</option>
+                <option value="水電工程">水電工程</option>
+                <option value="燈具工程">燈具工程</option>
+                <option value="木作工程">木作工程</option>
+                <option value="油漆工程">油漆工程</option>
+                <option value="雜項工程">雜項工程</option>
+                <option value="保護工程">保護工程</option>
+                <option value="拆除工程">拆除工程</option>
+                <option value="木地板工程">木地板工程</option>
             </select>
-
         </div>
 
-
         <div class="field">
-
             <label>工程項目</label>
-
-            <input
-                id="subCategorySelect"
-                type="text">
-
+            <select id="itemPresetSelect" onchange="onItemPresetChange()">
+                <option value="">請先選擇工種</option>
+            </select>
+            <input id="subCategorySelect" type="text" style="display: none; margin-top: 5px;" placeholder="請輸入自訂項目名稱">
         </div>
 
-
         <div class="field">
-
             <label>數量</label>
-
-            <input
-                id="itemQty"
-                type="number"
-                step="0.01"
-                value="1">
-
+            <input id="itemQty" type="number" step="0.01" value="1">
         </div>
 
-
         <div class="field">
-
             <label>單位</label>
-
-            <input
-                id="itemUnit"
-                type="text"
-                value="式">
-
+            <input id="itemUnit" type="text" value="式">
         </div>
 
-
         <div class="field">
-
             <label>成本單價</label>
-
-            <input
-                id="costPrice"
-                type="number"
-                step="1">
-
+            <input id="costPrice" type="number" step="1">
         </div>
 
-
         <div class="field">
-
             <label>報價單價</label>
-
-            <input
-                id="quotePrice"
-                type="number"
-                step="1">
-
+            <input id="quotePrice" type="number" step="1">
         </div>
 
-
-        <div class="field">
-
+        <div class="field" style="grid-column: span 2;">
             <label>備註</label>
-
-            <input
-                id="itemNote"
-                type="text">
-
+            <input id="itemNote" type="text">
         </div>
-
     </div>
-
 
     <div class="button-row">
-
-        <button
-            class="btn-green"
-            onclick="addItem()">
-            加入報價
-        </button>
-
+        <button class="btn-green" onclick="addItem()">加入報價</button>
     </div>
-
 </div>
 
 
-<!-- ==========================================================
-     報價明細
-========================================================== -->
-
+<!-- 報價明細 -->
 <div class="card">
-
     <h2>報價明細</h2>
+    
+    <div class="edit-hint">
+        💡 提示：您可以直接在下方表格中修改工種、項目名稱、數量或單價，系統會自動更新複價與總價！
+    </div>
 
     <div style="overflow-x:auto;">
-
         <table class="quote-table">
-
             <thead>
-
                 <tr>
-
-                    <th>工種</th>
+                    <th style="width: 140px;">工種</th>
                     <th>項目</th>
-                    <th>數量</th>
-                    <th>單位</th>
-                    <th>成本</th>
-                    <th>報價單價</th>
-                    <th>複價</th>
+                    <th style="width: 90px;">數量</th>
+                    <th style="width: 80px;">單位</th>
+                    <th style="width: 110px;">成本</th>
+                    <th style="width: 120px;">報價單價</th>
+                    <th style="width: 130px;">複價</th>
                     <th>備註</th>
-                    <th>操作</th>
-
+                    <th style="width: 80px;">操作</th>
                 </tr>
-
             </thead>
-
             <tbody id="quoteTableBody">
             </tbody>
-
         </table>
-
     </div>
-
 </div>
 
 
-<!-- ==========================================================
-     費用設定
-========================================================== -->
-
+<!-- 費用設定 -->
 <div class="card">
-
     <h2>費用設定</h2>
-
     <div class="checkbox-row">
-
         <label>
-
-            <input
-                type="checkbox"
-                id="chkManagementFee"
-                checked
-                onchange="renderSummary()">
-
+            <input type="checkbox" id="chkManagementFee" checked onchange="renderSummary()">
             管理費 10%
-
         </label>
-
-
         <label>
-
-            <input
-                type="checkbox"
-                id="chkTax"
-                onchange="renderSummary()">
-
+            <input type="checkbox" id="chkTax" onchange="renderSummary()">
             稅金 5%
-
         </label>
-
-
         <label>
-
-            <input
-                type="checkbox"
-                id="chkShowPayment"
-                checked>
-
+            <input type="checkbox" id="chkShowPayment" checked>
             顯示付款方式
-
         </label>
-
     </div>
-
 </div>
 
 
-<!-- ==========================================================
-     備註
-========================================================== -->
-
+<!-- 備註 -->
 <div class="card">
-
     <h2>備註</h2>
-
-    <textarea
-        id="presetNotes"
-        placeholder="可輸入報價單備註">
-    </textarea>
-
+    <textarea id="presetNotes" placeholder="可輸入報價單備註"></textarea>
 </div>
 
 
-<!-- ==========================================================
-     報價總計
-========================================================== -->
-
+<!-- 報價總計 -->
 <div class="card">
-
     <h2>報價總計</h2>
-
     <div class="summary">
-
         <div class="summary-box">
-
             <div class="summary-row">
                 <span>工程小計</span>
                 <strong id="summarySubtotal">0</strong>
             </div>
-
             <div class="summary-row">
                 <span>管理費</span>
                 <strong id="summaryManagement">0</strong>
             </div>
-
             <div class="summary-row">
                 <span>稅金</span>
                 <strong id="summaryTax">0</strong>
             </div>
-
             <div class="summary-row total">
                 <span>工程總價</span>
                 <strong id="summaryGrandTotal">0</strong>
             </div>
-
         </div>
-
     </div>
-
 </div>
 
 
-<!-- ==========================================================
-     工程進度
-========================================================== -->
-
+<!-- 工程進度 -->
 <div class="card">
-
     <h2>工程進度預覽</h2>
-
-    <div
-        id="schedulePreview"
-        class="notice">
-        尚無工程資料
-    </div>
-
+    <div id="schedulePreview" class="notice">尚無工程資料</div>
 </div>
 
 
-<!-- ==========================================================
-     Excel
-========================================================== -->
-
+<!-- Excel 匯出 -->
 <div class="card">
-
-    <h2>Excel 匯出與套印</h2>
-
+    <h2>Excel 匯出</h2>
     <div class="notice">
-
-        Excel 範本檔案名稱必須為
-        <strong>template.xlsx</strong>
-        ，並且與本 HTML 放在同一個資料夾。
-
+        Excel 範本檔案名稱必須為 <strong>template.xlsx</strong>，並且與本 HTML 放在同一個資料夾。
     </div>
 
     <div class="button-row">
-
-        <button
-            class="btn-green"
-            onclick="exportQuoteToExcel()">
-
-            套印匯出 Excel (範本)
-
-        </button>
-
-        <button
-            class="btn-blue"
-            onclick="exportDirectExcel()">
-
-            轉成報價單 Excel
-
-        </button>
-
+        <button class="btn-green" onclick="exportQuoteToExcel()">套印匯出 Excel</button>
+        <button class="btn-blue" onclick="exportDirectExcel()">轉成報價單 Excel</button>
     </div>
+</div>
 
 </div>
 
+
+<!-- 單價庫管理 Modal -->
+<div id="priceDbModal" class="modal-overlay">
+    <div class="modal-content">
+        <h2>管理單價庫項目</h2>
+        <p style="font-size: 14px; color: #666;">您可以在這裡新增、修改或刪除預設的常用項目與單價。修改後會自動儲存在您的電腦中。</p>
+        
+        <div style="background: #f8fafc; padding: 12px; border-radius: 8px; margin-bottom: 15px;">
+            <h4 style="margin: 0 0 10px;">新增預設項目</h4>
+            <div class="grid" style="grid-template-columns: repeat(5, 1fr); gap: 8px;">
+                <select id="newDbCat">
+                    <option value="水電工程">水電工程</option>
+                    <option value="燈具工程">燈具工程</option>
+                    <option value="木作工程">木作工程</option>
+                    <option value="油漆工程">油漆工程</option>
+                    <option value="雜項工程">雜項工程</option>
+                    <option value="保護工程">保護工程</option>
+                    <option value="拆除工程">拆除工程</option>
+                    <option value="木地板工程">木地板工程</option>
+                </select>
+                <input id="newDbName" type="text" placeholder="項目名稱">
+                <input id="newDbUnit" type="text" placeholder="單位 (例: 坪)" value="坪">
+                <input id="newDbPrice" type="number" placeholder="報價單價">
+                <button class="btn-green" onclick="addPriceDbItem()">新增至單價庫</button>
+            </div>
+        </div>
+
+        <div style="max-height: 400px; overflow-y: auto;">
+            <table class="price-db-table">
+                <thead>
+                    <tr>
+                        <th>工種</th>
+                        <th>項目名稱</th>
+                        <th style="width: 80px;">單位</th>
+                        <th style="width: 120px;">報價單價</th>
+                        <th style="width: 80px;">操作</th>
+                    </tr>
+                </thead>
+                <tbody id="priceDbTableBody">
+                </tbody>
+            </table>
+        </div>
+
+        <div class="button-row" style="justify-content: flex-end; margin-top: 15px;">
+            <button class="btn-gray" onclick="resetDefaultPriceDb()">重置為預設單價庫</button>
+            <button class="btn-blue" onclick="closePriceDbModal()">關閉</button>
+        </div>
+    </div>
 </div>
 
 
 <script>
 
-
-// ==========================================================
-// 全域
-// ==========================================================
-
 let currentItems = [];
 
+// 預設的計價單價庫資料
+const INITIAL_PRICE_DB = [
+    // 水電工程
+    { category: '水電工程', name: '新增110V專迴', unit: '迴', price: 7000 },
+    { category: '水電工程', name: '新增220V專迴', unit: '迴', price: 7000 },
+    { category: '水電工程', name: '新增插座', unit: '組', price: 5000 },
+    { category: '水電工程', name: '移動插座', unit: '組', price: 3500 },
+    { category: '水電工程', name: '新拉網路', unit: '組', price: 6000 },
+    { category: '水電工程', name: '新拉TV線', unit: '組', price: 6000 },
+    { category: '水電工程', name: '新拉電話線', unit: '組', price: 6000 },
+    { category: '水電工程', name: '新增燈具迴路', unit: '組', price: 2500 },
+    { category: '水電工程', name: '新增IC控制', unit: '組', price: 500 },
+    { category: '水電工程', name: '偵煙器延長', unit: '組', price: 300 },
+    { category: '水電工程', name: '衛浴設備代安裝', unit: '組', price: 1000 },
+    { category: '水電工程', name: '原燈線延長工資', unit: '組', price: 2000 },
 
-// ==========================================================
-// 頁面載入
-// ==========================================================
+    // 燈具工程
+    { category: '燈具工程', name: '15cmLED崁燈', unit: '組', price: 1200 },
+    { category: '燈具工程', name: '9.5cmLED崁燈', unit: '組', price: 1200 },
+    { category: '燈具工程', name: '軌道燈軌道', unit: '米', price: 2000 },
+    { category: '燈具工程', name: '軌道燈具', unit: '組', price: 700 },
+    { category: '燈具工程', name: '磁砐軌道', unit: '米', price: 3000 },
+    { category: '燈具工程', name: '磁吸軌道燈', unit: '組', price: 800 },
+    { category: '燈具工程', name: '崁入式燈條', unit: '米', price: 1500 },
+
+    // 木作工程
+    { category: '木作工程', name: '平釘天花板', unit: '坪', price: 5500 },
+    { category: '木作工程', name: '造型天花板', unit: '坪', price: 6500 },
+    { category: '木作工程', name: '間接燈', unit: '尺', price: 1000 },
+    { category: '木作工程', name: '窗簾盒', unit: '尺', price: 1000 },
+    { category: '木作工程', name: '冷氣包管', unit: '尺', price: 1000 },
+    { category: '木作工程', name: '櫃上封板', unit: '尺', price: 800 },
+    { category: '木作工程', name: '單面隔間', unit: '尺', price: 3500 },
+    { category: '木作工程', name: '雙面隔間', unit: '尺', price: 4500 },
+    { category: '木作工程', name: '拉門上軌道', unit: '尺', price: 800 },
+    { category: '木作工程', name: '弧型造型', unit: '尺', price: 800 },
+    { category: '木作工程', name: '木皮造型', unit: '尺', price: 1200 },
+    { category: '木作工程', name: '實木門', unit: '樘', price: 12000 },
+    { category: '木作工程', name: '實木門+門斗', unit: '樘', price: 22000 },
+    { category: '木作工程', name: '隱藏門', unit: '樘', price: 20000 },
+    { category: '木作工程', name: '維修孔', unit: '組', price: 800 },
+    { category: '木作工程', name: '維修孔(緩降)', unit: '組', price: 2000 },
+
+    // 油漆工程
+    { category: '油漆工程', name: '平釘天花板', unit: '坪', price: 2500 },
+    { category: '油漆工程', name: '間接燈', unit: '尺', price: 1000 },
+    { category: '油漆工程', name: '窗簾盒', unit: '尺', price: 1000 },
+    { category: '油漆工程', name: '冷氣包管', unit: '尺', price: 1000 },
+    { category: '油漆工程', name: '櫃上封板', unit: '尺', price: 700 },
+    { category: '油漆工程', name: '單面隔間', unit: '坪', price: 2500 },
+    { category: '油漆工程', name: '雙面隔間', unit: '坪', price: 5000 },
+    { category: '油漆工程', name: '拉門上軌道', unit: '尺', price: 500 },
+    { category: '油漆工程', name: '弧型造型', unit: '尺', price: 800 },
+    { category: '油漆工程', name: '全室批土打磨', unit: '坪', price: 1200 },
+    { category: '油漆工程', name: '全室過色不批土', unit: '式', price: 15000 },
+
+    // 雜項工程
+    { category: '雜項工程', name: '金屬飾條', unit: '米', price: 1200 },
+    { category: '雜項工程', name: '烤漆玻璃', unit: '才', price: 400 },
+    { category: '雜項工程', name: '鋁框拉門', unit: '才', price: 1000 },
+    { category: '雜項工程', name: '粗清工程', unit: '車', price: 9000 },
+    { category: '雜項工程', name: '細清20坪以下', unit: '式', price: 25000 },
+    { category: '雜項工程', name: '細清20坪以上', unit: '式', price: 35000 },
+
+    // 保護工程
+    { category: '保護工程', name: '隔間-電梯保護', unit: '式', price: 9000 },
+    { category: '保護工程', name: '隔間-保護牆面', unit: '坪', price: 3000 },
+    { category: '保護工程', name: '簡易-電梯保護', unit: '式', price: 5000 },
+    { category: '保護工程', name: '簡易-保護牆面', unit: '坪', price: 1000 },
+    { category: '保護工程', name: '廚具保護', unit: '式', price: 3000 },
+    { category: '保護工程', name: '室內保護', unit: '坪', price: 1000 },
+    { category: '保護工程', name: '傢俱保護', unit: '式', price: 5000 },
+
+    // 拆除工程
+    { category: '拆除工程', name: '拆除車趟', unit: '車', price: 15000 },
+    { category: '拆除工程', name: '拆除人工', unit: '工', price: 3000 },
+
+    // 木地板工程
+    { category: '木地板工程', name: 'SPC木地板', unit: '坪', price: 4200 },
+    { category: '木地板工程', name: '超耐磨地板', unit: '坪', price: 4300 }
+];
+
+let priceDb = [];
+
+const CATEGORY_OPTIONS = [
+    '水電工程',
+    '燈具工程',
+    '木作工程',
+    '油漆工程',
+    '雜項工程',
+    '保護工程',
+    '拆除工程',
+    '木地板工程'
+];
 
 window.onload = function() {
+    const today = new Date().toISOString().split('T')[0];
+    document.getElementById('quoteDate').value = today;
 
-    const today =
-        new Date()
-        .toISOString()
-        .split('T')[0];
-
-    document.getElementById(
-        'quoteDate'
-    ).value = today;
-
+    loadPriceDb();
     updateTestMonitor();
     renderQuoteTable();
     renderSummary();
     renderSchedule();
-
 };
 
 
-// ==========================================================
-// 測試面板
-// ==========================================================
+function loadPriceDb() {
+    const raw = localStorage.getItem('renovationPriceDb');
+    if (raw) {
+        try {
+            priceDb = JSON.parse(raw);
+        } catch (e) {
+            priceDb = [...INITIAL_PRICE_DB];
+        }
+    } else {
+        priceDb = [...INITIAL_PRICE_DB];
+    }
+}
+
+
+function savePriceDb() {
+    localStorage.setItem('renovationPriceDb', JSON.stringify(priceDb));
+}
+
+
+function resetDefaultPriceDb() {
+    if (!confirm('確定要將單價庫還原為預設設定嗎？')) return;
+    priceDb = [...INITIAL_PRICE_DB];
+    savePriceDb();
+    renderPriceDbTable();
+    onCategoryChange();
+    alert('單價庫已還原為預設設定');
+}
+
+
+function onCategoryChange() {
+    const cat = document.getElementById('categorySelect').value;
+    const presetSelect = document.getElementById('itemPresetSelect');
+    const customInput = document.getElementById('subCategorySelect');
+
+    presetSelect.innerHTML = '';
+    customInput.style.display = 'none';
+    customInput.value = '';
+
+    if (!cat) {
+        presetSelect.innerHTML = '<option value="">請先選擇工種</option>';
+        return;
+    }
+
+    const filtered = priceDb.filter(item => item.category === cat);
+    
+    presetSelect.innerHTML = '<option value="">-- 請選擇預設項目 --</option>';
+    filtered.forEach((item, idx) => {
+        presetSelect.innerHTML += `<option value="${idx}">${item.name} (${item.unit} / $${item.price.toLocaleString()})</option>`;
+    });
+    presetSelect.innerHTML += '<option value="CUSTOM">＋ 自訂手動輸入</option>';
+}
+
+
+function onItemPresetChange() {
+    const cat = document.getElementById('categorySelect').value;
+    const val = document.getElementById('itemPresetSelect').value;
+    const customInput = document.getElementById('subCategorySelect');
+
+    if (val === 'CUSTOM') {
+        customInput.style.display = 'block';
+        customInput.value = '';
+        document.getElementById('itemUnit').value = '式';
+        document.getElementById('quotePrice').value = '';
+    } else if (val !== '') {
+        customInput.style.display = 'none';
+        const filtered = priceDb.filter(item => item.category === cat);
+        const selected = filtered[Number(val)];
+        if (selected) {
+            customInput.value = selected.name;
+            document.getElementById('itemUnit').value = selected.unit;
+            document.getElementById('quotePrice').value = selected.price;
+        }
+    } else {
+        customInput.style.display = 'none';
+        customInput.value = '';
+    }
+}
+
 
 function toggleTestPage() {
-
-    document
-        .getElementById(
-            'testPanel'
-        )
-        .classList.toggle(
-            'show'
-        );
-
+    document.getElementById('testPanel').classList.toggle('show');
 }
 
-
-// ==========================================================
-// 測試資料
-// ==========================================================
 
 function loadTestData() {
-
-    document.getElementById(
-        'clientName'
-    ).value =
-        '劉隆穎';
-
-    document.getElementById(
-        'projectLocation'
-    ).value =
-        '桃園市中壢區高鐵站前路426號5樓';
-
-    document.getElementById(
-        'contractNo'
-    ).value =
-        '007006';
-
-    document.getElementById(
-        'designerName'
-    ).value =
-        '陳昭宇 設計師';
-
-    document.getElementById(
-        'estimatedDays'
-    ).value =
-        45;
-
+    document.getElementById('clientName').value = '劉隆穎';
+    document.getElementById('projectLocation').value = '桃園市中壢區高鐵站前路426號5樓';
+    document.getElementById('contractNo').value = '007006';
+    document.getElementById('designerName').value = '陳昭宇 設計師';
+    document.getElementById('estimatedDays').value = '35';
 
     currentItems = [
-
-        {
-            category: '水電工程',
-            name: '新增插座',
-            qty: 8,
-            unit: '處',
-            costPrice: 800,
-            price: 1500,
-            priceSubtotal: 12000,
-            note: ''
-        },
-
-        {
-            category: '水電工程',
-            name: '新增開關',
-            qty: 5,
-            unit: '處',
-            costPrice: 600,
-            price: 1200,
-            priceSubtotal: 6000,
-            note: ''
-        },
-
-        {
-            category: '水電工程',
-            name: '網路線路配置',
-            qty: 1,
-            unit: '式',
-            costPrice: 8000,
-            price: 15000,
-            priceSubtotal: 15000,
-            note: ''
-        },
-
-        {
-            category: '木作工程',
-            name: '平釘天花板',
-            qty: 20,
-            unit: '坪',
-            costPrice: 3200,
-            price: 5000,
-            priceSubtotal: 100000,
-            note: ''
-        },
-
-        {
-            category: '木作工程',
-            name: '窗簾盒',
-            qty: 3,
-            unit: '座',
-            costPrice: 2500,
-            price: 4500,
-            priceSubtotal: 13500,
-            note: ''
-        },
-
-        {
-            category: '木作工程',
-            name: '電視牆造型',
-            qty: 1,
-            unit: '式',
-            costPrice: 18000,
-            price: 32000,
-            priceSubtotal: 32000,
-            note: ''
-        },
-
-        {
-            category: '油漆工程',
-            name: '牆面乳膠漆',
-            qty: 80,
-            unit: '坪',
-            costPrice: 700,
-            price: 1100,
-            priceSubtotal: 88000,
-            note: ''
-        },
-
-        {
-            category: '燈具工程',
-            name: '吸頂燈安裝',
-            qty: 6,
-            unit: '盞',
-            costPrice: 500,
-            price: 1000,
-            priceSubtotal: 6000,
-            note: ''
-        },
-
-        {
-            category: '燈具工程',
-            name: '間接照明',
-            qty: 15,
-            unit: '尺',
-            costPrice: 500,
-            price: 900,
-            priceSubtotal: 13500,
-            note: ''
-        },
-
-        {
-            category: '雜項工程',
-            name: '清潔工程',
-            qty: 1,
-            unit: '式',
-            costPrice: 5000,
-            price: 8000,
-            priceSubtotal: 8000,
-            note: ''
-        }
-
+        { category: '水電工程', name: '新增插座', qty: 8, unit: '組', costPrice: 800, price: 5000, priceSubtotal: 40000, note: '' },
+        { category: '水電工程', name: '新增110V專迴', qty: 2, unit: '迴', costPrice: 3000, price: 7000, priceSubtotal: 14000, note: '' },
+        { category: '木作工程', name: '平釘天花板', qty: 20, unit: '坪', costPrice: 3200, price: 5500, priceSubtotal: 110000, note: '' },
+        { category: '木作工程', name: '窗簾盒', qty: 15, unit: '尺', costPrice: 500, price: 1000, priceSubtotal: 15000, note: '' },
+        { category: '油漆工程', name: '平釘天花板', qty: 20, unit: '坪', costPrice: 1200, price: 2500, priceSubtotal: 50000, note: '' },
+        { category: '燈具工程', name: '15cmLED崁燈', qty: 12, unit: '組', costPrice: 500, price: 1200, priceSubtotal: 14400, note: '' },
+        { category: '木地板工程', name: 'SPC木地板', qty: 18, unit: '坪', costPrice: 2800, price: 4200, priceSubtotal: 75600, note: '' },
+        { category: '雜項工程', name: '細清20坪以下', qty: 1, unit: '式', costPrice: 15000, price: 25000, priceSubtotal: 25000, note: '' }
     ];
 
-
     renderQuoteTable();
     renderSummary();
     renderSchedule();
     updateTestMonitor();
-
 }
 
-
-// ==========================================================
-// 清除
-// ==========================================================
 
 function clearAllItemsData() {
-
-    if (
-        !confirm(
-            '確定要清除目前所有報價項目嗎？'
-        )
-    ) {
-        return;
-    }
-
+    if (!confirm('確定要清除目前所有報價項目嗎？')) return;
     currentItems = [];
-
     renderQuoteTable();
     renderSummary();
     renderSchedule();
     updateTestMonitor();
-
 }
 
 
-// ==========================================================
-// 新增
-// ==========================================================
-
 function addItem() {
+    const category = document.getElementById('categorySelect').value;
+    const name = document.getElementById('subCategorySelect').value.trim();
+    const qty = Number(document.getElementById('itemQty').value);
+    const unit = document.getElementById('itemUnit').value.trim();
+    const costPrice = Number(document.getElementById('costPrice').value);
+    const price = Number(document.getElementById('quotePrice').value);
+    const note = document.getElementById('itemNote').value.trim();
 
-    const category =
-        document.getElementById(
-            'categorySelect'
-        ).value;
+    if (!category) { alert('請選擇工程分類'); return; }
+    if (!name) { alert('請選擇或輸入工程項目'); return; }
+    if (!qty || qty <= 0) { alert('請輸入正確數量'); return; }
+    if (!unit) { alert('請輸入單位'); return; }
+    if (!price || price < 0) { alert('請輸入報價單價'); return; }
 
-    const name =
-        document.getElementById(
-            'subCategorySelect'
-        ).value.trim();
-
-    const qty =
-        Number(
-            document.getElementById(
-                'itemQty'
-            ).value
-        );
-
-    const unit =
-        document.getElementById(
-            'itemUnit'
-        ).value.trim();
-
-    const costPrice =
-        Number(
-            document.getElementById(
-                'costPrice'
-            ).value
-        );
-
-    const price =
-        Number(
-            document.getElementById(
-                'quotePrice'
-            ).value
-        );
-
-    const note =
-        document.getElementById(
-            'itemNote'
-        ).value.trim();
-
-
-    if (!category) {
-
-        alert(
-            '請選擇工程分類'
-        );
-
-        return;
-    }
-
-
-    if (!name) {
-
-        alert(
-            '請輸入工程項目'
-        );
-
-        return;
-    }
-
-
-    if (!qty || qty <= 0) {
-
-        alert(
-            '請輸入正確數量'
-        );
-
-        return;
-    }
-
-
-    if (!unit) {
-
-        alert(
-            '請輸入單位'
-        );
-
-        return;
-    }
-
-
-    if (!price || price < 0) {
-
-        alert(
-            '請輸入報價單價'
-        );
-
-        return;
-    }
-
-
-    const priceSubtotal =
-        Math.round(
-            qty * price
-        );
-
+    const priceSubtotal = Math.round(qty * price);
 
     currentItems.push({
-
         category,
         name,
         qty,
@@ -1090,561 +838,294 @@ function addItem() {
         price,
         priceSubtotal,
         note
-
     });
 
-
     renderQuoteTable();
     renderSummary();
     renderSchedule();
     updateTestMonitor();
 
-
-    document.getElementById(
-        'subCategorySelect'
-    ).value = '';
-
-    document.getElementById(
-        'itemQty'
-    ).value = 1;
-
-    document.getElementById(
-        'itemUnit'
-    ).value = '式';
-
-    document.getElementById(
-        'costPrice'
-    ).value = '';
-
-    document.getElementById(
-        'quotePrice'
-    ).value = '';
-
-    document.getElementById(
-        'itemNote'
-    ).value = '';
-
+    document.getElementById('itemPresetSelect').value = '';
+    document.getElementById('subCategorySelect').value = '';
+    document.getElementById('subCategorySelect').style.display = 'none';
+    document.getElementById('itemQty').value = 1;
+    document.getElementById('itemUnit').value = '坪';
+    document.getElementById('costPrice').value = '';
+    document.getElementById('quotePrice').value = '';
+    document.getElementById('itemNote').value = '';
 }
 
-
-// ==========================================================
-// 刪除
-// ==========================================================
 
 function removeItem(index) {
+    currentItems.splice(index, 1);
+    renderQuoteTable();
+    renderSummary();
+    renderSchedule();
+    updateTestMonitor();
+}
 
-    currentItems.splice(
-        index,
-        1
-    );
+
+function updateTableItem(index, field, value) {
+    const item = currentItems[index];
+    if (!item) return;
+
+    if (field === 'qty' || field === 'price' || field === 'costPrice') {
+        item[field] = Number(value) || 0;
+        item.priceSubtotal = Math.round((item.qty || 0) * (item.price || 0));
+    } else {
+        item[field] = value;
+    }
 
     renderQuoteTable();
     renderSummary();
     renderSchedule();
     updateTestMonitor();
-
 }
 
-
-// ==========================================================
-// 報價表
-// ==========================================================
 
 function renderQuoteTable() {
-
-    const tbody =
-        document.getElementById(
-            'quoteTableBody'
-        );
-
+    const tbody = document.getElementById('quoteTableBody');
     tbody.innerHTML = '';
 
+    currentItems.forEach((item, index) => {
+        const tr = document.createElement('tr');
 
-    currentItems.forEach(
-        (item, index) => {
+        let catOptionsHtml = CATEGORY_OPTIONS.map(c => 
+            `<option value="${c}" ${c === item.category ? 'selected' : ''}>${c}</option>`
+        ).join('');
 
-            const tr =
-                document.createElement(
-                    'tr'
-                );
+        tr.innerHTML = `
+            <td>
+                <select onchange="updateTableItem(${index}, 'category', this.value)">
+                    ${catOptionsHtml}
+                </select>
+            </td>
 
+            <td>
+                <input type="text" value="${escapeHtml(item.name)}" 
+                       onchange="updateTableItem(${index}, 'name', this.value)">
+            </td>
 
-            tr.innerHTML = `
+            <td class="center">
+                <input type="number" step="0.01" style="text-align: center;" value="${item.qty}" 
+                       onchange="updateTableItem(${index}, 'qty', this.value)">
+            </td>
 
-                <td>
-                    ${escapeHtml(item.category)}
-                </td>
+            <td class="center">
+                <input type="text" style="text-align: center;" value="${escapeHtml(item.unit)}" 
+                       onchange="updateTableItem(${index}, 'unit', this.value)">
+            </td>
 
-                <td>
-                    ${escapeHtml(item.name)}
-                </td>
+            <td class="right">
+                <input type="number" style="text-align: right;" value="${item.costPrice || ''}" 
+                       placeholder="0" onchange="updateTableItem(${index}, 'costPrice', this.value)">
+            </td>
 
-                <td class="center">
-                    ${item.qty}
-                </td>
+            <td class="right">
+                <input type="number" style="text-align: right;" value="${item.price}" 
+                       onchange="updateTableItem(${index}, 'price', this.value)">
+            </td>
 
-                <td class="center">
-                    ${escapeHtml(item.unit)}
-                </td>
+            <td class="right" style="font-weight: bold; padding-right: 12px;">
+                ${formatMoney(item.priceSubtotal)}
+            </td>
 
-                <td class="right">
-                    ${formatMoney(item.costPrice)}
-                </td>
+            <td>
+                <input type="text" value="${escapeHtml(item.note || '')}" 
+                       onchange="updateTableItem(${index}, 'note', this.value)">
+            </td>
 
-                <td class="right">
-                    ${formatMoney(item.price)}
-                </td>
+            <td class="center">
+                <button class="btn-red" style="padding: 4px 8px; font-size: 13px;" onclick="removeItem(${index})">刪除</button>
+            </td>
+        `;
 
-                <td class="right">
-                    ${formatMoney(item.priceSubtotal)}
-                </td>
-
-                <td>
-                    ${escapeHtml(item.note || '')}
-                </td>
-
-                <td class="center">
-
-                    <button
-                        class="btn-red"
-                        onclick="removeItem(${index})">
-
-                        刪除
-
-                    </button>
-
-                </td>
-
-            `;
-
-
-            tbody.appendChild(tr);
-
-        }
-    );
-
+        tbody.appendChild(tr);
+    });
 }
 
-
-// ==========================================================
-// HTML
-// ==========================================================
 
 function escapeHtml(value) {
-
-    return String(
-        value ?? ''
-    )
-    .replace(/&/g, '&amp;')
-    .replace(/</g, '&lt;')
-    .replace(/>/g, '&gt;')
-    .replace(/"/g, '&quot;')
-    .replace(/'/g, '&#039;');
-
+    return String(value ?? '')
+        .replace(/&/g, '&amp;')
+        .replace(/</g, '&lt;')
+        .replace(/>/g, '&gt;')
+        .replace(/"/g, '&quot;')
+        .replace(/'/g, '&#039;');
 }
 
-
-// ==========================================================
-// 金額
-// ==========================================================
 
 function formatMoney(value) {
-
-    return Number(
-        value || 0
-    ).toLocaleString(
-        'zh-TW'
-    );
-
+    return Number(value || 0).toLocaleString('zh-TW');
 }
 
-
-// ==========================================================
-// 計算
-// ==========================================================
 
 function calculateTotals() {
+    const subtotal = currentItems.reduce((sum, item) => sum + Number(item.priceSubtotal || 0), 0);
+    const hasMgmt = document.getElementById('chkManagementFee').checked;
+    const hasTax = document.getElementById('chkTax').checked;
 
-    const subtotal =
-        currentItems.reduce(
-            (sum, item) =>
-                sum +
-                Number(
-                    item.priceSubtotal || 0
-                ),
-            0
-        );
+    const managementFee = hasMgmt ? Math.round(subtotal * 0.1) : 0;
+    const subtotalWithManagement = subtotal + managementFee;
+    const tax = hasTax ? Math.round(subtotalWithManagement * 0.05) : 0;
+    const grandTotal = subtotalWithManagement + tax;
 
-
-    const hasMgmt =
-        document.getElementById(
-            'chkManagementFee'
-        ).checked;
-
-
-    const hasTax =
-        document.getElementById(
-            'chkTax'
-        ).checked;
-
-
-    const managementFee =
-        hasMgmt
-            ? Math.round(
-                subtotal * 0.1
-            )
-            : 0;
-
-
-    const subtotalWithManagement =
-        subtotal +
-        managementFee;
-
-
-    const tax =
-        hasTax
-            ? Math.round(
-                subtotalWithManagement *
-                0.05
-            )
-            : 0;
-
-
-    const grandTotal =
-        subtotalWithManagement +
-        tax;
-
-
-    return {
-
-        subtotal,
-        managementFee,
-        tax,
-        grandTotal
-
-    };
-
+    return { subtotal, managementFee, tax, grandTotal };
 }
 
-
-// ==========================================================
-// 總計
-// ==========================================================
 
 function renderSummary() {
-
-    const totals =
-        calculateTotals();
-
-
-    document.getElementById(
-        'summarySubtotal'
-    ).innerText =
-        formatMoney(
-            totals.subtotal
-        );
-
-
-    document.getElementById(
-        'summaryManagement'
-    ).innerText =
-        formatMoney(
-            totals.managementFee
-        );
-
-
-    document.getElementById(
-        'summaryTax'
-    ).innerText =
-        formatMoney(
-            totals.tax
-        );
-
-
-    document.getElementById(
-        'summaryGrandTotal'
-    ).innerText =
-        formatMoney(
-            totals.grandTotal
-        );
-
+    const totals = calculateTotals();
+    document.getElementById('summarySubtotal').innerText = formatMoney(totals.subtotal);
+    document.getElementById('summaryManagement').innerText = formatMoney(totals.managementFee);
+    document.getElementById('summaryTax').innerText = formatMoney(totals.tax);
+    document.getElementById('summaryGrandTotal').innerText = formatMoney(totals.grandTotal);
 }
 
-
-// ==========================================================
-// 工程進度
-// ==========================================================
 
 function renderSchedule() {
+    const box = document.getElementById('schedulePreview');
+    const days = document.getElementById('estimatedDays').value;
 
-    const box =
-        document.getElementById(
-            'schedulePreview'
-        );
-
-    const estDays =
-        document.getElementById(
-            'estimatedDays'
-        ).value || 0;
-
-
-    if (
-        currentItems.length === 0
-    ) {
-
-        box.innerText =
-            '尚無工程資料';
-
+    if (currentItems.length === 0) {
+        box.innerText = '尚無工程資料';
         return;
     }
 
-
-    const categories =
-        [
-            ...new Set(
-                currentItems.map(
-                    item =>
-                        item.category
-                )
-            )
-        ];
-
-
-    let html = `<strong>預估總工期：${estDays} 工作天</strong><br><br>`;
-    html += categories
-        .map(
-            (cat, index) =>
-                `${index + 1}. ${escapeHtml(cat)}`
-        )
-        .join('<br>');
+    const categories = [...new Set(currentItems.map(item => item.category))];
+    let html = `<strong>預估總工期：${days ? days + ' 工作天' : '未設定'}</strong><br><br>`;
+    html += '<strong>工種進度順序：</strong><br>';
+    html += categories.map((cat, index) => `${index + 1}. ${escapeHtml(cat)}`).join('<br>');
 
     box.innerHTML = html;
-
 }
 
-
-// ==========================================================
-// 儲存
-// ==========================================================
 
 function saveDraft() {
-
     const data = {
-
-        clientName:
-            document.getElementById(
-                'clientName'
-            ).value,
-
-        projectLocation:
-            document.getElementById(
-                'projectLocation'
-            ).value,
-
-        contractNo:
-            document.getElementById(
-                'contractNo'
-            ).value,
-
-        quoteDate:
-            document.getElementById(
-                'quoteDate'
-            ).value,
-
-        startDate:
-            document.getElementById(
-                'startDate'
-            ).value,
-
-        estimatedDays:
-            document.getElementById(
-                'estimatedDays'
-            ).value,
-
-        designerName:
-            document.getElementById(
-                'designerName'
-            ).value,
-
-        presetNotes:
-            document.getElementById(
-                'presetNotes'
-            ).value,
-
+        clientName: document.getElementById('clientName').value,
+        projectLocation: document.getElementById('projectLocation').value,
+        contractNo: document.getElementById('contractNo').value,
+        quoteDate: document.getElementById('quoteDate').value,
+        estimatedDays: document.getElementById('estimatedDays').value,
+        designerName: document.getElementById('designerName').value,
+        presetNotes: document.getElementById('presetNotes').value,
         currentItems
-
     };
 
-
-    localStorage.setItem(
-        'renovationQuoteDraft',
-        JSON.stringify(data)
-    );
-
-
-    alert(
-        '草稿已儲存'
-    );
-
+    localStorage.setItem('renovationQuoteDraft_editTest', JSON.stringify(data));
+    alert('草稿已儲存');
 }
 
 
-// ==========================================================
-// 載入
-// ==========================================================
-
 function loadDraft() {
+    const raw = localStorage.getItem('renovationQuoteDraft_editTest');
+    if (!raw) { alert('目前沒有草稿'); return; }
 
-    const raw =
-        localStorage.getItem(
-            'renovationQuoteDraft'
-        );
+    const data = JSON.parse(raw);
+    document.getElementById('clientName').value = data.clientName || '';
+    document.getElementById('projectLocation').value = data.projectLocation || '';
+    document.getElementById('contractNo').value = data.contractNo || '';
+    document.getElementById('quoteDate').value = data.quoteDate || '';
+    document.getElementById('estimatedDays').value = data.estimatedDays || '';
+    document.getElementById('designerName').value = data.designerName || '';
+    document.getElementById('presetNotes').value = data.presetNotes || '';
 
-
-    if (!raw) {
-
-        alert(
-            '目前沒有草稿'
-        );
-
-        return;
-    }
-
-
-    const data =
-        JSON.parse(raw);
-
-
-    document.getElementById(
-        'clientName'
-    ).value =
-        data.clientName || '';
-
-
-    document.getElementById(
-        'projectLocation'
-    ).value =
-        data.projectLocation || '';
-
-
-    document.getElementById(
-        'contractNo'
-    ).value =
-        data.contractNo || '';
-
-
-    document.getElementById(
-        'quoteDate'
-    ).value =
-        data.quoteDate || '';
-
-
-    document.getElementById(
-        'startDate'
-    ).value =
-        data.startDate || '';
-
-
-    document.getElementById(
-        'estimatedDays'
-    ).value =
-        data.estimatedDays || 45;
-
-
-    document.getElementById(
-        'designerName'
-    ).value =
-        data.designerName || '';
-
-
-    document.getElementById(
-        'presetNotes'
-    ).value =
-        data.presetNotes || '';
-
-
-    currentItems =
-        data.currentItems || [];
-
+    currentItems = data.currentItems || [];
 
     renderQuoteTable();
     renderSummary();
     renderSchedule();
     updateTestMonitor();
 
-
-    alert(
-        '草稿已載入'
-    );
-
+    alert('草稿已載入');
 }
 
-
-// ==========================================================
-// 測試監控
-// ==========================================================
 
 function updateTestMonitor() {
+    const box = document.getElementById('testMonitor');
+    if (!box) return;
 
-    const box =
-        document.getElementById(
-            'testMonitor'
-        );
-
-
-    if (!box) {
+    if (currentItems.length === 0) {
+        box.innerText = '目前尚無報價資料';
         return;
     }
 
-
-    if (
-        currentItems.length === 0
-    ) {
-
-        box.innerText =
-            '目前尚無報價資料';
-
-        return;
-    }
-
-
-    const totals =
-        calculateTotals();
-
-
+    const totals = calculateTotals();
     box.innerHTML = `
-
-        報價項目：
-        <strong>
-            ${currentItems.length}
-        </strong>
-        項
-
-        <br>
-
-        工程小計：
-        <strong>
-            ${formatMoney(totals.subtotal)}
-        </strong>
-
-        <br>
-
-        工程總價：
-        <strong>
-            ${formatMoney(totals.grandTotal)}
-        </strong>
-
+        報價項目：<strong>${currentItems.length}</strong> 項<br>
+        工程小計：<strong>${formatMoney(totals.subtotal)}</strong><br>
+        工程總價：<strong>${formatMoney(totals.grandTotal)}</strong>
     `;
-
 }
 
 
-// ==========================================================
-// Excel 匯出 (直接產生報價單)
-// ==========================================================
+// --- 單價庫管理邏輯 ---
+function openPriceDbModal() {
+    renderPriceDbTable();
+    document.getElementById('priceDbModal').classList.add('show');
+}
 
-async function exportDirectExcel() {
+function closePriceDbModal() {
+    document.getElementById('priceDbModal').classList.remove('show');
+}
 
+function renderPriceDbTable() {
+    const tbody = document.getElementById('priceDbTableBody');
+    tbody.innerHTML = '';
+
+    priceDb.forEach((item, index) => {
+        const tr = document.createElement('tr');
+        tr.innerHTML = `
+            <td>${escapeHtml(item.category)}</td>
+            <td><input type="text" value="${escapeHtml(item.name)}" onchange="updateDbItem(${index}, 'name', this.value)"></td>
+            <td><input type="text" value="${escapeHtml(item.unit)}" onchange="updateDbItem(${index}, 'unit', this.value)"></td>
+            <td><input type="number" value="${item.price}" onchange="updateDbItem(${index}, 'price', this.value)"></td>
+            <td><button class="btn-red" style="padding: 3px 6px; font-size: 12px;" onclick="removeDbItem(${index})">刪除</button></td>
+        `;
+        tbody.appendChild(tr);
+    });
+}
+
+function addPriceDbItem() {
+    const category = document.getElementById('newDbCat').value;
+    const name = document.getElementById('newDbName').value.trim();
+    const unit = document.getElementById('newDbUnit').value.trim();
+    const price = Number(document.getElementById('newDbPrice').value);
+
+    if (!name || !unit || isNaN(price)) {
+        alert('請填寫完整的項目名稱、單位與單價');
+        return;
+    }
+
+    priceDb.push({ category, name, unit, price });
+    savePriceDb();
+    renderPriceDbTable();
+    onCategoryChange();
+
+    document.getElementById('newDbName').value = '';
+    document.getElementById('newDbPrice').value = '';
+}
+
+function updateDbItem(index, field, value) {
+    if (field === 'price') {
+        priceDb[index][field] = Number(value) || 0;
+    } else {
+        priceDb[index][field] = value;
+    }
+    savePriceDb();
+    onCategoryChange();
+}
+
+function removeDbItem(index) {
+    priceDb.splice(index, 1);
+    savePriceDb();
+    renderPriceDbTable();
+    onCategoryChange();
+}
+
+
+async function exportQuoteToExcel() {
     if (currentItems.length === 0) {
         alert('請先加入報價項目！');
         return;
@@ -1654,1251 +1135,232 @@ async function exportDirectExcel() {
     const projectLocation = document.getElementById('projectLocation').value || '';
     const contractNo = document.getElementById('contractNo').value || '';
     const quoteDateInput = document.getElementById('quoteDate').value || '';
-    const designerName = document.getElementById('designerName').value || '';
 
-    const wb = new ExcelJS.Workbook();
-    const ws = wb.addWorksheet('報價單');
+    let dateStr = quoteDateInput;
+    if (quoteDateInput) {
+        const d = new Date(quoteDateInput);
+        const rocYear = d.getFullYear() - 1911;
+        const m = String(d.getMonth() + 1).padStart(2, '0');
+        const day = String(d.getDate()).padStart(2, '0');
+        dateStr = `${rocYear} 年 ${m}月${day}日`;
+    }
 
-    ws.columns = [
-        { width: 12 }, // A
-        { width: 32 }, // B
-        { width: 10 }, // C
-        { width: 10 }, // D
-        { width: 16 }, // E
-        { width: 18 }, // F
-        { width: 25 }  // G
-    ];
+    try {
+        const response = await fetch('./template.xlsx', { cache: 'no-store' });
+        if (!response.ok) {
+            alert('找不到 template.xlsx，請確認它與 HTML 放在同一個資料夾。');
+            return;
+        }
 
-    ws.mergeCells('A1:G1');
-    ws.getCell('A1').value = '室內裝修報價單';
-    ws.getCell('A1').font = { name: 'Microsoft JhengHei', size: 18, bold: true };
-    ws.getCell('A1').alignment = { horizontal: 'center', vertical: 'center' };
+        const arrayBuffer = await response.arrayBuffer();
+        const wb = new ExcelJS.Workbook();
+        await wb.xlsx.load(arrayBuffer);
 
-    ws.getCell('A3').value = `客戶名稱：${clientName}`;
-    ws.getCell('E3').value = `合約編號：${contractNo}`;
-    ws.getCell('A4').value = `工程地點：${projectLocation}`;
-    ws.getCell('E4').value = `報價日期：${quoteDateInput}`;
+        const ws = wb.getWorksheet('估價單0906') || wb.worksheets[0];
+        if (!ws) {
+            alert('找不到報價單工作表！');
+            return;
+        }
 
-    const headers = ['項次', '工程項目', '數量', '單位', '單價', '複價', '備註'];
-    ws.addRow([]);
-    const headerRow = ws.addRow(headers);
-    headerRow.eachCell((cell) => {
-        cell.font = { name: 'Microsoft JhengHei', size: 12, bold: true };
-        cell.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: 'FFE0E0E0' } };
-        cell.alignment = { horizontal: 'center', vertical: 'center' };
-        cell.border = {
-            top: { style: 'thin' },
-            left: { style: 'thin' },
-            bottom: { style: 'thin' },
-            right: { style: 'thin' }
-        };
-    });
+        ws.getCell('A6').value = `客戶名稱 :${clientName}`;
+        ws.getCell('G6').value = contractNo;
+        ws.getCell('A7').value = `工程地點 :${projectLocation}`;
+        if (dateStr) ws.getCell('G7').value = dateStr;
 
-    const grouped = {};
-    currentItems.forEach(item => {
-        if (!grouped[item.category]) grouped[item.category] = [];
-        grouped[item.category].push(item);
-    });
+        for (let r = 48; r <= 150; r++) {
+            for (let c = 1; c <= 7; c++) {
+                ws.getCell(r, c).value = null;
+            }
+        }
 
-    const numMap = ['一', '二', '三', '四', '五', '六', '七', '八', '九', '十'];
-    let catIdx = 0;
+        ws.pageSetup.printArea = 'A1:G150';
+        ws.pageSetup.fitToPage = true;
+        ws.pageSetup.fitToWidth = 1;
+        ws.pageSetup.fitToHeight = 0;
+        ws.pageSetup.orientation = 'portrait';
+        ws.pageSetup.paperSize = 9;
 
-    Object.keys(grouped).forEach(cat => {
-        const catNum = numMap[catIdx] || (catIdx + 1);
-        catIdx++;
+        if (ws.rowBreaks && Array.isArray(ws.rowBreaks.brk)) {
+            ws.rowBreaks.brk = [];
+        }
+        if (typeof ws.addRowBreak === 'function') {
+            ws.addRowBreak(47);
+        }
 
-        const catRow = ws.addRow([catNum, cat, '', '', '', '', '']);
-        catRow.eachCell((cell, colNumber) => {
-            cell.font = { name: 'Microsoft JhengHei', size: 12, bold: true };
-            cell.alignment = { horizontal: 'left', vertical: 'center' };
+        const grouped = {};
+        currentItems.forEach(item => {
+            if (!grouped[item.category]) grouped[item.category] = [];
+            grouped[item.category].push(item);
         });
 
-        let catSum = 0;
-        grouped[cat].forEach(item => {
-            const itemRow = ws.addRow(['', item.name, Number(item.qty), item.unit, Number(item.price), Number(item.priceSubtotal), item.note || '']);
-            catSum += Number(item.priceSubtotal || 0);
+        const catOrderList = ['水電工程', '燈具工程', '木作工程', '油漆工程', '雜項工程'];
+        const numMap = ['一', '二', '三', '四', '五', '六', '七', '八'];
+        const mainRowMap = { '水電工程': 11, '燈具工程': 12, '木作工程': 13, '油漆工程': 14, '雜項工程': 15 };
 
-            itemRow.getCell(1).alignment = { horizontal: 'left' };
-            itemRow.getCell(2).alignment = { horizontal: 'left' };
-            itemRow.getCell(3).alignment = { horizontal: 'left' };
-            itemRow.getCell(4).alignment = { horizontal: 'left' };
-            itemRow.getCell(5).alignment = { horizontal: 'left' };
-            itemRow.getCell(6).alignment = { horizontal: 'right' };
-            itemRow.getCell(7).alignment = { horizontal: 'left' };
+        let curRow = 49;
+        let activeIdx = 0;
+        const categoryTotals = {};
 
-            itemRow.getCell(5).numFmt = '#,##0';
-            itemRow.getCell(6).numFmt = '#,##0';
+        function setSecondPageFont(cell, bold) {
+            cell.font = { name: 'Microsoft JhengHei', size: 12, bold: bold, italic: false, underline: false };
+        }
+        function alignLeft(cell) { cell.alignment = { horizontal: 'left', vertical: 'center', wrapText: false }; }
+        function alignCenter(cell) { cell.alignment = { horizontal: 'center', vertical: 'center', wrapText: false }; }
+        function alignRight(cell) { cell.alignment = { horizontal: 'right', vertical: 'center', wrapText: false }; }
+
+        catOrderList.forEach(cat => {
+            const items = grouped[cat] || [];
+            const mainRow = mainRowMap[cat];
+
+            if (items.length === 0) {
+                ws.getCell(`A${mainRow}`).value = null;
+                ws.getCell(`B${mainRow}`).value = null;
+                ws.getCell(`C${mainRow}`).value = null;
+                ws.getCell(`D${mainRow}`).value = null;
+                ws.getCell(`E${mainRow}`).value = null;
+                ws.getCell(`F${mainRow}`).value = null;
+                return;
+            }
+
+            let catSum = 0;
+            const numStr = numMap[activeIdx] || String(activeIdx + 1);
+            activeIdx++;
+
+            ws.getCell(`A${mainRow}`).value = numStr;
+            ws.getCell(`B${mainRow}`).value = cat;
+            ws.getCell(`C${mainRow}`).value = 1;
+            ws.getCell(`D${mainRow}`).value = '式';
+
+            const headerA = ws.getCell(`A${curRow}`);
+            const headerB = ws.getCell(`B${curRow}`);
+            headerA.value = numStr;
+            headerB.value = cat;
 
             for (let c = 1; c <= 7; c++) {
-                const cell = itemRow.getCell(c);
-                cell.font = { name: 'Microsoft JhengHei', size: 12, bold: false };
+                const cell = ws.getCell(curRow, c);
+                setSecondPageFont(cell, true);
+                alignLeft(cell);
             }
+            curRow++;
+
+            items.forEach(item => {
+                const cellA = ws.getCell(`A${curRow}`);
+                const cellB = ws.getCell(`B${curRow}`);
+                const cellC = ws.getCell(`C${curRow}`);
+                const cellD = ws.getCell(`D${curRow}`);
+                const cellE = ws.getCell(`E${curRow}`);
+                const cellF = ws.getCell(`F${curRow}`);
+                const cellG = ws.getCell(`G${curRow}`);
+
+                cellA.value = null;
+                cellB.value = item.name;
+                cellC.value = Number(item.qty);
+                cellD.value = item.unit;
+                cellE.value = Number(item.price);
+                cellE.numFmt = '#,##0';
+                cellF.value = Number(item.priceSubtotal);
+                cellF.numFmt = '#,##0';
+                cellG.value = null;
+
+                for (let c = 1; c <= 7; c++) {
+                    const cell = ws.getCell(curRow, c);
+                    setSecondPageFont(cell, false);
+                    alignLeft(cell);
+                }
+                alignRight(cellF);
+                curRow++;
+                catSum += Number(item.priceSubtotal || 0);
+            });
+
+            const subtotalA = ws.getCell(`A${curRow}`);
+            const subtotalB = ws.getCell(`B${curRow}`);
+            const subtotalC = ws.getCell(`C${curRow}`);
+            const subtotalD = ws.getCell(`D${curRow}`);
+            const subtotalE = ws.getCell(`E${curRow}`);
+            const subtotalF = ws.getCell(`F${curRow}`);
+            const subtotalG = ws.getCell(`G${curRow}`);
+
+            subtotalA.value = null;
+            subtotalB.value = `${cat}小計`;
+            subtotalC.value = null;
+            subtotalD.value = null;
+            subtotalE.value = null;
+            subtotalF.value = catSum;
+            subtotalF.numFmt = '#,##0';
+            subtotalG.value = null;
+
+            for (let c = 1; c <= 7; c++) {
+                const cell = ws.getCell(curRow, c);
+                setSecondPageFont(cell, false);
+            }
+
+            alignCenter(subtotalB);
+            alignRight(subtotalF);
+            alignLeft(subtotalA);
+            alignLeft(subtotalC);
+            alignLeft(subtotalD);
+            alignLeft(subtotalE);
+            alignLeft(subtotalG);
+
+            categoryTotals[cat] = catSum;
+            curRow += 2;
         });
 
-        const subRow = ws.addRow(['', `${cat}小計`, '', '', '', catSum, '']);
-        for (let c = 1; c <= 7; c++) {
-            const cell = subRow.getCell(c);
-            cell.font = { name: 'Microsoft JhengHei', size: 12, bold: false };
-            cell.alignment = { horizontal: 'left', vertical: 'center' };
+        function fillTotalCell(cellRef, value) {
+            const cell = ws.getCell(cellRef);
+            if (value !== undefined && value !== null && Number(value) > 0) {
+                cell.value = Number(value);
+                cell.numFmt = '#,##0';
+            } else {
+                cell.value = null;
+            }
         }
-        subRow.getCell(2).alignment = { horizontal: 'center', vertical: 'center' };
-        subRow.getCell(6).alignment = { horizontal: 'right', vertical: 'center' };
-        subRow.getCell(6).numFmt = '#,##0';
 
-        ws.addRow([]);
-    });
+        fillTotalCell('E11', categoryTotals['水電工程']);
+        fillTotalCell('F11', categoryTotals['水電工程']);
+        fillTotalCell('E12', categoryTotals['燈具工程']);
+        fillTotalCell('F12', categoryTotals['燈具工程']);
+        fillTotalCell('E13', categoryTotals['木作工程']);
+        fillTotalCell('F13', categoryTotals['木作工程']);
+        fillTotalCell('E14', categoryTotals['油漆工程']);
+        fillTotalCell('F14', categoryTotals['油漆工程']);
+        fillTotalCell('E15', categoryTotals['雜項工程']);
+        fillTotalCell('F15', categoryTotals['雜項工程']);
 
-    const totals = calculateTotals();
-    ws.addRow([]);
-    ws.addRow(['', '工程小計', '', '', '', totals.subtotal, '']).getCell(6).numFmt = '#,##0';
-    if (totals.managementFee > 0) {
-        ws.addRow(['', '管理費 (10%)', '', '', '', totals.managementFee, '']).getCell(6).numFmt = '#,##0';
+        const totals = calculateTotals();
+        fillTotalCell('E17', totals.managementFee);
+        fillTotalCell('F18', totals.subtotal + totals.managementFee);
+        fillTotalCell('E19', totals.tax);
+        fillTotalCell('F20', totals.grandTotal);
+
+        const p1 = Math.round(totals.grandTotal * 0.3);
+        const p2 = Math.round(totals.grandTotal * 0.3);
+        const p3 = Math.round(totals.grandTotal * 0.3);
+        const p4 = totals.grandTotal - p1 - p2 - p3;
+
+        fillTotalCell('F22', p1);
+        fillTotalCell('F23', p2);
+        fillTotalCell('F24', p3);
+        fillTotalCell('F25', p4);
+
+        for (let r = 48; r <= 150; r++) {
+            ws.getCell(`G${r}`).value = null;
+        }
+
+        const buffer = await wb.xlsx.writeBuffer();
+        const fileName = clientName ? `裝修報價單-${clientName}-${quoteDateInput}.xlsx` : `裝修報價單-${quoteDateInput}.xlsx`;
+
+        saveAs(new Blob([buffer], { type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' }), fileName);
+
+    } catch (err) {
+        console.error('Excel 匯出錯誤：', err);
+        alert('套印匯出發生錯誤：' + err.message);
     }
-    if (totals.tax > 0) {
-        ws.addRow(['', '稅金 (5%)', '', '', '', totals.tax, '']).getCell(6).numFmt = '#,##0';
-    }
-    const totalRow = ws.addRow(['', '工程總價', '', '', '', totals.grandTotal, '']);
-    totalRow.getCell(2).font = { name: 'Microsoft JhengHei', size: 14, bold: true };
-    totalRow.getCell(6).font = { name: 'Microsoft JhengHei', size: 14, bold: true };
-    totalRow.getCell(6).numFmt = '#,##0';
-
-    const buffer = await wb.xlsx.writeBuffer();
-    const fileName = clientName ? `報價單-${clientName}-${quoteDateInput}.xlsx` : `報價單-${quoteDateInput}.xlsx`;
-
-    saveAs(new Blob([buffer], { type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' }), fileName);
 }
 
 
-// ==========================================================
-// Excel 匯出 (套印範本)
-// ==========================================================
-
-async function exportQuoteToExcel() {
-
-    if (
-        currentItems.length === 0
-    ) {
-
-        alert(
-            '請先加入報價項目！'
-        );
-
-        return;
-    }
-
-
-    const clientName =
-        document.getElementById(
-            'clientName'
-        ).value || '';
-
-
-    const projectLocation =
-        document.getElementById(
-            'projectLocation'
-        ).value || '';
-
-
-    const contractNo =
-        document.getElementById(
-            'contractNo'
-        ).value || '';
-
-
-    const quoteDateInput =
-        document.getElementById(
-            'quoteDate'
-        ).value || '';
-
-
-    // ======================================================
-    // 日期
-    // ======================================================
-
-    let dateStr =
-        quoteDateInput;
-
-
-    if (quoteDateInput) {
-
-        const d =
-            new Date(
-                quoteDateInput
-            );
-
-
-        const rocYear =
-            d.getFullYear() -
-            1911;
-
-
-        const m =
-            String(
-                d.getMonth() + 1
-            ).padStart(
-                2,
-                '0'
-            );
-
-
-        const day =
-            String(
-                d.getDate()
-            ).padStart(
-                2,
-                '0'
-            );
-
-
-        dateStr =
-            `${rocYear} 年 ${m}月${day}日`;
-
-    }
-
-
-    try {
-
-        // ==================================================
-        // 讀取範本
-        // ==================================================
-
-        const response =
-            await fetch(
-                './template.xlsx',
-                {
-                    cache: 'no-store'
-                }
-            );
-
-
-        if (!response.ok) {
-
-            alert(
-                '找不到 template.xlsx，請確認它與 HTML 放在同一個資料夾。'
-            );
-
-            return;
-        }
-
-
-        const arrayBuffer =
-            await response.arrayBuffer();
-
-
-        const wb =
-            new ExcelJS.Workbook();
-
-
-        await wb.xlsx.load(
-            arrayBuffer
-        );
-
-
-        // ==================================================
-        // 工作表
-        // ==================================================
-
-        const ws =
-            wb.getWorksheet(
-                '估價單0906'
-            ) ||
-            wb.worksheets[0];
-
-
-        if (!ws) {
-
-            alert(
-                '找不到報價單工作表！'
-            );
-
-            return;
-        }
-
-
-        // ==================================================
-        // 第一頁
-        //
-        // 只填資料，不重新設計第一頁格式
-        // ==================================================
-
-        ws.getCell(
-            'A6'
-        ).value =
-            `客戶名稱 :${clientName}`;
-
-
-        ws.getCell(
-            'G6'
-        ).value =
-            contractNo;
-
-
-        ws.getCell(
-            'A7'
-        ).value =
-            `工程地點 :${projectLocation}`;
-
-
-        if (dateStr) {
-
-            ws.getCell(
-                'G7'
-            ).value =
-                dateStr;
-
-        }
-
-
-        // ==================================================
-        // 清除第二頁資料
-        // ==================================================
-
-        for (
-            let r = 48;
-            r <= 150;
-            r++
-        ) {
-
-            for (
-                let c = 1;
-                c <= 7;
-                c++
-            ) {
-
-                ws.getCell(
-                    r,
-                    c
-                ).value = null;
-
-            }
-
-        }
-
-
-        // ==================================================
-        // 分頁設定
-        // ==================================================
-
-        ws.pageSetup.printArea =
-            'A1:G150';
-
-
-        ws.pageSetup.fitToPage =
-            true;
-
-
-        ws.pageSetup.fitToWidth =
-            1;
-
-
-        ws.pageSetup.fitToHeight =
-            0;
-
-
-        ws.pageSetup.orientation =
-            'portrait';
-
-
-        ws.pageSetup.paperSize =
-            9;
-
-
-        if (
-            ws.rowBreaks &&
-            Array.isArray(
-                ws.rowBreaks.brk
-            )
-        ) {
-
-            ws.rowBreaks.brk = [];
-
-        }
-
-
-        if (
-            typeof ws.addRowBreak ===
-            'function'
-        ) {
-
-            ws.addRowBreak(
-                47
-            );
-
-        }
-
-
-        // ==================================================
-        // 分類
-        // ==================================================
-
-        const grouped = {};
-
-
-        currentItems.forEach(
-            item => {
-
-                if (
-                    !grouped[
-                        item.category
-                    ]
-                ) {
-
-                    grouped[
-                        item.category
-                    ] = [];
-
-                }
-
-
-                grouped[
-                    item.category
-                ].push(item);
-
-            }
-        );
-
-
-        // ==================================================
-        // 工種順序
-        // ==================================================
-
-        const catOrderList = [
-
-            '水電工程',
-
-            '燈具工程',
-
-            '木作工程',
-
-            '油漆工程',
-
-            '雜項工程'
-
-        ];
-
-
-        const numMap = [
-
-            '一',
-            '二',
-            '三',
-            '四',
-            '五',
-            '六',
-            '七',
-            '八'
-
-        ];
-
-
-        // ==================================================
-        // 第一頁總表位置
-        // ==================================================
-
-        const mainRowMap = {
-
-            '水電工程': 11,
-
-            '燈具工程': 12,
-
-            '木作工程': 13,
-
-            '油漆工程': 14,
-
-            '雜項工程': 15
-
-        };
-
-
-        let curRow = 49;
-
-        let activeIdx = 0;
-
-        const categoryTotals = {};
-
-
-        // ==================================================
-        // 第二頁字體
-        // ==================================================
-
-        function setSecondPageFont(
-            cell,
-            bold
-        ) {
-
-            cell.font = {
-
-                name:
-                    'Microsoft JhengHei',
-
-                size: 12,
-
-                bold: bold,
-
-                italic: false,
-
-                underline: false
-
-            };
-
-        }
-
-
-        // ==================================================
-        // 第二頁靠左
-        // ==================================================
-
-        function alignLeft(
-            cell
-        ) {
-
-            cell.alignment = {
-
-                horizontal: 'left',
-
-                vertical: 'center',
-
-                wrapText: false
-
-            };
-
-        }
-
-
-        // ==================================================
-        // 第二頁置中
-        // ==================================================
-
-        function alignCenter(
-            cell
-        ) {
-
-            cell.alignment = {
-
-                horizontal: 'center',
-
-                vertical: 'center',
-
-                wrapText: false
-
-            };
-
-        }
-
-
-        // ==================================================
-        // 第二頁數字靠右
-        // ==================================================
-
-        function alignRight(
-            cell
-        ) {
-
-            cell.alignment = {
-
-                horizontal: 'right',
-
-                vertical: 'center',
-
-                wrapText: false
-
-            };
-
-        }
-
-
-        // ==================================================
-        // 建立第二頁
-        // ==================================================
-
-        catOrderList.forEach(
-            cat => {
-
-                const items =
-                    grouped[cat] || [];
-
-
-                const mainRow =
-                    mainRowMap[cat];
-
-
-                // ==========================================
-                // 沒有資料
-                // ==========================================
-
-                if (
-                    items.length === 0
-                ) {
-
-                    ws.getCell(
-                        `A${mainRow}`
-                    ).value = null;
-
-                    ws.getCell(
-                        `B${mainRow}`
-                    ).value = null;
-
-                    ws.getCell(
-                        `C${mainRow}`
-                    ).value = null;
-
-                    ws.getCell(
-                        `D${mainRow}`
-                    ).value = null;
-
-                    ws.getCell(
-                        `E${mainRow}`
-                    ).value = null;
-
-                    ws.getCell(
-                        `F${mainRow}`
-                    ).value = null;
-
-                    return;
-
-                }
-
-
-                let catSum = 0;
-
-
-                const numStr =
-                    numMap[
-                        activeIdx
-                    ] ||
-                    String(
-                        activeIdx + 1
-                    );
-
-
-                activeIdx++;
-
-
-                // ==========================================
-                // 第一頁總表
-                // ==========================================
-
-                ws.getCell(
-                    `A${mainRow}`
-                ).value =
-                    numStr;
-
-
-                ws.getCell(
-                    `B${mainRow}`
-                ).value =
-                    cat;
-
-
-                ws.getCell(
-                    `C${mainRow}`
-                ).value =
-                    1;
-
-
-                ws.getCell(
-                    `D${mainRow}`
-                ).value =
-                    '式';
-
-
-                // ==========================================
-                // 第二頁工種標題
-                //
-                // 一、水電工程 → 粗體、靠左
-                // ==========================================
-
-                const headerA =
-                    ws.getCell(
-                        `A${curRow}`
-                    );
-
-                const headerB =
-                    ws.getCell(
-                        `B${curRow}`
-                    );
-
-
-                headerA.value =
-                    numStr;
-
-
-                headerB.value =
-                    cat;
-
-
-                for (
-                    let c = 1;
-                    c <= 7;
-                    c++
-                ) {
-
-                    const cell =
-                        ws.getCell(
-                            curRow,
-                            c
-                        );
-
-
-                    setSecondPageFont(
-                        cell,
-                        true
-                    );
-
-
-                    alignLeft(
-                        cell
-                    );
-
-                }
-
-
-                curRow++;
-
-
-                // ==========================================
-                // 細項
-                //
-                // 12pt、正常字體、全部靠左
-                // 複價 F 欄數字維持靠右
-                // G 欄 (備註) 保持空白/null
-                // ==========================================
-
-                items.forEach(
-                    item => {
-
-                        const cellA =
-                            ws.getCell(
-                                `A${curRow}`
-                            );
-
-                        const cellB =
-                            ws.getCell(
-                                `B${curRow}`
-                            );
-
-                        const cellC =
-                            ws.getCell(
-                                `C${curRow}`
-                            );
-
-                        const cellD =
-                            ws.getCell(
-                                `D${curRow}`
-                            );
-
-                        const cellE =
-                            ws.getCell(
-                                `E${curRow}`
-                            );
-
-                        const cellF =
-                            ws.getCell(
-                                `F${curRow}`
-                            );
-
-                        const cellG =
-                            ws.getCell(
-                                `G${curRow}`
-                            );
-
-
-                        cellA.value =
-                            null;
-
-
-                        cellB.value =
-                            item.name;
-
-
-                        cellC.value =
-                            Number(
-                                item.qty
-                            );
-
-
-                        cellD.value =
-                            item.unit;
-
-
-                        cellE.value =
-                            Number(
-                                item.price
-                            );
-
-
-                        cellE.numFmt =
-                            '#,##0';
-
-
-                        cellF.value =
-                            Number(
-                                item.priceSubtotal
-                            );
-
-
-                        cellF.numFmt =
-                            '#,##0';
-
-
-                        // G 欄永遠留白 (空白)
-                        cellG.value =
-                            null;
-
-
-                        // ----------------------------------
-                        // 細項全部統一為 12pt、正常字體、靠左
-                        // ----------------------------------
-
-                        for (
-                            let c = 1;
-                            c <= 7;
-                            c++
-                        ) {
-
-                            const cell =
-                                ws.getCell(
-                                    curRow,
-                                    c
-                                );
-
-
-                            setSecondPageFont(
-                                cell,
-                                false
-                            );
-
-
-                            alignLeft(
-                                cell
-                            );
-
-                        }
-
-
-                        // ----------------------------------
-                        // 細項複價 F 欄維持數字靠右
-                        // ----------------------------------
-
-                        alignRight(
-                            cellF
-                        );
-
-
-                        curRow++;
-
-
-                        // 累計工種小計
-                        catSum +=
-                            Number(
-                                item.priceSubtotal || 0
-                            );
-
-                    }
-                );
-
-
-                // ==========================================
-                // 工程小計
-                //
-                // 只有小計文字那一格 (B 欄) 置中
-                // 小計金額 (F 欄) 維持數字靠右
-                // 其他欄位靠左
-                // ==========================================
-
-                const subtotalA =
-                    ws.getCell(
-                        `A${curRow}`
-                    );
-
-                const subtotalB =
-                    ws.getCell(
-                        `B${curRow}`
-                    );
-
-                const subtotalC =
-                    ws.getCell(
-                        `C${curRow}`
-                    );
-
-                const subtotalD =
-                    ws.getCell(
-                        `D${curRow}`
-                    );
-
-                const subtotalE =
-                    ws.getCell(
-                        `E${curRow}`
-                    );
-
-                const subtotalF =
-                    ws.getCell(
-                        `F${curRow}`
-                    );
-
-                const subtotalG =
-                    ws.getCell(
-                        `G${curRow}`
-                    );
-
-
-                subtotalA.value =
-                    null;
-
-
-                subtotalB.value =
-                    `${cat}小計`;
-
-
-                subtotalC.value =
-                    null;
-
-
-                subtotalD.value =
-                    null;
-
-
-                subtotalE.value =
-                    null;
-
-
-                subtotalF.value =
-                    catSum;
-
-
-                subtotalF.numFmt =
-                    '#,##0';
-
-
-                subtotalG.value =
-                    null;
-
-
-                // ------------------------------------------
-                // 小計列全部正常字體 12pt、預設靠左
-                // ------------------------------------------
-
-                for (
-                    let c = 1;
-                    c <= 7;
-                    c++
-                ) {
-
-                    const cell =
-                        ws.getCell(
-                            curRow,
-                            c
-                        );
-
-
-                    setSecondPageFont(
-                        cell,
-                        false
-                    );
-
-                    alignLeft(
-                        cell
-                    );
-
-                }
-
-
-                // ------------------------------------------
-                // 精準設定：只有小計文字那一格 (B 欄) 置中
-                // ------------------------------------------
-
-                alignCenter(
-                    subtotalB
-                );
-
-
-                // ------------------------------------------
-                // 精準設定：小計金額 (F 欄) 靠右
-                // ------------------------------------------
-
-                alignRight(
-                    subtotalF
-                );
-
-
-                categoryTotals[cat] =
-                    catSum;
-
-
-                // ==========================================
-                // 小計後空一列
-                // ==========================================
-
-                curRow++;
-
-                curRow++;
-
-            }
-        );
-
-
-        // ==================================================
-        // 第一頁總表金額 (保持不動)
-        // ==================================================
-
-        function fillTotalCell(
-            cellRef,
-            value
-        ) {
-
-            const cell =
-                ws.getCell(
-                    cellRef
-                );
-
-
-            if (
-                value !== undefined &&
-                value !== null &&
-                Number(value) > 0
-            ) {
-
-                cell.value =
-                    Number(value);
-
-                cell.numFmt =
-                    '#,##0';
-
-            } else {
-
-                cell.value =
-                    null;
-
-            }
-
-        }
-
-
-        fillTotalCell(
-            'E11',
-            categoryTotals[
-                '水電工程'
-            ]
-        );
-
-        fillTotalCell(
-            'F11',
-            categoryTotals[
-                '水電工程'
-            ]
-        );
-
-
-        fillTotalCell(
-            'E12',
-            categoryTotals[
-                '燈具工程'
-            ]
-        );
-
-        fillTotalCell(
-            'F12',
-            categoryTotals[
-                '燈具工程'
-            ]
-        );
-
-
-        fillTotalCell(
-            'E13',
-            categoryTotals[
-                '木作工程'
-            ]
-        );
-
-        fillTotalCell(
-            'F13',
-            categoryTotals[
-                '木作工程'
-            ]
-        );
-
-
-        fillTotalCell(
-            'E14',
-            categoryTotals[
-                '油漆工程'
-            ]
-        );
-
-        fillTotalCell(
-            'F14',
-            categoryTotals[
-                '油漆工程'
-            ]
-        );
-
-
-        fillTotalCell(
-            'E15',
-            categoryTotals[
-                '雜項工程'
-            ]
-        );
-
-        fillTotalCell(
-            'F15',
-            categoryTotals[
-                '雜項工程'
-            ]
-        );
-
-
-        // ==================================================
-        // 總計
-        // ==================================================
-
-        const totals =
-            calculateTotals();
-
-
-        fillTotalCell(
-            'E17',
-            totals.managementFee
-        );
-
-
-        fillTotalCell(
-            'F18',
-            totals.subtotal +
-            totals.managementFee
-        );
-
-
-        fillTotalCell(
-            'E19',
-            totals.tax
-        );
-
-
-        fillTotalCell(
-            'F20',
-            totals.grandTotal
-        );
-
-
-        // ==================================================
-        // 付款
-        // ==================================================
-
-        const p1 =
-            Math.round(
-                totals.grandTotal *
-                0.3
-            );
-
-
-        const p2 =
-            Math.round(
-                totals.grandTotal *
-                0.3
-            );
-
-
-        const p3 =
-            Math.round(
-                totals.grandTotal *
-                0.3
-            );
-
-
-        const p4 =
-            totals.grandTotal -
-            p1 -
-            p2 -
-            p3;
-
-
-        fillTotalCell(
-            'F22',
-            p1
-        );
-
-        fillTotalCell(
-            'F23',
-            p2
-        );
-
-        fillTotalCell(
-            'F24',
-            p3
-        );
-
-        fillTotalCell(
-            'F25',
-            p4
-        );
-
-
-        // ==================================================
-        // G 欄全部清空 (保持空白)
-        // ==================================================
-
-        for (
-            let r = 48;
-            r <= 150;
-            r++
-        ) {
-
-            ws.getCell(
-                `G${r}`
-            ).value =
-                null;
-
-        }
-
-
-        // ==================================================
-        // 匯出
-        // ==================================================
-
-        const buffer =
-            await wb.xlsx.writeBuffer();
-
-
-        const fileName =
-            clientName
-
-                ? `裝修報價單-${clientName}-${quoteDateInput}.xlsx`
-
-                : `裝修報價單-${quoteDateInput}.xlsx`;
-
-
-        saveAs(
-
-            new Blob(
-                [buffer],
-                {
-                    type:
-                        'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'
-                }
-            ),
-
-            fileName
-
-        );
-
-
-    } catch (err) {
-
-        console.error(
-            'Excel 匯出錯誤：',
-            err
-        );
-
-
-        alert(
-            '套印匯出發生錯誤：' +
-            err.message
-        );
-
-    }
-
+function exportDirectExcel() {
+    exportQuoteToExcel();
 }
 
 </script>
