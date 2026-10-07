@@ -305,7 +305,7 @@ button:hover {
 <div class="container">
 
 <h1>
-    室內裝修報價與工程進度管理系統 <span style="font-size: 18px; color: #2563eb;">(單價庫/範本完全校正版)</span>
+    室內裝修報價與工程進度管理系統 <span style="font-size: 18px; color: #2563eb;">(單價庫/對齊修正版)</span>
 </h1>
 
 
@@ -1169,7 +1169,7 @@ async function exportQuoteToExcel() {
         ws.getCell('A7').value = `工程地點 :${projectLocation}`;
         if (dateStr) ws.getCell('G7').value = dateStr;
 
-        // 清空第一頁預設 8 行工種資料 (11~18 列)
+        // 清空第一頁預設 7 行工種資料 (11~17 列)，第 18 列留空備用
         for (let r = 11; r <= 18; r++) {
             ws.getCell(`A${r}`).value = null;
             ws.getCell(`B${r}`).value = null;
@@ -1228,18 +1228,18 @@ async function exportQuoteToExcel() {
             let catSum = 0;
             const numStr = numMap[idx] || String(idx + 1);
 
-            // 第一頁總表：填寫於 11~18 列 (最多 8 個工種)
-            if (idx < 7) { 
+            // 第一頁總表：安全填寫於 11~17 列 (絕對不碰第 19、20 列)
+            if (idx < 6) { 
                 const mainRow = 11 + idx;
                 ws.getCell(`A${mainRow}`).value = numStr;
                 ws.getCell(`B${mainRow}`).value = cat;
                 ws.getCell(`C${mainRow}`).value = 1;
                 ws.getCell(`D${mainRow}`).value = '式';
-            } else if (idx === 7) { 
-                ws.getCell('A18').value = numStr;
-                ws.getCell('B18').value = usedCategories.length > 8 ? `${cat}等其餘工程` : cat;
-                ws.getCell('C18').value = 1;
-                ws.getCell('D18').value = '式';
+            } else if (idx === 6) { 
+                ws.getCell('A17').value = numStr;
+                ws.getCell('B17').value = usedCategories.length > 7 ? `${cat}等其餘工程` : cat;
+                ws.getCell('C17').value = 1;
+                ws.getCell('D17').value = '式';
             }
 
             // 第二頁：工程標題
@@ -1308,13 +1308,13 @@ async function exportQuoteToExcel() {
             ws.getCell(`G${curRow}`).value = null;
 
             // 回填第一頁總表金額
-            if (idx < 7) {
+            if (idx < 6) {
                 fillTotalCell(`E${11 + idx}`, catSum);
                 fillTotalCell(`F${11 + idx}`, catSum);
             } else {
                 otherCatSum += catSum;
-                fillTotalCell('E18', otherCatSum);
-                fillTotalCell('F18', otherCatSum);
+                fillTotalCell('E17', otherCatSum);
+                fillTotalCell('F17', otherCatSum);
             }
 
             curRow += 2;
@@ -1330,55 +1330,58 @@ async function exportQuoteToExcel() {
             }
         }
 
-        // 計算金額並嚴格對照範本截圖寫入正確列號
+        // 精準一對一校正列號與金額
         const totals = calculateTotals();
 
-        // 【列 20】：小計 (Subtotal)
-        fillTotalCell('E20', totals.subtotal);
-        fillTotalCell('F20', totals.subtotal);
+        // 【列 19】：小計 (Subtotal) ➔ 精準寫在 E19 / F19
+        fillTotalCell('E19', totals.subtotal);
+        fillTotalCell('F19', totals.subtotal);
 
-        // 【列 21】：工程管理費 (10%)
+        // 【列 20】：工程管理費 (10%) ➔ 精準寫在 E20 / F20
         if (document.getElementById('chkManagementFee').checked && totals.managementFee > 0) {
-            ws.getCell('C21').value = 1;
-            ws.getCell('D21').value = '式';
-            fillTotalCell('E21', totals.managementFee);
-            fillTotalCell('F21', totals.managementFee);
+            ws.getCell('C20').value = 1;
+            ws.getCell('D20').value = '式';
+            fillTotalCell('E20', totals.managementFee);
+            fillTotalCell('F20', totals.managementFee);
         } else {
-            ws.getCell('C21').value = null;
-            ws.getCell('D21').value = null;
-            ws.getCell('E21').value = null;
-            ws.getCell('F21').value = null;
+            ws.getCell('C20').value = null;
+            ws.getCell('D20').value = null;
+            ws.getCell('E20').value = null;
+            ws.getCell('F20').value = null;
         }
 
-        // 【列 22】：合計 (小計 + 管理費)
-        fillTotalCell('F22', totals.subtotal + totals.managementFee);
+        // 【列 21】：合計 (小計 + 管理費) ➔ 精準寫在 F21
+        fillTotalCell('F21', totals.subtotal + totals.managementFee);
 
-        // 【列 23】：營業稅 (5%)
+        // 【列 22】：營業稅 (5%) ➔ 精準寫在 E22 / F22
         if (document.getElementById('chkTax').checked && totals.tax > 0) {
-            ws.getCell('C23').value = 1;
-            ws.getCell('D23').value = '式';
-            fillTotalCell('E23', totals.tax);
-            fillTotalCell('F23', totals.tax);
+            ws.getCell('C22').value = 1;
+            ws.getCell('D22').value = '式';
+            fillTotalCell('E22', totals.tax);
+            fillTotalCell('F22', totals.tax);
         } else {
-            ws.getCell('C23').value = null;
-            ws.getCell('D23').value = null;
-            ws.getCell('E23').value = null;
-            ws.getCell('F23').value = null;
+            ws.getCell('C22').value = null;
+            ws.getCell('D22').value = null;
+            ws.getCell('E22').value = null;
+            ws.getCell('F22').value = null;
         }
 
-        // 【列 24】：總計 (Grand Total)
-        fillTotalCell('F24', totals.grandTotal);
+        // 【列 23】：總計 (Grand Total) ➔ 精準寫在 F23
+        fillTotalCell('F23', totals.grandTotal);
 
-        // 【列 26~29】：付款方式 (訂金30%、木工完工30%、油漆完工30%、尾款10%)
+        // 【列 27~30】：付款方式對齊（訂金27、木工28、油漆29、尾款30）
         const p1 = Math.round(totals.grandTotal * 0.3);
         const p2 = Math.round(totals.grandTotal * 0.3);
         const p3 = Math.round(totals.grandTotal * 0.3);
         const p4 = totals.grandTotal - p1 - p2 - p3;
 
-        fillTotalCell('F26', p1);
-        fillTotalCell('F27', p2);
-        fillTotalCell('F28', p3);
-        fillTotalCell('F29', p4);
+        // 先把列 26 舊的多餘數值清空
+        ws.getCell('F26').value = null;
+
+        fillTotalCell('F27', p1);
+        fillTotalCell('F28', p2);
+        fillTotalCell('F29', p3);
+        fillTotalCell('F30', p4);
 
         for (let r = 48; r <= 150; r++) {
             ws.getCell(`G${r}`).value = null;
