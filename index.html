@@ -1316,14 +1316,43 @@ async function exportQuoteToExcel() {
             }
         }
 
-        // 計算並填寫第一頁總金額
+        // 精準填寫第一頁小計與管理費等金額
         const totals = calculateTotals();
-        fillTotalCell('E17', totals.managementFee);
+
+        // 【精準修復管理費列】：工程管理費(10%) 位在第 16 列！
+        ws.getCell('C17').value = null;
+        ws.getCell('D17').value = null;
+
+        if (document.getElementById('chkManagementFee').checked && totals.managementFee > 0) {
+            ws.getCell('C17').value = 1;
+            ws.getCell('D17').value = '式';
+            fillTotalCell('E17', totals.managementFee);
+            fillTotalCell('F17', totals.managementFee);
+        } else {
+            ws.getCell('E17').value = null;
+            ws.getCell('F17').value = null;
+        }
+
+        // 合計 (小計 + 管理費) 位於第 18 列
         fillTotalCell('F18', totals.subtotal + totals.managementFee);
-        fillTotalCell('E19', totals.tax);
+
+        // 營業稅 5% 位於第 19 列
+        if (document.getElementById('chkTax').checked && totals.tax > 0) {
+            ws.getCell('C19').value = 1;
+            ws.getCell('D19').value = '式';
+            fillTotalCell('E19', totals.tax);
+            fillTotalCell('F19', totals.tax);
+        } else {
+            ws.getCell('C19').value = null;
+            ws.getCell('D19').value = null;
+            ws.getCell('E19').value = null;
+            ws.getCell('F19').value = null;
+        }
+
+        // 總計 位於第 20 列
         fillTotalCell('F20', totals.grandTotal);
 
-        // 付款方式 30%, 30%, 30%, 10%
+        // 付款方式 30%, 30%, 30%, 10% 位於列 24~27
         ws.getCell('F22').value = null;
         ws.getCell('F23').value = null;
 
